@@ -1,0 +1,231 @@
+import React, { createContext, useContext, useState, useEffect } from "react";
+import axios from './axioConfig';
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+
+// Add axios interceptor for token
+axios.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Token ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add axios interceptor for error handling
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response) {
+      const message =
+        error.response.data?.detail ||
+        error.response.data?.message ||
+        error.response.data?.error ||
+        "An error occurred";
+
+      if (error.response.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user"); // Clear user data on unauthorized
+        window.location.href = "/login";
+        return Promise.reject(error);
+      }
+
+      toast.error(
+        typeof message === "string" ? message : JSON.stringify(message)
+      );
+    } else if (error.request) {
+      toast.error("No response from server. Please check your connection.");
+    } else {
+      toast.error("Error setting up the request.");
+    }
+    return Promise.reject(error);
+  }
+);
+
+interface User {
+  id: number;
+  email: string;
+  full_name: string;
+  phone_number?: string;
+  date_joined: string;
+  is_farmer: boolean;
+  is_consumer: boolean;
+}
+
+interface AuthContextType {
+  user: User | null;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  register: (userData: RegisterData) => Promise<void>;
+  logout: () => Promise<void>;
+  updateUser: (userData: Partial<User>) => Promise<void>;
+  setUser: (user: User | null) => void;
+}
+
+interface RegisterData {
+  email: string;
+  password: string;
+  full_name: string;
+  phone_number: string;
+  is_farmer: boolean;
+  is_consumer: boolean;
+}
+
+// Create and export AuthContext
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Export useAuth hook
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true); // Start with loading true
+  const navigate = useNavigate();
+
+  // Restore user from localStorage on app initialization
+  useEffect(() => {
+    const storedUser = localStorage.getItem("agriconnectUser");
+    const token = localStorage.getItem("token");
+
+    if (storedUser && token) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser); // Restore user from localStorage
+      } catch (error) {
+        console.error("Failed to parse user data from localStorage:", error);
+        localStorage.removeItem("agriconnectUser");
+        localStorage.removeItem("token");
+      }
+    }
+
+    // Validate token and fetch user data
+    checkAuthStatus();
+  }, []);
+
+  const checkAuthStatus = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setLoading(false); // No token, stop loading
+      return;
+    }
+
+    try {
+      const response = await axios.get("/api/auth/user/", {
+        headers: { Authorization: `Token ${token}` },
+      });
+      setUser(response.data);
+      localStorage.setItem("agriconnectUser", JSON.stringify(response.data)); // Save user to localStorage
+    } catch (error) {
+      console.error("Auth status check failed:", error);
+      localStorage.removeItem("token");
+      localStorage.removeItem("agriconnectUser"); // Clear user data on error
+      setUser(null);
+    } finally {
+      setLoading(false); // Stop loading after auth check
+    }
+  };
+
+  const login = async (email: string, password: string) => {
+    try {
+      const response = await axios.post("/api/auth/login/", {
+        email,
+        password,
+      });
+      const { token, user } = response.data;
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user)); // Save user data
+      setUser(user);
+      toast.success("Login successful!");
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Login failed:", error);
+      if (axios.isAxiosError(error) && error.response?.data) {
+        const message = error.response.data.detail || "Invalid credentials";
+        toast.error(message);
+      } else {
+        toast.error("Login failed. Please check your credentials.");
+      }
+      throw error;
+    }
+  };
+
+  const register = async (userData: RegisterData) => {
+    try {
+      const response = await axios.post("/api/auth/register/", userData);
+      const { token, user } = response.data;
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user)); // Save user data
+      setUser(user);
+      toast.success("Registration successful!");
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Registration failed:", error);
+      if (axios.isAxiosError(error) && error.response?.data) {
+        const errorMessage = Object.entries(error.response.data)
+          .map(([key, value]) => `${key}: ${value}`)
+          .join("\n");
+        toast.error(errorMessage);
+      } else {
+        toast.error("Registration failed. Please try again.");
+      }
+      throw error;
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await axios.post("/api/auth/logout/");
+      localStorage.removeItem("token");
+      localStorage.removeItem("user"); // Clear user data on logout
+      setUser(null);
+      toast.success("Logged out successfully");
+      navigate("/");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      toast.error("Logout failed. Please try again.");
+    }
+  };
+
+  const updateUser = async (userData: Partial<User>) => {
+    try {
+      const response = await axios.patch(
+        `/api/auth/user/${user?.id}/`,
+        userData
+      );
+      setUser(response.data);
+      localStorage.setItem("user", JSON.stringify(response.data)); // Save updated user data
+      toast.success("Profile updated successfully!");
+    } catch (error) {
+      console.error("Profile update failed:", error);
+      toast.error("Profile update failed. Please try again.");
+      throw error;
+    }
+  };
+
+  const value = {
+    user,
+    loading,
+    login,
+    register,
+    logout,
+    updateUser,
+    setUser,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+export default AuthContext;
