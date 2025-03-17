@@ -4,8 +4,6 @@ import { AuthProvider } from "./contexts/AuthContext"; // Import AuthProvider
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
-import Dashboard from "./pages/Dashboard";
-import Marketplace from "./pages/Marketplace";
 import Inventory from "./pages/Inventory";
 import Orders from "./pages/Orders";
 import Subscriptions from "./pages/Subscriptions";
@@ -42,22 +40,7 @@ function App() {
               <Route path="/cart" element={<CartPage />} />
               <Route path="/farm-registration" element={<FarmRegistration />} />
 
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/marketplace"
-                element={
-                  <ProtectedRoute>
-                    <Marketplace />
-                  </ProtectedRoute>
-                }
-              />
+             
               <Route
                 path="/inventory"
                 element={

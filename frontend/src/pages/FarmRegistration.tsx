@@ -166,7 +166,17 @@ const FarmRegistration = () => {
         payment: data,
       };
       console.log("Registration Data:", registrationData); // Debugging
-      setStep(5); // Move to the success step
+
+      // Simulate a successful API call
+      // Replace this with your actual API call
+      const response = await axios.post('/api/register', registrationData);
+
+      if (response.status === 200) {
+        // Navigate to the farmer dashboard on success
+        navigate('/farmer-dashboard');
+      } else {
+        throw new Error("Registration failed");
+      }
     } catch (error) {
       setError("Failed to complete registration. Please try again.");
     } finally {
