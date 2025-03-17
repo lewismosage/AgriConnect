@@ -17,12 +17,12 @@ const Navbar: React.FC = () => {
 
           {/* Navigation Links */}
           <div className="hidden md:flex space-x-8">
+          <Link to="/about" className="text-gray-700 hover:text-green-600">About Us</Link>
             <Link to="/farms" className="text-gray-700 hover:text-green-600">Farms</Link>
             <Link to="/products" className="text-gray-700 hover:text-green-600">Products</Link>
             {user && (
               <Link to="/farmer-dashboard" className="text-gray-700 hover:text-green-600">Farmer Dashboard</Link>
             )}
-            <Link to="/about" className="text-gray-700 hover:text-green-600">About</Link>
           </div>
 
           {/* Icons: Search, Wishlist, Cart, Account */}

@@ -1,4 +1,14 @@
-import React from 'react';
+import React, { useState } from "react";
+import { Facebook, Twitter, Linkedin, Mail } from "lucide-react";
+
+const navigation = {
+  social: [
+    { name: "Facebook", href: "#", icon: Facebook },
+    { name: "Twitter", href: "#", icon: Twitter },
+    { name: "LinkedIn", href: "#", icon: Linkedin },
+    { name: "Email", href: "#", icon: Mail },
+  ],
+};
 
 const Footer: React.FC = () => {
   return (
@@ -25,8 +35,27 @@ const Footer: React.FC = () => {
             <p className="text-gray-400">Phone: +1 (123) 456-7890</p>
           </div>
         </div>
-        <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-          &copy; 2023 AgriConnect. All rights reserved.
+        <div className="border-t border-gray-800 pt-8">
+          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+            <p className="text-gray-400 text-sm">
+              © {new Date().getFullYear()} AgriConnect. All rights reserved.
+            </p>
+            <div className="flex space-x-6">
+              {navigation.social.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    <span className="sr-only">{item.name}</span>
+                    <Icon className="h-6 w-6" />
+                  </a>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
     </footer>

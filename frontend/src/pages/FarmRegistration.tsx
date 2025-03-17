@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from '../contexts/axiosConfig';  
+import axios from '../contexts/axioConfig';  
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -730,7 +730,7 @@ const FarmRegistration = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="text-center text-3xl font-extrabold text-gray-900">Register Your Farm</h2>
+        <h2 className="text-center text-3xl font-extrabold text-emerald-600">Register Your Farm</h2>
         <p className="mt-2 text-center text-sm text-gray-600">
           Complete the following steps to join the AgriConnect Farmers Directory
         </p>

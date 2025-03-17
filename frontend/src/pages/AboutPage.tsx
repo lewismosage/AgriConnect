@@ -6,7 +6,7 @@ const AboutPage: React.FC = () => {
     <div className="bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-16">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">About FreshLocal</h1>
+          <h1 className="text-4xl font-bold text-emerald-600 mb-4">About AgriConnect</h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Connecting local farmers with conscious consumers for a sustainable food future.
           </p>
@@ -16,12 +16,12 @@ const AboutPage: React.FC = () => {
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Our Mission</h2>
             <p className="text-gray-600 mb-6">
-              At FreshLocal, we're passionate about revolutionizing the way people access fresh, local produce. 
+              At AgriConnect, we're passionate about revolutionizing the way people access fresh, local produce. 
               Our platform bridges the gap between local farmers and consumers, promoting sustainable agriculture 
               and supporting local communities.
             </p>
             <p className="text-gray-600">
-              We believe in transparency, sustainability, and the power of community. By choosing FreshLocal, 
+              We believe in transparency, sustainability, and the power of community. By choosing AgriConnect, 
               you're not just getting the freshest produce – you're supporting local farmers and contributing 
               to a more sustainable food system.
             </p>
