@@ -32,8 +32,20 @@ const farmerDetailsSchema = z.object({
   path: ["confirmPassword"],
 });
 
+const paymentDetailsSchema = z.object({
+  paymentMethod: z.enum(['mpesa', 'bank']), // Payment method
+  mpesaNumber: z.string().optional(), // MPESA number
+  bankDetails: z.object({
+    cardNumber: z.string().optional(),
+    expiryDate: z.string().optional(),
+    cvv: z.string().optional(),
+    name: z.string().optional(),
+  }).optional(), // Bank details
+});
+
 type FarmDetailsForm = z.infer<typeof farmDetailsSchema>;
 type FarmerDetailsForm = z.infer<typeof farmerDetailsSchema>;
+type PaymentDetailsForm = z.infer<typeof paymentDetailsSchema>;
 
 const FarmRegistration = () => {
   const [step, setStep] = useState(1);
@@ -48,6 +60,7 @@ const FarmRegistration = () => {
     register: registerFarm,
     handleSubmit: handleSubmitFarm,
     formState: { errors: farmErrors },
+    watch: watchFarm,
   } = useForm<FarmDetailsForm>({
     resolver: zodResolver(farmDetailsSchema),
   });
@@ -56,14 +69,37 @@ const FarmRegistration = () => {
     register: registerFarmer,
     handleSubmit: handleSubmitFarmer,
     formState: { errors: farmerErrors },
-    watch,
+    watch: watchFarmer,
   } = useForm<FarmerDetailsForm>({
     resolver: zodResolver(farmerDetailsSchema),
+    defaultValues: {
+      password: '', // Provide a default value for password
+    },
   });
 
-  const password = watch('password', '');
+  const {
+    register: registerPayment,
+    handleSubmit: handleSubmitPayment,
+    formState: { errors: paymentErrors },
+    watch: watchPayment,
+  } = useForm<PaymentDetailsForm>({
+    resolver: zodResolver(paymentDetailsSchema),
+  });
 
-  const validatePassword = (password: string) => {
+  const password = watchFarmer('password'); // Watch password for validation
+
+  const validatePassword = (password: string | undefined) => {
+    if (!password) {
+      return {
+        minLength: false,
+        hasUppercase: false,
+        hasLowercase: false,
+        hasNumber: false,
+        hasSpecialChar: false,
+        isValid: false,
+      };
+    }
+
     const minLength = password.length >= 8;
     const hasUppercase = /[A-Z]/.test(password);
     const hasLowercase = /[a-z]/.test(password);
@@ -90,6 +126,7 @@ const FarmRegistration = () => {
   const onSubmitFarmDetails = async (data: FarmDetailsForm) => {
     try {
       setIsLoading(true);
+      console.log("Farm Details Submitted:", data); // Debugging
       setStep(2); // Move to the next step
     } catch (error) {
       setError("Failed to save farm details. Please try again.");
@@ -101,6 +138,7 @@ const FarmRegistration = () => {
   const onSubmitFarmerDetails = async (data: FarmerDetailsForm) => {
     try {
       setIsLoading(true);
+      console.log("Farmer Details Submitted:", data); // Debugging
       setStep(3); // Move to the next step
     } catch (error) {
       setError("Failed to save farmer details. Please try again.");
@@ -112,10 +150,27 @@ const FarmRegistration = () => {
   const onSelectPlan = (plan: 'free' | 'premium') => {
     setSelectedPlan(plan);
     if (plan === 'free') {
-      // Skip payment step for free plan
-      setStep(4);
+      setStep(4); // Skip payment for free plan
     } else {
-      setStep(4); // For premium, proceed to payment
+      setStep(4); // Proceed to payment for premium plan
+    }
+  };
+
+  const onSubmitPayment = async (data: PaymentDetailsForm) => {
+    try {
+      setIsLoading(true);
+      // Combine all data (farm, farmer, payment) and send to the backend
+      const registrationData = {
+        farm: watchFarm(),
+        farmer: watchFarmer(),
+        payment: data,
+      };
+      console.log("Registration Data:", registrationData); // Debugging
+      setStep(5); // Move to the success step
+    } catch (error) {
+      setError("Failed to complete registration. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -140,7 +195,7 @@ const FarmRegistration = () => {
           <div className={`rounded-full p-2 ${step >= 3 ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-400'}`}>
             <CreditCard className="h-6 w-6" />
           </div>
-          <span className="ml-2 text-sm font-medium">Plan Selection</span>
+          <span className="ml-2 text-sm font-medium">Plan & Payment</span>
         </div>
       </div>
     </div>
@@ -527,6 +582,136 @@ const FarmRegistration = () => {
     </div>
   );
 
+  const renderPaymentForm = () => (
+    <form onSubmit={handleSubmitPayment(onSubmitPayment)} className="space-y-6">
+      <div>
+        <label className="block text-sm font-medium text-gray-700">
+          Payment Method
+        </label>
+        <div className="mt-1 space-y-4">
+          <div className="flex items-center">
+            <input
+              type="radio"
+              id="mpesa"
+              value="mpesa"
+              {...registerPayment('paymentMethod')}
+              className="focus:ring-emerald-500 h-4 w-4 text-emerald-600 border-gray-300"
+            />
+            <label htmlFor="mpesa" className="ml-3 block text-sm font-medium text-gray-700">
+              Pay with MPESA
+            </label>
+          </div>
+          <div className="flex items-center">
+            <input
+              type="radio"
+              id="bank"
+              value="bank"
+              {...registerPayment('paymentMethod')}
+              className="focus:ring-emerald-500 h-4 w-4 text-emerald-600 border-gray-300"
+            />
+            <label htmlFor="bank" className="ml-3 block text-sm font-medium text-gray-700">
+              Pay with Bank
+            </label>
+          </div>
+        </div>
+      </div>
+
+      {watchPayment('paymentMethod') === 'mpesa' && (
+        <div>
+          <label htmlFor="mpesaNumber" className="block text-sm font-medium text-gray-700">
+          <div className="mb-4 p-4 bg-blue-50 rounded-lg flex items-center">
+              <span className="text-blue-500 mr-2">&#9432;</span>
+              <p className="text-sm text-blue-700">
+                You will receive an M-Pesa prompt on your phone to complete the
+                payment.
+              </p>
+          </div>
+            MPESA Number
+          </label>
+          <input
+            type="tel"
+            id="mpesaNumber"
+            {...registerPayment('mpesaNumber')}
+            className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+          />
+        </div>
+      )}
+
+      {watchPayment('paymentMethod') === 'bank' && (
+        <div className="space-y-6">
+          <div>
+            <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-700">
+              Card Number
+            </label>
+            <input
+              type="text"
+              id="cardNumber"
+              {...registerPayment('bankDetails.cardNumber')}
+              placeholder="1234 5678 9012 3456"
+              className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div>
+              <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700">
+                Expiry Date
+              </label>
+              <input
+                type="text"
+                id="expiryDate"
+                {...registerPayment('bankDetails.expiryDate')}
+                placeholder="MM/YY"
+                className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="cvv" className="block text-sm font-medium text-gray-700">
+                CVV
+              </label>
+              <input
+                type="text"
+                id="cvv"
+                {...registerPayment('bankDetails.cvv')}
+                placeholder="123"
+                className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+              Name on Card
+            </label>
+            <input
+              type="text"
+              id="name"
+              {...registerPayment('bankDetails.name')}
+              className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+            />
+          </div>
+        </div>
+      )}
+
+      <div className="flex justify-between">
+        <button
+          type="button"
+          onClick={() => setStep(3)}
+          className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
+        >
+          Back
+        </button>
+        <button
+          type="submit"
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
+        >
+          Complete Registration
+        </button>
+      </div>
+    </form>
+  );
+
   const renderSuccess = () => (
     <div className="text-center">
       <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100">
@@ -558,7 +743,8 @@ const FarmRegistration = () => {
           {step === 1 && renderFarmDetailsForm()}
           {step === 2 && renderFarmerDetailsForm()}
           {step === 3 && renderPlanSelection()}
-          {step === 4 && renderSuccess()}
+          {step === 4 && renderPaymentForm()}
+          {step === 5 && renderSuccess()}
         </div>
       </div>
     </div>
