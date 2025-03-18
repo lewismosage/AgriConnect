@@ -1,6 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext"; // Import AuthProvider
+import { AuthProvider } from "./contexts/AuthContext";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -22,9 +22,9 @@ import FarmRegistration from "./pages/FarmRegistration";
 
 function App() {
   return (
-    <Router> {/* Router must wrap AuthProvider */}
-      <AuthProvider> {/* AuthProvider is now inside Router */}
-        <div className="min-h-screen bg-gray-50 flex flex-col">
+    <Router>
+      <AuthProvider>
+        <div className="min-h-screen flex flex-col">
           {/* Navbar appears on all pages */}
           <Navbar />
 
@@ -40,7 +40,6 @@ function App() {
               <Route path="/cart" element={<CartPage />} />
               <Route path="/farm-registration" element={<FarmRegistration />} />
 
-             
               <Route
                 path="/inventory"
                 element={

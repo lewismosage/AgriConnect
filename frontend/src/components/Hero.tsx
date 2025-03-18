@@ -1,14 +1,44 @@
 import React from 'react';
 import { Leaf, Truck, Shield, Recycle } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import 'swiper/css'; // Import Swiper styles
-import 'swiper/css/navigation'; // Optional: Import navigation styles
-import 'swiper/css/pagination'; // Optional: Import pagination styles
+import { motion } from 'framer-motion';
+import { useMediaQuery } from 'react-responsive';
 
 const Hero: React.FC = () => {
+  const isMobile = useMediaQuery({ maxWidth: 768 }); // Detect mobile screens
+  const cardWidth = isMobile ? 280 : 300; // Adjust card width for mobile
+  const gap = isMobile ? 16 : 24; // Adjust gap between cards
+  const totalWidth = (cardWidth + gap) * 4; // Total width for 4 cards
+
+  const gridItems = [
+    {
+      id: 1,
+      icon: <Leaf className="text-green-600 w-8 h-8 mb-4 mx-auto" />,
+      title: '100% Organic',
+      description: 'Certified organic and pesticide-free',
+    },
+    {
+      id: 2,
+      icon: <Truck className="text-green-600 w-8 h-8 mb-4 mx-auto" />,
+      title: 'Fast Delivery',
+      description: 'Same-day delivery for local orders',
+    },
+    {
+      id: 3,
+      icon: <Shield className="text-green-600 w-8 h-8 mb-4 mx-auto" />,
+      title: 'Quality Assured',
+      description: 'Rigorous quality control',
+    },
+    {
+      id: 4,
+      icon: <Recycle className="text-green-600 w-8 h-8 mb-4 mx-auto" />,
+      title: 'Eco-Friendly',
+      description: 'Sustainable packaging',
+    },
+  ];
+
   return (
-    <div className="relative h-screen flex items-center justify-center">
+    <div className="relative min-h-[calc(100vh-64px)] flex items-center justify-center overflow-hidden">
       {/* Background Image with Overlay */}
       <div 
         className="absolute inset-0 bg-cover bg-center"
@@ -48,83 +78,43 @@ const Hero: React.FC = () => {
         {/* Right Side: Swiper for Small Screens, Grid for Larger Screens */}
         <div className="lg:w-1/2 mt-8 lg:mt-0 lg:pl-8">
           {/* Swiper for Small Screens */}
-          <div className="lg:hidden">
-            <Swiper
-              spaceBetween={16} // Space between slides
-              slidesPerView={1.2} // Show 1.2 slides at a time (for partial visibility)
-              centeredSlides={true} // Center the active slide
-              loop={true} // Enable infinite loop
-              pagination={{ clickable: true }} // Add pagination dots
-              className="w-full"
-            >
-              {/* Grid Item 1: 100% Organic */}
-              <SwiperSlide>
-                <div className="bg-white bg-opacity-20 rounded-lg p-6 text-center backdrop-blur-sm">
-                  <Leaf className="text-green-600 w-8 h-8 mb-4 mx-auto" />
-                  <h3 className="text-xl font-semibold mb-2 text-white">100% Organic</h3>
-                  <p className="text-gray-200">Certified organic and pesticide-free</p>
-                </div>
-              </SwiperSlide>
-
-              {/* Grid Item 2: Fast Delivery */}
-              <SwiperSlide>
-                <div className="bg-white bg-opacity-20 rounded-lg p-6 text-center backdrop-blur-sm">
-                  <Truck className="text-green-600 w-8 h-8 mb-4 mx-auto" />
-                  <h3 className="text-xl font-semibold mb-2 text-white">Fast Delivery</h3>
-                  <p className="text-gray-200">Same-day delivery for local orders</p>
-                </div>
-              </SwiperSlide>
-
-              {/* Grid Item 3: Quality Assured */}
-              <SwiperSlide>
-                <div className="bg-white bg-opacity-20 rounded-lg p-6 text-center backdrop-blur-sm">
-                  <Shield className="text-green-600 w-8 h-8 mb-4 mx-auto" />
-                  <h3 className="text-xl font-semibold mb-2 text-white">Quality Assured</h3>
-                  <p className="text-gray-200">Rigorous quality control</p>
-                </div>
-              </SwiperSlide>
-
-              {/* Grid Item 4: Eco-Friendly */}
-              <SwiperSlide>
-                <div className="bg-white bg-opacity-20 rounded-lg p-6 text-center backdrop-blur-sm">
-                  <Recycle className="text-green-600 w-8 h-8 mb-4 mx-auto" />
-                  <h3 className="text-xl font-semibold mb-2 text-white">Eco-Friendly</h3>
-                  <p className="text-gray-200">Sustainable packaging</p>
-                </div>
-              </SwiperSlide>
-            </Swiper>
-          </div>
-
-          {/* Grid for Larger Screens */}
-          <div className="hidden lg:grid grid-cols-2 gap-6">
-            {/* Grid Item 1: 100% Organic */}
-            <div className="bg-white bg-opacity-20 rounded-lg p-6 text-center backdrop-blur-sm">
-              <Leaf className="text-green-600 w-8 h-8 mb-4 mx-auto" />
-              <h3 className="text-xl font-semibold mb-2 text-white">100% Organic</h3>
-              <p className="text-gray-200">Certified organic and pesticide-free</p>
+          {isMobile ? (
+            <div className="relative overflow-hidden w-full">
+              <motion.div
+                className="flex"
+                style={{ width: totalWidth * 2 }} // Double the width for seamless looping
+                animate={{ x: ["0%", `-${totalWidth}px`], transitionEnd: { x: "0%" } }}
+                transition={{
+                  duration: 12, // Adjust duration for slower/faster scrolling
+                  repeat: Infinity, // Infinite loop
+                  ease: "linear", // Smooth linear animation
+                }}
+              >
+                {[...gridItems, ...gridItems].map((item, index) => (
+                  <motion.div
+                    key={`${item.id}-${index}`}
+                    className="flex-shrink-0 bg-white bg-opacity-20 rounded-lg p-6 text-center backdrop-blur-sm"
+                    style={{ width: cardWidth, marginRight: gap }}
+                  >
+                    {item.icon}
+                    <h3 className="text-xl font-semibold mb-2 text-white">{item.title}</h3>
+                    <p className="text-gray-200">{item.description}</p>
+                  </motion.div>
+                ))}
+              </motion.div>
             </div>
-
-            {/* Grid Item 2: Fast Delivery */}
-            <div className="bg-white bg-opacity-20 rounded-lg p-6 text-center backdrop-blur-sm">
-              <Truck className="text-green-600 w-8 h-8 mb-4 mx-auto" />
-              <h3 className="text-xl font-semibold mb-2 text-white">Fast Delivery</h3>
-              <p className="text-gray-200">Same-day delivery for local orders</p>
+          ) : (
+            // Grid for Larger Screens
+            <div className="hidden lg:grid grid-cols-2 gap-6">
+              {gridItems.map((item) => (
+                <div key={item.id} className="bg-white bg-opacity-20 rounded-lg p-6 text-center backdrop-blur-sm">
+                  {item.icon}
+                  <h3 className="text-xl font-semibold mb-2 text-white">{item.title}</h3>
+                  <p className="text-gray-200">{item.description}</p>
+                </div>
+              ))}
             </div>
-
-            {/* Grid Item 3: Quality Assured */}
-            <div className="bg-white bg-opacity-20 rounded-lg p-6 text-center backdrop-blur-sm">
-              <Shield className="text-green-600 w-8 h-8 mb-4 mx-auto" />
-              <h3 className="text-xl font-semibold mb-2 text-white">Quality Assured</h3>
-              <p className="text-gray-200">Rigorous quality control</p>
-            </div>
-
-            {/* Grid Item 4: Eco-Friendly */}
-            <div className="bg-white bg-opacity-20 rounded-lg p-6 text-center backdrop-blur-sm">
-              <Recycle className="text-green-600 w-8 h-8 mb-4 mx-auto" />
-              <h3 className="text-xl font-semibold mb-2 text-white">Eco-Friendly</h3>
-              <p className="text-gray-200">Sustainable packaging</p>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
