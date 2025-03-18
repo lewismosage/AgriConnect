@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from '../contexts/axioConfig';  
+import axios from '../contexts/axiosConfig';  
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,6 +13,7 @@ const farmDetailsSchema = z.object({
   location: z.string().min(1, 'Please enter a location'),
   specialty: z.string().min(1, 'Please enter a specialty'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
+  image: z.instanceof(File).optional(), // Allow image upload
 });
 
 const farmerDetailsSchema = z.object({
@@ -54,6 +55,7 @@ const FarmRegistration = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null); // For image preview
   const navigate = useNavigate();
 
   const {
@@ -86,7 +88,21 @@ const FarmRegistration = () => {
     resolver: zodResolver(paymentDetailsSchema),
   });
 
+  const farmImage = watchFarm('image'); // Watch farm image for preview
   const password = watchFarmer('password'); // Watch password for validation
+
+  // Handle image upload and preview
+  React.useEffect(() => {
+    if (farmImage && farmImage instanceof File) { // Ensure farmImage is a valid File object
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(farmImage);
+    } else {
+      setImagePreview(null); // Reset preview if no image is selected
+    }
+  }, [farmImage]);
 
   const validatePassword = (password: string | undefined) => {
     if (!password) {
@@ -166,17 +182,7 @@ const FarmRegistration = () => {
         payment: data,
       };
       console.log("Registration Data:", registrationData); // Debugging
-
-      // Simulate a successful API call
-      // Replace this with your actual API call
-      const response = await axios.post('/api/register', registrationData);
-
-      if (response.status === 200) {
-        // Navigate to the farmer dashboard on success
-        navigate('/farmer-dashboard');
-      } else {
-        throw new Error("Registration failed");
-      }
+      setStep(5); // Move to the success step
     } catch (error) {
       setError("Failed to complete registration. Please try again.");
     } finally {
@@ -270,6 +276,28 @@ const FarmRegistration = () => {
         />
         {farmErrors.description && (
           <p className="mt-1 text-sm text-red-600">{farmErrors.description.message}</p>
+        )}
+      </div>
+
+      <div>
+        <label htmlFor="image" className="block text-sm font-medium text-gray-700">
+          Farm Image
+        </label>
+        <input
+          type="file"
+          id="image"
+          accept="image/*"
+          {...registerFarm('image')}
+          className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
+        />
+        {imagePreview && (
+          <div className="mt-4">
+            <img
+              src={imagePreview}
+              alt="Farm Preview"
+              className="w-full h-48 object-cover rounded-md"
+            />
+          </div>
         )}
       </div>
 
@@ -629,13 +657,6 @@ const FarmRegistration = () => {
       {watchPayment('paymentMethod') === 'mpesa' && (
         <div>
           <label htmlFor="mpesaNumber" className="block text-sm font-medium text-gray-700">
-          <div className="mb-4 p-4 bg-blue-50 rounded-lg flex items-center">
-              <span className="text-blue-500 mr-2">&#9432;</span>
-              <p className="text-sm text-blue-700">
-                You will receive an M-Pesa prompt on your phone to complete the
-                payment.
-              </p>
-          </div>
             MPESA Number
           </label>
           <input
@@ -740,7 +761,7 @@ const FarmRegistration = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="text-center text-3xl font-extrabold text-emerald-600">Register Your Farm</h2>
+        <h2 className="text-center text-3xl font-extrabold text-gray-900">Register Your Farm</h2>
         <p className="mt-2 text-center text-sm text-gray-600">
           Complete the following steps to join the AgriConnect Farmers Directory
         </p>
