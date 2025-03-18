@@ -1,8 +1,8 @@
 from django.db import models
-from accounts.models import Farmer
+from accounts.models import User
 
 class Subscription(models.Model):
-    farmer = models.OneToOneField(Farmer, on_delete=models.CASCADE, related_name='subscription')
+    farmer = models.OneToOneField(User, on_delete=models.CASCADE, related_name='subscription')
     payment_method = models.CharField(max_length=50, choices=[('mpesa', 'MPESA'), ('bank', 'Bank')])
     mpesa_number = models.CharField(max_length=15, blank=True, null=True)
     card_number = models.CharField(max_length=16, blank=True, null=True)
