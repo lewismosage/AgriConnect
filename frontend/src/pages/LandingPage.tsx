@@ -3,8 +3,8 @@ import Hero from '../components/Hero';
 
 const LandingPage: React.FC = () => {
   return (
-    <div>
-      <Hero /> 
+    <div className="flex-1">
+      <Hero />
     </div>
   );
 };
