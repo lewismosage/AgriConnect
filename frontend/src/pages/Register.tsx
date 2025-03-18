@@ -65,45 +65,37 @@ const Register = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-
+  
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
       return;
     }
-
+  
     if (!passwordStrength.isValid) {
       setError("Password does not meet the requirements");
       return;
     }
-
+  
     if (!formData.agreeToTerms) {
       setError("You must agree to the terms and conditions");
       return;
     }
-
+  
     if (!formData.phoneNumber) {
       setError("Phone number is required");
       return;
     }
-
+  
     setIsLoading(true);
-
+  
     try {
-      const formPayload = new FormData();
-      formPayload.append("email", formData.email);
-      formPayload.append("password", formData.password);
-      formPayload.append("full_name", `${formData.firstName} ${formData.lastName}`);
-      formPayload.append("phone_number", formData.phoneNumber);
-      if (profilePicture) {
-        formPayload.append("profile_picture", profilePicture);
-      }
-
       const registerData = {
         email: formData.email,
         password: formData.password,
-        full_name: `${formData.firstName} ${formData.lastName}`,
+        full_name: `${formData.firstName} ${formData.lastName}`, // Combine first and last name
         phone_number: formData.phoneNumber,
-        profile_picture: profilePicture || undefined,
+        is_farmer: false, // Set user type to 'consumer'
+        is_consumer: true,
       };
       await register(registerData);
       navigate("/dashboard");

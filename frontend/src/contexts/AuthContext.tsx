@@ -1,3 +1,4 @@
+// AuthContext.tsx
 import React, { createContext, useContext, useState, useEffect } from "react";
 import axios from './axioConfig';
 import { useNavigate } from "react-router-dom";
@@ -8,7 +9,7 @@ axios.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
     if (token) {
-      config.headers.Authorization = `Token ${token}`;
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
@@ -62,6 +63,7 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (userData: RegisterData) => Promise<void>;
+  registerFarmer: (farmerData: FarmerRegisterData) => Promise<void>; // Add this line
   logout: () => Promise<void>;
   updateUser: (userData: Partial<User>) => Promise<void>;
   setUser: (user: User | null) => void;
@@ -72,8 +74,27 @@ interface RegisterData {
   password: string;
   full_name: string;
   phone_number: string;
-  is_farmer: boolean;
-  is_consumer: boolean;
+  is_farmer?: boolean;  
+  is_consumer?: boolean; 
+  profile_picture?: File; 
+}
+
+export interface FarmerRegisterData {
+  user: {
+    email: string;
+    password: string;
+    first_name: string;
+    last_name: string;
+    phone_number: string;
+    user_type: string;
+  };
+  farmer_profile: {
+    farm_name: string;
+    location: string;
+    specialty: string;
+    description: string;
+    farm_image?: File | null; 
+  };
 }
 
 // Create and export AuthContext
@@ -97,7 +118,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Restore user from localStorage on app initialization
   useEffect(() => {
-    const storedUser = localStorage.getItem("agriconnectUser");
+    const storedUser = localStorage.getItem("user");
     const token = localStorage.getItem("token");
 
     if (storedUser && token) {
@@ -106,7 +127,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         setUser(parsedUser); // Restore user from localStorage
       } catch (error) {
         console.error("Failed to parse user data from localStorage:", error);
-        localStorage.removeItem("agriconnectUser");
+        localStorage.removeItem("user");
         localStorage.removeItem("token");
       }
     }
@@ -123,15 +144,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     try {
-      const response = await axios.get("/api/auth/user/", {
-        headers: { Authorization: `Token ${token}` },
-      });
+      const response = await axios.get("/api/auth/user/");
       setUser(response.data);
-      localStorage.setItem("agriconnectUser", JSON.stringify(response.data)); // Save user to localStorage
+      localStorage.setItem("user", JSON.stringify(response.data)); // Save user to localStorage
     } catch (error) {
       console.error("Auth status check failed:", error);
       localStorage.removeItem("token");
-      localStorage.removeItem("agriconnectUser"); // Clear user data on error
+      localStorage.removeItem("user"); // Clear user data on error
       setUser(null);
     } finally {
       setLoading(false); // Stop loading after auth check
@@ -144,8 +163,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         email,
         password,
       });
-      const { token, user } = response.data;
-      localStorage.setItem("token", token);
+      const { access, user } = response.data;
+      localStorage.setItem("token", access);
       localStorage.setItem("user", JSON.stringify(user)); // Save user data
       setUser(user);
       toast.success("Login successful!");
@@ -165,9 +184,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const register = async (userData: RegisterData) => {
     try {
       const response = await axios.post("/api/auth/register/", userData);
-      const { token, user } = response.data;
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user)); // Save user data
+      const { access, user } = response.data;
+      localStorage.setItem("token", access);
+      localStorage.setItem("user", JSON.stringify(user));
       setUser(user);
       toast.success("Registration successful!");
       navigate("/dashboard");
@@ -180,6 +199,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         toast.error(errorMessage);
       } else {
         toast.error("Registration failed. Please try again.");
+      }
+      throw error;
+    }
+  };
+  
+  const registerFarmer = async (farmerData: FarmerRegisterData) => {
+    try {
+      const response = await axios.post("/api/auth/register/farmer/", farmerData);
+      const { access, user, farmer_profile } = response.data;
+      localStorage.setItem("token", access);
+      localStorage.setItem("user", JSON.stringify(user));
+      setUser(user);
+      toast.success("Farmer registration successful!");
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Farmer registration failed:", error);
+      if (axios.isAxiosError(error) && error.response?.data) {
+        const errorMessage = Object.entries(error.response.data)
+          .map(([key, value]) => `${key}: ${value}`)
+          .join("\n");
+        toast.error(errorMessage);
+      } else {
+        toast.error("Farmer registration failed. Please try again.");
       }
       throw error;
     }
@@ -201,10 +243,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const updateUser = async (userData: Partial<User>) => {
     try {
-      const response = await axios.patch(
-        `/api/auth/user/${user?.id}/`,
-        userData
-      );
+      const response = await axios.patch(`/api/auth/user/${user?.id}/`, userData);
       setUser(response.data);
       localStorage.setItem("user", JSON.stringify(response.data)); // Save updated user data
       toast.success("Profile updated successfully!");
@@ -220,6 +259,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     loading,
     login,
     register,
+    registerFarmer, 
     logout,
     updateUser,
     setUser,

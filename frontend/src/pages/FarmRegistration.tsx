@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import axios from '../contexts/axiosConfig';  
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Check, ChevronsRight, MapPin, User, CreditCard, ArrowRight } from 'lucide-react';
-import { Eye, EyeOff, CheckCircle, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react';
+import { FarmerRegisterData, useAuth } from '../contexts/AuthContext'; // Import useAuth
 
 // Validation schemas
 const farmDetailsSchema = z.object({
@@ -30,7 +30,7 @@ const farmerDetailsSchema = z.object({
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
-  path: ["confirmPassword"],
+  path: ['confirmPassword'],
 });
 
 const paymentDetailsSchema = z.object({
@@ -53,7 +53,7 @@ const FarmRegistration = () => {
   const [selectedPlan, setSelectedPlan] = useState<'free' | 'premium' | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null); // For image preview
   const navigate = useNavigate();
@@ -68,7 +68,7 @@ const FarmRegistration = () => {
   });
 
   const {
-    register: registerFarmer,
+    register: registerFarmerForm, // Renamed to avoid conflict
     handleSubmit: handleSubmitFarmer,
     formState: { errors: farmerErrors },
     watch: watchFarmer,
@@ -88,12 +88,28 @@ const FarmRegistration = () => {
     resolver: zodResolver(paymentDetailsSchema),
   });
 
+  const { registerFarmer: registerFarmerAuth } = useAuth(); // Access registerFarmer from AuthContext and rename it
+
   const farmImage = watchFarm('image'); // Watch farm image for preview
   const password = watchFarmer('password'); // Watch password for validation
 
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    phoneNumber: '',
+    farmName: '',
+    location: '',
+    specialty: '',
+    description: '',
+    farmImage: null as File | null,
+  });
+
   // Handle image upload and preview
   React.useEffect(() => {
-    if (farmImage && farmImage instanceof File) { // Ensure farmImage is a valid File object
+    if (farmImage && farmImage instanceof File) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -128,12 +144,7 @@ const FarmRegistration = () => {
       hasLowercase,
       hasNumber,
       hasSpecialChar,
-      isValid:
-        minLength &&
-        hasUppercase &&
-        hasLowercase &&
-        hasNumber &&
-        hasSpecialChar,
+      isValid: minLength && hasUppercase && hasLowercase && hasNumber && hasSpecialChar,
     };
   };
 
@@ -142,10 +153,18 @@ const FarmRegistration = () => {
   const onSubmitFarmDetails = async (data: FarmDetailsForm) => {
     try {
       setIsLoading(true);
-      console.log("Farm Details Submitted:", data); // Debugging
+      console.log('Farm Details Submitted:', data); // Debugging
+      setFormData((prev) => ({
+        ...prev,
+        farmName: data.name,
+        location: data.location,
+        specialty: data.specialty,
+        description: data.description,
+        farmImage: data.image || null,
+      }));
       setStep(2); // Move to the next step
     } catch (error) {
-      setError("Failed to save farm details. Please try again.");
+      setError('Failed to save farm details. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -154,10 +173,19 @@ const FarmRegistration = () => {
   const onSubmitFarmerDetails = async (data: FarmerDetailsForm) => {
     try {
       setIsLoading(true);
-      console.log("Farmer Details Submitted:", data); // Debugging
+      console.log('Farmer Details Submitted:', data); // Debugging
+      setFormData((prev) => ({
+        ...prev,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        phoneNumber: data.phone,
+        password: data.password,
+        confirmPassword: data.confirmPassword,
+      }));
       setStep(3); // Move to the next step
     } catch (error) {
-      setError("Failed to save farmer details. Please try again.");
+      setError('Failed to save farmer details. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -175,16 +203,52 @@ const FarmRegistration = () => {
   const onSubmitPayment = async (data: PaymentDetailsForm) => {
     try {
       setIsLoading(true);
-      // Combine all data (farm, farmer, payment) and send to the backend
-      const registrationData = {
-        farm: watchFarm(),
-        farmer: watchFarmer(),
-        payment: data,
+
+      // Validate form data before proceeding
+      if (formData.password !== formData.confirmPassword) {
+        setError('Passwords do not match');
+        return;
+      }
+
+      if (!passwordStrength.isValid) {
+        setError('Password does not meet the requirements');
+        return;
+      }
+
+      if (!formData.phoneNumber) {
+        setError('Phone number is required');
+        return;
+      }
+
+      // Prepare the farmer registration data
+      const farmerData: FarmerRegisterData = {
+        user: {
+          email: formData.email,
+          password: formData.password,
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          phone_number: formData.phoneNumber,
+          user_type: 'farmer',
+        },
+        farmer_profile: {
+          farm_name: formData.farmName,
+          location: formData.location,
+          specialty: formData.specialty,
+          description: formData.description,
+          farm_image: formData.farmImage || undefined, // Convert null to undefined
+        },
       };
-      console.log("Registration Data:", registrationData); // Debugging
-      setStep(5); // Move to the success step
+
+      console.log('Farmer Registration Data:', farmerData); // Debugging
+
+      // Submit the farmer registration data to the backend using registerFarmerAuth from AuthContext
+      await registerFarmerAuth(farmerData);
+
+      // Move to the success step
+      setStep(5);
     } catch (error) {
-      setError("Failed to complete registration. Please try again.");
+      console.error('Registration error:', error);
+      setError(error instanceof Error ? error.message : 'Registration failed');
     } finally {
       setIsLoading(false);
     }
@@ -192,21 +256,21 @@ const FarmRegistration = () => {
 
   const renderStepIndicator = () => (
     <div className="mb-8">
-      <div className="flex items-center justify-center space-x-4">
+      <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
         <div className={`flex items-center ${step > 1 ? 'text-emerald-600' : 'text-gray-600'}`}>
           <div className={`rounded-full p-2 ${step >= 1 ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-400'}`}>
             <MapPin className="h-6 w-6" />
           </div>
           <span className="ml-2 text-sm font-medium">Farm Details</span>
         </div>
-        <ChevronsRight className={`h-4 w-4 ${step > 1 ? 'text-emerald-600' : 'text-gray-300'}`} />
+        <ChevronsRight className={`h-4 w-4 ${step > 1 ? 'text-emerald-600' : 'text-gray-300'} hidden sm:block`} />
         <div className={`flex items-center ${step > 2 ? 'text-emerald-600' : 'text-gray-600'}`}>
           <div className={`rounded-full p-2 ${step >= 2 ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-400'}`}>
             <User className="h-6 w-6" />
           </div>
           <span className="ml-2 text-sm font-medium">Farmer Account</span>
         </div>
-        <ChevronsRight className={`h-4 w-4 ${step > 2 ? 'text-emerald-600' : 'text-gray-300'}`} />
+        <ChevronsRight className={`h-4 w-4 ${step > 2 ? 'text-emerald-600' : 'text-gray-300'} hidden sm:block`} />
         <div className={`flex items-center ${step > 3 ? 'text-emerald-600' : 'text-gray-600'}`}>
           <div className={`rounded-full p-2 ${step >= 3 ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-400'}`}>
             <CreditCard className="h-6 w-6" />
@@ -323,7 +387,7 @@ const FarmRegistration = () => {
           <input
             type="text"
             id="firstName"
-            {...registerFarmer('firstName')}
+            {...registerFarmerForm('firstName')}
             className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
           />
           {farmerErrors.firstName && (
@@ -338,7 +402,7 @@ const FarmRegistration = () => {
           <input
             type="text"
             id="lastName"
-            {...registerFarmer('lastName')}
+            {...registerFarmerForm('lastName')}
             className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
           />
           {farmerErrors.lastName && (
@@ -354,7 +418,7 @@ const FarmRegistration = () => {
         <input
           type="email"
           id="email"
-          {...registerFarmer('email')}
+          {...registerFarmerForm('email')}
           className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
         />
         {farmerErrors.email && (
@@ -369,7 +433,7 @@ const FarmRegistration = () => {
         <input
           type="tel"
           id="phone"
-          {...registerFarmer('phone')}
+          {...registerFarmerForm('phone')}
           className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
         />
         {farmerErrors.phone && (
@@ -385,7 +449,7 @@ const FarmRegistration = () => {
           <input
             type={showPassword ? "text" : "password"}
             id="password"
-            {...registerFarmer('password')}
+            {...registerFarmerForm('password')}
             className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
           />
           <button
@@ -413,7 +477,7 @@ const FarmRegistration = () => {
           <input
             type={showConfirmPassword ? "text" : "password"}
             id="confirmPassword"
-            {...registerFarmer('confirmPassword')}
+            {...registerFarmerForm('confirmPassword')}
             className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
           />
           <button
@@ -622,6 +686,7 @@ const FarmRegistration = () => {
 
   const renderPaymentForm = () => (
     <form onSubmit={handleSubmitPayment(onSubmitPayment)} className="space-y-6">
+      {/* Payment form fields */}
       <div>
         <label className="block text-sm font-medium text-gray-700">
           Payment Method
@@ -653,7 +718,7 @@ const FarmRegistration = () => {
           </div>
         </div>
       </div>
-
+  
       {watchPayment('paymentMethod') === 'mpesa' && (
         <div>
           <label htmlFor="mpesaNumber" className="block text-sm font-medium text-gray-700">
@@ -667,7 +732,7 @@ const FarmRegistration = () => {
           />
         </div>
       )}
-
+  
       {watchPayment('paymentMethod') === 'bank' && (
         <div className="space-y-6">
           <div>
@@ -682,7 +747,7 @@ const FarmRegistration = () => {
               className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
             />
           </div>
-
+  
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div>
               <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700">
@@ -696,7 +761,7 @@ const FarmRegistration = () => {
                 className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
               />
             </div>
-
+  
             <div>
               <label htmlFor="cvv" className="block text-sm font-medium text-gray-700">
                 CVV
@@ -710,7 +775,7 @@ const FarmRegistration = () => {
               />
             </div>
           </div>
-
+  
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700">
               Name on Card
@@ -724,7 +789,7 @@ const FarmRegistration = () => {
           </div>
         </div>
       )}
-
+  
       <div className="flex justify-between">
         <button
           type="button"
