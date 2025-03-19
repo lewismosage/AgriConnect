@@ -59,6 +59,11 @@ WSGI_APPLICATION = 'agriconnect.wsgi.application'
 
 AUTH_USER_MODEL = 'accounts.User'
 
+AUTHENTICATION_BACKENDS = [
+    'accounts.backends.EmailBackend',  # Replace 'accounts' with your app name
+    'django.contrib.auth.backends.ModelBackend',  # Keep the default backend
+]
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',

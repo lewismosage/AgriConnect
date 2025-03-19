@@ -170,27 +170,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await axios.post("/api/auth/login/", {
-        email,
-        password,
-      });
-      const { access, user } = response.data;
-      localStorage.setItem("token", access);
-      localStorage.setItem("user", JSON.stringify(user)); // Save user data
-      setUser(user);
-      toast.success("Login successful!");
-      navigate("/dashboard");
+        const response = await axios.post("/api/auth/login/", {
+            email,
+            password,
+        });
+
+        // Extract user, token, and user_type from the response
+        const { access, user, user_type } = response.data;
+
+        // Save token and user data to localStorage
+        localStorage.setItem("token", access);
+        localStorage.setItem("user", JSON.stringify(user));
+
+        // Update the user state
+        setUser(user);
+
+        // Show success message
+        toast.success("Login successful!");
+
+        // Redirect based on user_type
+        if (user_type === 'farmer') {
+            navigate("/farmer-dashboard"); // Redirect to farmer dashboard
+        } else {
+            navigate("/customer-dashboard"); // Redirect to consumer dashboard
+        }
     } catch (error) {
-      console.error("Login failed:", error);
-      if (axios.isAxiosError(error) && error.response?.data) {
-        const message = error.response.data.detail || "Invalid credentials";
-        toast.error(message);
-      } else {
-        toast.error("Login failed. Please check your credentials.");
-      }
-      throw error;
+        console.error("Login failed:", error);
+
+        // Handle error messages
+        if (axios.isAxiosError(error) && error.response?.data) {
+            const message = error.response.data.detail || "Invalid credentials";
+            toast.error(message);
+        } else {
+            toast.error("Login failed. Please check your credentials.");
+        }
+
+        // Re-throw the error for further handling
+        throw error;
     }
-  };
+};
 
   const register = async (userData: RegisterData) => {
     try {

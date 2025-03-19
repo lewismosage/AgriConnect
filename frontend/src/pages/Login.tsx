@@ -35,9 +35,9 @@ const Login = () => {
 
         // Redirect based on user_type
         if (user_type === 'farmer') {
-            navigate("/farmer-dashboard"); // Redirect to farmer dashboard
+            navigate("/farmer-dashboard"); 
         } else {
-            navigate("/dashboard"); // Redirect to consumer dashboard
+            navigate("/customer-dashboard"); 
         }
     } catch (err) {
         if (err instanceof AxiosError) {

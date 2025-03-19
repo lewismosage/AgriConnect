@@ -44,16 +44,11 @@ class LoginView(APIView):
     def post(self, request):
         email = request.data.get('email')
         password = request.data.get('password')
-        
-        # Debugging: Print the email and password
-        print(f"Email: {email}, Password: {password}")
 
-        user = authenticate(email=email, password=password)
+        # Use the custom backend to authenticate
+        user = authenticate(request, email=email, password=password)
         
         if user:
-            # Debugging: Print the authenticated user
-            print(f"Authenticated User: {user}")
-
             refresh = RefreshToken.for_user(user)
             return Response({
                 'user': {
