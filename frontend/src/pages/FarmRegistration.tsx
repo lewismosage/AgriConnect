@@ -13,7 +13,6 @@ const farmDetailsSchema = z.object({
   location: z.string().min(1, 'Please enter a location'),
   specialty: z.string().min(1, 'Please enter a specialty'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
-  image: z.instanceof(File).optional(), // Allow image upload
 });
 
 const farmerDetailsSchema = z.object({
@@ -55,7 +54,6 @@ const FarmRegistration = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [imagePreview, setImagePreview] = useState<string | null>(null); // For image preview
   const navigate = useNavigate();
 
   const {
@@ -90,7 +88,6 @@ const FarmRegistration = () => {
 
   const { registerFarmer: registerFarmerAuth } = useAuth(); // Access registerFarmer from AuthContext and rename it
 
-  const farmImage = watchFarm('image'); // Watch farm image for preview
   const password = watchFarmer('password'); // Watch password for validation
 
   const [formData, setFormData] = useState({
@@ -104,21 +101,7 @@ const FarmRegistration = () => {
     location: '',
     specialty: '',
     description: '',
-    farmImage: null as File | null,
   });
-
-  // Handle image upload and preview
-  React.useEffect(() => {
-    if (farmImage && farmImage instanceof File) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(farmImage);
-    } else {
-      setImagePreview(null); // Reset preview if no image is selected
-    }
-  }, [farmImage]);
 
   const validatePassword = (password: string | undefined) => {
     if (!password) {
@@ -154,16 +137,20 @@ const FarmRegistration = () => {
     try {
       setIsLoading(true);
       console.log('Farm Details Submitted:', data); // Debugging
+
+      // Update formData state with farm details
       setFormData((prev) => ({
         ...prev,
         farmName: data.name,
         location: data.location,
         specialty: data.specialty,
         description: data.description,
-        farmImage: data.image || null,
       }));
+
+      console.log('Moving to step 2'); // Debugging
       setStep(2); // Move to the next step
     } catch (error) {
+      console.error('Farm details submission error:', error); // Debugging
       setError('Failed to save farm details. Please try again.');
     } finally {
       setIsLoading(false);
@@ -203,23 +190,23 @@ const FarmRegistration = () => {
   const onSubmitPayment = async (data: PaymentDetailsForm) => {
     try {
       setIsLoading(true);
-
+  
       // Validate form data before proceeding
       if (formData.password !== formData.confirmPassword) {
         setError('Passwords do not match');
         return;
       }
-
+  
       if (!passwordStrength.isValid) {
         setError('Password does not meet the requirements');
         return;
       }
-
+  
       if (!formData.phoneNumber) {
         setError('Phone number is required');
         return;
       }
-
+  
       // Prepare the farmer registration data
       const farmerData: FarmerRegisterData = {
         user: {
@@ -235,17 +222,16 @@ const FarmRegistration = () => {
           location: formData.location,
           specialty: formData.specialty,
           description: formData.description,
-          farm_image: formData.farmImage || undefined, // Convert null to undefined
         },
       };
-
+  
       console.log('Farmer Registration Data:', farmerData); // Debugging
-
+  
       // Submit the farmer registration data to the backend using registerFarmerAuth from AuthContext
       await registerFarmerAuth(farmerData);
-
-      // Move to the success step
-      setStep(5);
+  
+      // Navigate to the farmer dashboard
+      navigate('/farmer-dashboard');
     } catch (error) {
       console.error('Registration error:', error);
       setError(error instanceof Error ? error.message : 'Registration failed');
@@ -340,28 +326,6 @@ const FarmRegistration = () => {
         />
         {farmErrors.description && (
           <p className="mt-1 text-sm text-red-600">{farmErrors.description.message}</p>
-        )}
-      </div>
-
-      <div>
-        <label htmlFor="image" className="block text-sm font-medium text-gray-700">
-          Farm Image
-        </label>
-        <input
-          type="file"
-          id="image"
-          accept="image/*"
-          {...registerFarm('image')}
-          className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
-        />
-        {imagePreview && (
-          <div className="mt-4">
-            <img
-              src={imagePreview}
-              alt="Farm Preview"
-              className="w-full h-48 object-cover rounded-md"
-            />
-          </div>
         )}
       </div>
 
@@ -808,21 +772,6 @@ const FarmRegistration = () => {
     </form>
   );
 
-  const renderSuccess = () => (
-    <div className="text-center">
-      <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100">
-        <Check className="h-6 w-6 text-emerald-600" />
-      </div>
-      <h3 className="mt-2 text-lg font-medium text-gray-900">Registration Successful!</h3>
-      <p className="mt-2 text-sm text-gray-500">
-        Your farm has been registered successfully. You will be redirected to your dashboard shortly.
-      </p>
-      <div className="mt-6">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-500 mx-auto"></div>
-      </div>
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -840,7 +789,6 @@ const FarmRegistration = () => {
           {step === 2 && renderFarmerDetailsForm()}
           {step === 3 && renderPlanSelection()}
           {step === 4 && renderPaymentForm()}
-          {step === 5 && renderSuccess()}
         </div>
       </div>
     </div>

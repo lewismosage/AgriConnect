@@ -1,5 +1,4 @@
-// login.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
@@ -12,65 +11,46 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [csrfToken, setCsrfToken] = useState("");
   const navigate = useNavigate();
-  const { login, setUser } = useAuth();  
-
-  useEffect(() => {
-    const fetchCsrfToken = async () => {
-      try {
-        const response = await axios.get('/api/csrf-token/');
-        setCsrfToken(response.data.csrfToken);
-      } catch (error) {
-        console.error('Failed to fetch CSRF token:', error);
-      }
-    };
-  
-    fetchCsrfToken();
-  }, []);
+  const { login, setUser } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // Prevent default form submission (which would be a GET request)
+    e.preventDefault();
     setError("");
     setIsLoading(true);
-  
+
     try {
-      // Fetch CSRF token
-      const csrfToken = await axios.get("/api/csrf-token/").then((res) => res.data.csrfToken);
-  
-      // Make login request with CSRF token
-      const response = await axios.post(
-        "/api/auth/login/",
-        {
-          email,
-          password,
-        },
-        {
-          headers: {
-            "X-CSRFToken": csrfToken,
-          },
+        // Make login request to the correct URL
+        const response = await axios.post("/api/accounts/login/", {
+            email,
+            password,
+        });
+
+        // Handle successful login
+        const { token, user, user_type } = response.data; // Extract user_type from the response
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(user));
+        setUser(user);
+        toast.success("Login successful!");
+
+        // Redirect based on user_type
+        if (user_type === 'farmer') {
+            navigate("/farmer-dashboard"); // Redirect to farmer dashboard
+        } else {
+            navigate("/dashboard"); // Redirect to consumer dashboard
         }
-      );
-  
-      // Handle successful login
-      const { token, user } = response.data;
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
-      setUser(user);
-      toast.success("Login successful!");
-      navigate("/dashboard");
     } catch (err) {
-      if (err instanceof AxiosError) {
-        setError(err.response?.data?.error || "Invalid email or password. Please try again.");
-        console.error("Login error:", err.response?.data);
-      } else {
-        setError("An unexpected error occurred.");
-        console.error("Unexpected error:", err);
-      }
+        if (err instanceof AxiosError) {
+            setError(err.response?.data?.error || "Invalid email or password. Please try again.");
+            console.error("Login error:", err.response?.data);
+        } else {
+            setError("An unexpected error occurred.");
+            console.error("Unexpected error:", err);
+        }
     } finally {
-      setIsLoading(false);
+        setIsLoading(false);
     }
-  };
+};
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">

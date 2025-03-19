@@ -48,6 +48,16 @@ axios.interceptors.response.use(
   }
 );
 
+// Define the FarmerProfile interface
+interface FarmerProfile {
+  farm_name: string;
+  location: string;
+  specialty: string;
+  description: string;
+  farm_image?: string | null;
+}
+
+// Update the User interface to include farmer_profile
 interface User {
   id: number;
   email: string;
@@ -56,6 +66,7 @@ interface User {
   date_joined: string;
   is_farmer: boolean;
   is_consumer: boolean;
+  farmer_profile?: FarmerProfile | null; // Add farmer_profile
 }
 
 interface AuthContextType {
@@ -63,7 +74,7 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (userData: RegisterData) => Promise<void>;
-  registerFarmer: (farmerData: FarmerRegisterData) => Promise<void>; // Add this line
+  registerFarmer: (farmerData: FarmerRegisterData) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (userData: Partial<User>) => Promise<void>;
   setUser: (user: User | null) => void;

@@ -39,6 +39,7 @@ function App() {
               <Route path="/farms" element={<FarmsPage />} />
               <Route path="/cart" element={<CartPage />} />
               <Route path="/farm-registration" element={<FarmRegistration />} />
+              <Route path="/farmer-dashboard" element={<FarmerDashboard />} />
 
               <Route
                 path="/inventory"
@@ -88,14 +89,14 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route
+            {/*  <Route
                 path="/farmer-dashboard"
                 element={
                   <ProtectedRoute>
                     <FarmerDashboard />
                   </ProtectedRoute>
                 }
-              />
+              /> */}
             </Routes>
           </div>
 

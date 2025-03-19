@@ -31,6 +31,10 @@ class FarmerRegistrationSerializer(serializers.Serializer):
         user_data = validated_data.pop('user')
         farmer_profile_data = validated_data.pop('farmer_profile')
 
+        # Ensure username is set to email if not provided
+        if 'username' not in user_data:
+            user_data['username'] = user_data.get('email')
+
         # Create the user
         user = User.objects.create_user(**user_data)
 

@@ -44,15 +44,30 @@ class LoginView(APIView):
     def post(self, request):
         email = request.data.get('email')
         password = request.data.get('password')
+        
+        # Debugging: Print the email and password
+        print(f"Email: {email}, Password: {password}")
+
         user = authenticate(email=email, password=password)
+        
         if user:
+            # Debugging: Print the authenticated user
+            print(f"Authenticated User: {user}")
+
             refresh = RefreshToken.for_user(user)
             return Response({
-                'user': UserSerializer(user).data,
+                'user': {
+                    'id': user.id,
+                    'email': user.email,
+                    'user_type': user.user_type,  # Include user_type in the response
+                },
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
             }, status=status.HTTP_200_OK)
-        return Response({'detail': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            # Debugging: Print authentication failure
+            print("Authentication failed")
+            return Response({'detail': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
 class LogoutView(APIView):
     def post(self, request):
