@@ -17,6 +17,7 @@ import ProductsPage from "./pages/ProductsPage";
 import FarmsPage from "./pages/FarmsPage";
 import CartPage from "./pages/CartPage";
 import FarmerDashboard from "./pages/FarmerDashboard";
+import CustomerDashboard from "./pages/CustomerDashboard";
 import AboutPage from "./pages/AboutPage";
 import FarmRegistration from "./pages/FarmRegistration";
 
@@ -39,7 +40,6 @@ function App() {
               <Route path="/farms" element={<FarmsPage />} />
               <Route path="/cart" element={<CartPage />} />
               <Route path="/farm-registration" element={<FarmRegistration />} />
-              <Route path="/farmer-dashboard" element={<FarmerDashboard />} />
 
               <Route
                 path="/inventory"
@@ -89,14 +89,22 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-            {/*  <Route
+              <Route
+                path="/customer-dashboard"
+                element={
+                  <ProtectedRoute>
+                    <CustomerDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/farmer-dashboard"
                 element={
                   <ProtectedRoute>
                     <FarmerDashboard />
                   </ProtectedRoute>
                 }
-              /> */}
+              />
             </Routes>
           </div>
 

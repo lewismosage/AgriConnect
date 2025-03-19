@@ -4,7 +4,7 @@ import { Heart, ShoppingCart, User, Search, Menu, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const Navbar: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const toggleMobileMenu = () => {
@@ -41,11 +41,7 @@ const Navbar: React.FC = () => {
             <Link to="/products" className="text-gray-700 hover:text-green-600">
               Products
             </Link>
-            {user && (
-              <Link to="/farmer-dashboard" className="text-gray-700 hover:text-green-600">
-                Farmer Dashboard
-              </Link>
-            )}
+           
           </div>
 
           {/* Icons: Search, Wishlist, Cart, Account (Desktop) */}
@@ -65,18 +61,9 @@ const Navbar: React.FC = () => {
                 0
               </span>
             </Link>
-            {user ? (
-              <button
-                onClick={logout}
-                className="text-gray-600 hover:text-green-600"
-              >
-                <User size={20} />
-              </button>
-            ) : (
-              <Link to="/login" className="text-gray-600 hover:text-green-600">
-                <User size={20} />
-              </Link>
-            )}
+            <Link to="/login" className="text-gray-600 hover:text-green-600">
+              <User size={20} />
+            </Link>
           </div>
         </div>
 
@@ -93,11 +80,7 @@ const Navbar: React.FC = () => {
               <Link to="/products" className="text-gray-700 hover:text-green-600">
                 Products
               </Link>
-              {user && (
-                <Link to="/farmer-dashboard" className="text-gray-700 hover:text-green-600">
-                  Farmer Dashboard
-                </Link>
-              )}
+              
               <div className="flex items-center space-x-4">
                 <button className="text-gray-600 hover:text-green-600">
                   <Search size={20} />
@@ -114,18 +97,9 @@ const Navbar: React.FC = () => {
                     0
                   </span>
                 </Link>
-                {user ? (
-                  <button
-                    onClick={logout}
-                    className="text-gray-600 hover:text-green-600"
-                  >
-                    <User size={20} />
-                  </button>
-                ) : (
-                  <Link to="/login" className="text-gray-600 hover:text-green-600">
-                    <User size={20} />
-                  </Link>
-                )}
+                <Link to="/login" className="text-gray-600 hover:text-green-600">
+                  <User size={20} />
+                </Link>
               </div>
             </div>
           </div>
