@@ -154,9 +154,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setLoading(false); // No token, stop loading
       return;
     }
-
+  
     try {
-      const response = await axios.get("/api/auth/user/");
+      const response = await axios.get("/api/accounts/user/");  // Updated path
       setUser(response.data);
       localStorage.setItem("user", JSON.stringify(response.data)); // Save user to localStorage
     } catch (error) {
@@ -176,23 +176,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         password,
       });
   
-      // Extract user, token, and user_type from the response
       const { access, user, user_type } = response.data;
   
-      // Log the user object for debugging
-      console.log("User object from login:", user);
+      console.log("User object from login:", user);  // Log the user object
   
-      // Save token and user data to localStorage
       localStorage.setItem("token", access);
       localStorage.setItem("user", JSON.stringify(user));
   
-      // Update the user state
       setUser(user);
   
-      // Show success message
       toast.success("Login successful!");
   
-      // Redirect based on user_type
       if (user_type === 'farmer') {
         navigate("/farmer-dashboard");
       } else {
@@ -201,7 +195,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (error) {
       console.error("Login failed:", error);
   
-      // Handle error messages
       if (axios.isAxiosError(error) && error.response?.data) {
         const message = error.response.data.detail || "Invalid credentials";
         toast.error(message);
@@ -209,7 +202,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         toast.error("Login failed. Please check your credentials.");
       }
   
-      // Re-throw the error for further handling
       throw error;
     }
   };

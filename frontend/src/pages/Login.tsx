@@ -17,40 +17,58 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setIsLoading(true);
-
-    try {
-        // Make login request to the correct URL
-        const response = await axios.post("/api/accounts/login/", {
-            email,
-            password,
-        });
-
-        // Handle successful login
-        const { token, user, user_type } = response.data; // Extract user_type from the response
-        localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify(user));
-        setUser(user);
-        toast.success("Login successful!");
-
-        // Redirect based on user_type
-        if (user_type === 'farmer') {
-            navigate("/farmer-dashboard"); 
-        } else {
-            navigate("/customer-dashboard"); 
-        }
-    } catch (err) {
-        if (err instanceof AxiosError) {
-            setError(err.response?.data?.error || "Invalid email or password. Please try again.");
-            console.error("Login error:", err.response?.data);
-        } else {
-            setError("An unexpected error occurred.");
-            console.error("Unexpected error:", err);
-        }
-    } finally {
-        setIsLoading(false);
+  
+    // Validate email format
+    const validateEmail = (email: string) => {
+      const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return regex.test(email);
+    };
+  
+    if (!validateEmail(email)) {
+      setError("Please enter a valid email address.");
+      return;
     }
-};
+  
+    setIsLoading(true);
+  
+    try {
+      // Make login request to the correct URL
+      const response = await axios.post("/api/accounts/login/", {
+        email,
+        password,
+      });
+  
+      // Handle successful login
+      const { access, user } = response.data; // Extract access token and user data
+      localStorage.setItem("token", access);
+      localStorage.setItem("user", JSON.stringify(user));
+      setUser(user);
+      toast.success("Login successful!");
+  
+      // Redirect based on user_type (assuming user_type is part of the user object)
+      if (user.user_type === 'farmer') {
+        navigate("/farmer-dashboard"); 
+      } else {
+        navigate("/customer-dashboard"); 
+      }
+    } catch (err) {
+      if (err instanceof AxiosError) {
+        if (err.response?.status === 401) {
+          setError("Invalid email or password. Please try again.");
+        } else if (err.response?.status === 400) {
+          setError("Please fill in all fields correctly.");
+        } else {
+          setError("An error occurred. Please try again later.");
+        }
+        console.error("Login error:", err.response?.data);
+      } else {
+        setError("An unexpected error occurred.");
+        console.error("Unexpected error:", err);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">

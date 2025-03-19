@@ -19,7 +19,7 @@ class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # Generate a username if not provided
         if 'username' not in validated_data:
-            validated_data['username'] = validated_data.get('email')  # Use email as username
+            validated_data['username'] = validated_data.get('email')
         user = User.objects.create_user(**validated_data)
         return user
 

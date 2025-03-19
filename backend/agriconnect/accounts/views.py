@@ -9,6 +9,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth import get_user_model
 import logging
 from .serializers import UserSerializer, FarmerRegistrationSerializer, FarmerProfileSerializer
+from rest_framework.permissions import IsAuthenticated
 
 
 logger = logging.getLogger(__name__)
@@ -36,7 +37,7 @@ class RegisterView(APIView):
                 'access': str(refresh.access_token),
             }, status=status.HTTP_201_CREATED)
         else:
-            logger.error(f"Validation errors: {serializer.errors}")  # Log validation errors
+            logger.error(f"Validation errors: {serializer.errors}")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -80,6 +81,14 @@ class UserDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAdminUser]
+
+class UserDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
 
 class FarmerRegistrationView(APIView):
     def post(self, request):
