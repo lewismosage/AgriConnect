@@ -43,7 +43,7 @@ const CustomerDashboard: React.FC = () => {
                   <User className="w-6 h-6 text-green-600" />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900">{user?.full_name}</p>
+                  <p className="font-medium text-gray-900">{user?.first_name} {user?.last_name}</p>
                   <p className="text-sm text-gray-500">{user?.email}</p>
                 </div>
               </div>
@@ -208,7 +208,7 @@ const CustomerDashboard: React.FC = () => {
                     <input
                       type="text"
                       id="fullName"
-                      defaultValue={user?.full_name}
+                      defaultValue={`${user?.first_name} ${user?.last_name}`}
                       className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
                     />
                   </div>

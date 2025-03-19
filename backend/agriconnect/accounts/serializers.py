@@ -3,13 +3,18 @@ from rest_framework import serializers
 from .models import User, FarmerProfile
 
 class UserSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()  # Add computed full_name field
+
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'password', 'first_name', 'last_name', 'phone_number', 'profile_picture', 'user_type']
+        fields = ['id', 'username', 'email', 'password', 'first_name', 'last_name', 'full_name', 'phone_number', 'profile_picture', 'user_type']
         extra_kwargs = {
             'password': {'write_only': True},
             'username': {'required': False},  # Make username optional
         }
+
+    def get_full_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}"  # Combine first_name and last_name
 
     def create(self, validated_data):
         # Generate a username if not provided

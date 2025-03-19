@@ -50,12 +50,9 @@ class LoginView(APIView):
         
         if user:
             refresh = RefreshToken.for_user(user)
+            serializer = UserSerializer(user)  # Use UserSerializer to serialize the user
             return Response({
-                'user': {
-                    'id': user.id,
-                    'email': user.email,
-                    'user_type': user.user_type,  # Include user_type in the response
-                },
+                'user': serializer.data,  # Include serialized user data
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
             }, status=status.HTTP_200_OK)
