@@ -4,11 +4,21 @@ import { Heart, ShoppingCart, User, Search, Menu, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const Navbar: React.FC = () => {
-  const { user } = useAuth();
+  const { user } = useAuth(); // Destructure user from useAuth
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  // Determine the dashboard route based on user type
+  const getDashboardRoute = () => {
+    if (user?.is_farmer) {
+      return '/farmer-dashboard';
+    } else if (user?.is_consumer) {
+      return '/customer-dashboard';
+    }
+    return '/login'; // Fallback for unauthenticated users
   };
 
   return (
@@ -41,7 +51,6 @@ const Navbar: React.FC = () => {
             <Link to="/products" className="text-gray-700 hover:text-green-600">
               Products
             </Link>
-           
           </div>
 
           {/* Icons: Search, Wishlist, Cart, Account (Desktop) */}
@@ -61,7 +70,10 @@ const Navbar: React.FC = () => {
                 0
               </span>
             </Link>
-            <Link to="/login" className="text-gray-600 hover:text-green-600">
+            <Link
+              to={getDashboardRoute()} // Navigate to the relevant dashboard or login
+              className="text-gray-600 hover:text-green-600"
+            >
               <User size={20} />
             </Link>
           </div>
@@ -80,7 +92,6 @@ const Navbar: React.FC = () => {
               <Link to="/products" className="text-gray-700 hover:text-green-600">
                 Products
               </Link>
-              
               <div className="flex items-center space-x-4">
                 <button className="text-gray-600 hover:text-green-600">
                   <Search size={20} />
@@ -97,7 +108,10 @@ const Navbar: React.FC = () => {
                     0
                   </span>
                 </Link>
-                <Link to="/login" className="text-gray-600 hover:text-green-600">
+                <Link
+                  to={getDashboardRoute()} // Navigate to the relevant dashboard or login
+                  className="text-gray-600 hover:text-green-600"
+                >
                   <User size={20} />
                 </Link>
               </div>
