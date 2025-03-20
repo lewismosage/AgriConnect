@@ -29,9 +29,10 @@ axios.interceptors.response.use(
         error.response.data?.error ||
         "An error occurred";
 
-      if (error.response.status === 401) {
+      // Skip redirect for login endpoint
+      if (error.response.status === 401 && !error.config.url?.includes("/api/accounts/login/")) {
         localStorage.removeItem("token");
-        localStorage.removeItem("user"); // Clear user data on unauthorized
+        localStorage.removeItem("user"); 
         window.location.href = "/login";
         return Promise.reject(error);
       }
