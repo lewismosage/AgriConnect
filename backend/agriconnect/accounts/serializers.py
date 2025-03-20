@@ -4,10 +4,11 @@ from .models import User, FarmerProfile
 
 class UserSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
+    farmer_profile = serializers.SerializerMethodField()  # Add farmer_profile field
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'password', 'first_name', 'last_name', 'full_name', 'phone_number', 'profile_picture', 'user_type']
+        fields = ['id', 'username', 'email', 'password', 'first_name', 'last_name', 'full_name', 'phone_number', 'profile_picture', 'user_type', 'farmer_profile']
         extra_kwargs = {
             'password': {'write_only': True},
             'username': {'required': False},  # Make username optional
@@ -15,6 +16,12 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_full_name(self, obj):
         return f"{obj.first_name} {obj.last_name}"  # Combine first_name and last_name
+
+    def get_farmer_profile(self, obj):
+        # If the user is a farmer and has a farmer_profile, serialize it
+        if obj.user_type == 'farmer' and hasattr(obj, 'farmer_profile'):
+            return FarmerProfileSerializer(obj.farmer_profile).data
+        return None
 
     def create(self, validated_data):
         # Generate a username if not provided

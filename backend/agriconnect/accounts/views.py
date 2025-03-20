@@ -52,11 +52,20 @@ class LoginView(APIView):
         if user:
             refresh = RefreshToken.for_user(user)
             serializer = UserSerializer(user)  # Use UserSerializer to serialize the user
-            return Response({
+
+            # Prepare the response data
+            response_data = {
                 'user': serializer.data,  # Include serialized user data
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
-            }, status=status.HTTP_200_OK)
+            }
+
+            # If the user is a farmer, include the farmer_profile data
+            if user.user_type == 'farmer' and hasattr(user, 'farmer_profile'):
+                farmer_profile_serializer = FarmerProfileSerializer(user.farmer_profile)
+                response_data['farmer_profile'] = farmer_profile_serializer.data
+
+            return Response(response_data, status=status.HTTP_200_OK)
         else:
             # Debugging: Print authentication failure
             print("Authentication failed")

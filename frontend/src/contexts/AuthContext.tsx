@@ -235,13 +235,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   
   const registerFarmer = async (farmerData: FarmerRegisterData) => {
     try {
-      const response = await axios.post("/api/auth/register/farmer/", farmerData);
+      const response = await axios.post("/api/accounts/register/farmer/", farmerData);
       const { access, user, farmer_profile } = response.data;
       localStorage.setItem("token", access);
       localStorage.setItem("user", JSON.stringify(user));
       setUser(user);
       toast.success("Farmer registration successful!");
-      navigate("/farmer-dashboard");
+      return response.data; // Return the response data
     } catch (error) {
       console.error("Farmer registration failed:", error);
       if (axios.isAxiosError(error) && error.response?.data) {

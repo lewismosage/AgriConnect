@@ -136,7 +136,6 @@ const FarmRegistration = () => {
   const onSubmitFarmDetails = async (data: FarmDetailsForm) => {
     try {
       setIsLoading(true);
-      console.log('Farm Details Submitted:', data); // Debugging
 
       // Update formData state with farm details
       setFormData((prev) => ({
@@ -147,10 +146,8 @@ const FarmRegistration = () => {
         description: data.description,
       }));
 
-      console.log('Moving to step 2'); // Debugging
       setStep(2); // Move to the next step
     } catch (error) {
-      console.error('Farm details submission error:', error); // Debugging
       setError('Failed to save farm details. Please try again.');
     } finally {
       setIsLoading(false);
@@ -181,9 +178,9 @@ const FarmRegistration = () => {
   const onSelectPlan = (plan: 'free' | 'premium') => {
     setSelectedPlan(plan);
     if (plan === 'free') {
-      setStep(4); // Skip payment for free plan
+      setStep(4); 
     } else {
-      setStep(4); // Proceed to payment for premium plan
+      setStep(4); 
     }
   };
 
@@ -225,13 +222,13 @@ const FarmRegistration = () => {
         },
       };
   
-      console.log('Farmer Registration Data:', farmerData); // Debugging
-  
       // Submit the farmer registration data to the backend using registerFarmerAuth from AuthContext
       await registerFarmerAuth(farmerData);
   
-      // Navigate to the farmer dashboard
-      navigate('/farmer-dashboard');
+      // Delay navigation to allow the user to see the success message
+      setTimeout(() => {
+        navigate('/farmer-dashboard');
+      }, 2000); 
     } catch (error) {
       console.error('Registration error:', error);
       setError(error instanceof Error ? error.message : 'Registration failed');
@@ -685,6 +682,13 @@ const FarmRegistration = () => {
   
       {watchPayment('paymentMethod') === 'mpesa' && (
         <div>
+          <div className="mb-4 p-4 bg-blue-50 rounded-lg flex items-center">
+              <span className="text-blue-500 mr-2">&#9432;</span>
+              <p className="text-sm text-blue-700">
+                You will receive an M-Pesa prompt on your phone to complete the
+                payment.
+              </p>
+            </div>
           <label htmlFor="mpesaNumber" className="block text-sm font-medium text-gray-700">
             MPESA Number
           </label>
@@ -772,6 +776,24 @@ const FarmRegistration = () => {
     </form>
   );
 
+  const renderSuccess = () => {
+    console.log("Rendering success screen"); // Debugging statement
+    return (
+      <div className="text-center">
+        <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100">
+          <Check className="h-6 w-6 text-emerald-600" />
+        </div>
+        <h3 className="mt-2 text-lg font-medium text-gray-900">Registration Successful!</h3>
+        <p className="mt-2 text-sm text-gray-500">
+          Your FARM has been registered successfully. You will be redirected to your dashboard shortly.
+        </p>
+        <div className="mt-6">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-500 mx-auto"></div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -789,6 +811,7 @@ const FarmRegistration = () => {
           {step === 2 && renderFarmerDetailsForm()}
           {step === 3 && renderPlanSelection()}
           {step === 4 && renderPaymentForm()}
+          {step === 5 && renderSuccess()}
         </div>
       </div>
     </div>
