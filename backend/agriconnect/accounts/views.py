@@ -122,6 +122,12 @@ class FarmerProfileUpdateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def put(self, request):
+        return self.update_profile(request)
+
+    def patch(self, request):
+        return self.update_profile(request, partial=True)
+
+    def update_profile(self, request, partial=False):
         # Ensure the user is a farmer
         if request.user.user_type != 'farmer':
             return Response(
@@ -142,7 +148,7 @@ class FarmerProfileUpdateView(APIView):
         serializer = FarmerProfileSerializer(
             farmer_profile,
             data=request.data,
-            partial=True  # Allow partial updates
+            partial=partial  # Allow partial updates for PATCH
         )
 
         if serializer.is_valid():
