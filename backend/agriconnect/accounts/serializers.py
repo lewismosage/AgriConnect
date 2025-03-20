@@ -3,7 +3,7 @@ from rest_framework import serializers
 from .models import User, FarmerProfile
 
 class UserSerializer(serializers.ModelSerializer):
-    full_name = serializers.SerializerMethodField()  # Add computed full_name field
+    full_name = serializers.SerializerMethodField()
 
     class Meta:
         model = User

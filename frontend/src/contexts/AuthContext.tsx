@@ -156,7 +156,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   
     try {
-      const response = await axios.get("/api/accounts/user/");  // Updated path
+      const response = await axios.get("/api/accounts/user/");  
       setUser(response.data);
       localStorage.setItem("user", JSON.stringify(response.data)); // Save user to localStorage
     } catch (error) {
