@@ -257,9 +257,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const logout = async () => {
     try {
-      await axios.post("/api/auth/logout/");
+      await axios.post("/api/accounts/logout/");
       localStorage.removeItem("token");
-      localStorage.removeItem("user"); // Clear user data on logout
+      localStorage.removeItem("user"); 
       setUser(null);
       toast.success("Logged out successfully");
       navigate("/");
