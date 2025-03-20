@@ -15,6 +15,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework_simplejwt.token_blacklist',
 
     'rest_framework',
     'corsheaders',  
@@ -106,6 +107,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CORS Settings
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # React frontend
+    "http://localhost:5173",
 ]
 CORS_ALLOW_CREDENTIALS = True

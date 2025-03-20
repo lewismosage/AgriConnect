@@ -70,6 +70,7 @@ interface User {
   date_joined?: string;
   is_farmer?: boolean;  
   is_consumer?: boolean;
+  farmer_profile?: FarmerProfile;
 }
 
 interface AuthContextType {

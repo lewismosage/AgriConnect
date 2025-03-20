@@ -13,9 +13,9 @@ const Navbar: React.FC = () => {
 
   // Determine the dashboard route based on user type
   const getDashboardRoute = () => {
-    if (user?.is_farmer) {
+    if (user?.user_type === 'farmer') {
       return '/farmer-dashboard';
-    } else if (user?.is_consumer) {
+    } else if (user?.user_type === 'consumer') {
       return '/customer-dashboard';
     }
     return '/login'; // Fallback for unauthenticated users

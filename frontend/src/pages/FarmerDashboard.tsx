@@ -1,9 +1,10 @@
 import React from 'react';
 import { BarChart, Package, Truck, DollarSign, MessageSquare, Bell, Settings, LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext'; 
+import { Link } from 'react-router-dom';
 
 const FarmerDashboard: React.FC = () => {
-  const { user } = useAuth(); // Get the logged-in user from AuthContext
+  const { user, logout } = useAuth(); 
 
   // Dynamically get the farm name from the user's farmer_profile
   const farmName = user?.farmer_profile?.farm_name || "Farm";
@@ -15,19 +16,22 @@ const FarmerDashboard: React.FC = () => {
         <h2 className="text-xl font-bold text-gray-900 mb-8">Dashboard</h2>
         <nav>
           <ul className="space-y-4">
-            <li className="flex items-center text-gray-700 hover:text-green-600">
+            <li className="flex items-center text-gray-700 hover:text-green-600 cursor-pointer">
               <MessageSquare className="w-5 h-5 mr-3" />
               Messages
             </li>
-            <li className="flex items-center text-gray-700 hover:text-green-600">
+            <li className="flex items-center text-gray-700 hover:text-green-600 cursor-pointer">
               <Bell className="w-5 h-5 mr-3" />
               Notifications
             </li>
-            <li className="flex items-center text-gray-700 hover:text-green-600">
+            <li className="flex items-center text-gray-700 hover:text-green-600 cursor-pointer">
               <Settings className="w-5 h-5 mr-3" />
               Settings
             </li>
-            <li className="flex items-center text-gray-700 hover:text-green-600">
+            <li
+              className="flex items-center text-gray-700 hover:text-green-600 cursor-pointer"
+              onClick={logout} // Add logout functionality
+            >
               <LogOut className="w-5 h-5 mr-3" />
               Logout
             </li>
