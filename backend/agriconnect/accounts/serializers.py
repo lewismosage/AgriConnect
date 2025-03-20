@@ -34,6 +34,9 @@ class FarmerProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = FarmerProfile
         fields = ['farm_name', 'location', 'specialty', 'description', 'farm_image']
+        extra_kwargs = {
+            'farm_image': {'required': False},
+        }
 
 class FarmerRegistrationSerializer(serializers.Serializer):
     user = UserSerializer()

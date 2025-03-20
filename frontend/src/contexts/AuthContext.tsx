@@ -82,6 +82,7 @@ interface AuthContextType {
   registerFarmer: (farmerData: FarmerRegisterData) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (userData: Partial<User>) => Promise<void>;
+  updateFarmerProfile: (farmerProfile: Partial<FarmerProfile>) => Promise<void>; // Add this function
   setUser: (user: User | null) => void;
 }
 
@@ -283,6 +284,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const updateFarmerProfile = async (farmerProfile: Partial<FarmerProfile>) => {
+    try {
+      const formData = new FormData();
+      if (farmerProfile.farm_name) formData.append('farm_name', farmerProfile.farm_name);
+      if (farmerProfile.location) formData.append('location', farmerProfile.location);
+      if (farmerProfile.specialty) formData.append('specialty', farmerProfile.specialty);
+      if (farmerProfile.description) formData.append('description', farmerProfile.description);
+      if (farmerProfile.farm_image) formData.append('farm_image', farmerProfile.farm_image);
+
+      const response = await axios.patch(`/api/accounts/farmer/profile/update/`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      // Update the user context with the new farmer profile data
+      if (user) {
+        const updatedUser = {
+          ...user,
+          farmer_profile: {
+            ...user.farmer_profile,
+            ...response.data, // Update with the new farm details
+          },
+        };
+        setUser(updatedUser);
+        localStorage.setItem("user", JSON.stringify(updatedUser)); // Save updated user data
+      }
+
+      toast.success("Farm details updated successfully!");
+    } catch (error) {
+      console.error("Failed to update farm details:", error);
+      toast.error("Failed to update farm details. Please try again.");
+      throw error;
+    }
+  };
+
   const value = {
     user,
     loading,
@@ -291,6 +329,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     registerFarmer, 
     logout,
     updateUser,
+    updateFarmerProfile, // Add the new function to the context value
     setUser,
   };
 

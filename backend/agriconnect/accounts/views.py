@@ -10,6 +10,9 @@ from django.contrib.auth import get_user_model
 import logging
 from .serializers import UserSerializer, FarmerRegistrationSerializer, FarmerProfileSerializer
 from rest_framework.permissions import IsAuthenticated
+from .models import FarmerProfile
+from .serializers import FarmerProfileSerializer
+from rest_framework.parsers import MultiPartParser, FormParser
 
 
 logger = logging.getLogger(__name__)
@@ -114,3 +117,71 @@ class FarmerRegistrationView(APIView):
         else:
             logger.error(f"Validation errors: {serializer.errors}")  # Log validation errors
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+class FarmerProfileUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request):
+        # Ensure the user is a farmer
+        if request.user.user_type != 'farmer':
+            return Response(
+                {'detail': 'Only farmers can update farm details.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Get the farmer profile associated with the user
+        try:
+            farmer_profile = request.user.farmer_profile
+        except FarmerProfile.DoesNotExist:
+            return Response(
+                {'detail': 'Farmer profile not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Update the farmer profile
+        serializer = FarmerProfileSerializer(
+            farmer_profile,
+            data=request.data,
+            partial=True  # Allow partial updates
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+class FarmImageUploadView(APIView):
+    parser_classes = [MultiPartParser, FormParser]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        # Ensure the user is a farmer
+        if request.user.user_type != 'farmer':
+            return Response(
+                {'detail': 'Only farmers can upload farm images.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Get the uploaded file
+        file = request.FILES.get('file')
+        if not file:
+            return Response(
+                {'detail': 'No file uploaded.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Save the file to the farmer's profile
+        try:
+            farmer_profile = request.user.farmer_profile
+            farmer_profile.farm_image = file
+            farmer_profile.save()
+            return Response(
+                {'url': farmer_profile.farm_image.url},  # Return the URL of the uploaded image
+                status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            return Response(
+                {'detail': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
