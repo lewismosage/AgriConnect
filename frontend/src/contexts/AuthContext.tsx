@@ -67,7 +67,9 @@ interface User {
   phone_number?: string;
   profile_picture?: string;
   user_type: string; 
-  date_joined?: string; 
+  date_joined?: string;
+  is_farmer?: boolean;  
+  is_consumer?: boolean;
 }
 
 interface AuthContextType {
@@ -214,7 +216,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       localStorage.setItem("user", JSON.stringify(user));
       setUser(user);
       toast.success("Registration successful!");
-      navigate("/dashboard");
+      navigate("/customer-dashboard");
     } catch (error) {
       console.error("Registration failed:", error);
       if (axios.isAxiosError(error) && error.response?.data) {
@@ -237,7 +239,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       localStorage.setItem("user", JSON.stringify(user));
       setUser(user);
       toast.success("Farmer registration successful!");
-      navigate("/dashboard");
+      navigate("/farmer-dashboard");
     } catch (error) {
       console.error("Farmer registration failed:", error);
       if (axios.isAxiosError(error) && error.response?.data) {
