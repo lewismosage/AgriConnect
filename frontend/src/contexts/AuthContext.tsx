@@ -306,8 +306,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         formData.append('farm_image', farmerProfile.farm_image);
       }
   
-      console.log([...formData.entries()]); // Log form data for debugging
-  
       const response = await axios.patch(`/api/accounts/farmer/profile/update/`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
