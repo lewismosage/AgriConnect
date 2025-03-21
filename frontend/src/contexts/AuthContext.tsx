@@ -161,7 +161,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   
     try {
-      const response = await axios.get("/api/accounts/user/");  
+      const response = await axios.get("/api/accounts/user/");
+  
+      // Ensure the farm_image URL is complete
+      if (response.data.farmer_profile?.farm_image) {
+        response.data.farmer_profile.farm_image = `${process.env.REACT_APP_BACKEND_URL}${response.data.farmer_profile.farm_image}`;
+      }
+  
       setUser(response.data);
       localStorage.setItem("user", JSON.stringify(response.data)); // Save user to localStorage
     } catch (error) {
@@ -183,7 +189,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   
       const { access, user, user_type } = response.data;
   
-      console.log("User object from login:", user);  // Log the user object
+      // Ensure the farm_image URL is complete
+      if (user.farmer_profile?.farm_image) {
+        user.farmer_profile.farm_image = `${process.env.REACT_APP_BACKEND_URL}${user.farmer_profile.farm_image}`;
+      }
   
       localStorage.setItem("token", access);
       localStorage.setItem("user", JSON.stringify(user));

@@ -127,17 +127,23 @@ const FarmerDashboard: React.FC = () => {
               {/* Farm Image Upload */}
               <div className="relative">
                 <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-200">
-                {farmImagePreview || user?.farmer_profile?.farm_image ? (
-                  <img
-                    src={farmImagePreview || user?.farmer_profile?.farm_image || ''}
-                    alt="Farm Preview"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                    <ImageIcon className="h-12 w-12 text-gray-400" />
-                  </div>
-                )}
+                {
+                  farmImagePreview || user?.farmer_profile?.farm_image ? (
+                    <img
+                      src={
+                        farmImagePreview ||
+                        `${import.meta.env.VITE_BACKEND_URL}${user?.farmer_profile?.farm_image}` ||
+                        ''
+                      }
+                      alt="Farm Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                      <ImageIcon className="h-12 w-12 text-gray-400" />
+                    </div>
+                  )
+                }
                 </div>
                 <button
                   onClick={() => setIsEditFormOpen(true)}
