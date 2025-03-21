@@ -115,27 +115,13 @@ class FarmerRegistrationView(APIView):
                 'access': str(refresh.access_token),
             }, status=status.HTTP_201_CREATED)
         else:
-            logger.error(f"Validation errors: {serializer.errors}")  # Log validation errors
+            logger.error(f"Validation errors: {serializer.errors}")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
 class FarmerProfileUpdateView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def put(self, request):
-        return self.update_profile(request)
-
     def patch(self, request):
-        return self.update_profile(request, partial=True)
-
-    def update_profile(self, request, partial=False):
-        # Ensure the user is a farmer
-        if request.user.user_type != 'farmer':
-            return Response(
-                {'detail': 'Only farmers can update farm details.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
-        # Get the farmer profile associated with the user
         try:
             farmer_profile = request.user.farmer_profile
         except FarmerProfile.DoesNotExist:
@@ -144,17 +130,22 @@ class FarmerProfileUpdateView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
+        # Log the incoming data
+        print("Incoming data:", request.data)
+
         # Update the farmer profile
         serializer = FarmerProfileSerializer(
             farmer_profile,
             data=request.data,
-            partial=partial  # Allow partial updates for PATCH
+            partial=True  # Allow partial updates for PATCH
         )
 
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
+            # Log validation errors
+            print("Validation errors:", serializer.errors)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
 class FarmImageUploadView(APIView):

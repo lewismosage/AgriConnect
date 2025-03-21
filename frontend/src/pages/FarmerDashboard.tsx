@@ -47,10 +47,10 @@ const FarmerDashboard: React.FC = () => {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFarmImagePreview(reader.result as string);
+        setFarmImagePreview(reader.result as string); // Store the data URL as a string
       };
-      reader.readAsDataURL(file);
-      setFarmImageFile(file);
+      reader.readAsDataURL(file); // Convert the file to a data URL
+      setFarmImageFile(file); // Store the file object for later use
     }
   };
 
@@ -80,7 +80,7 @@ const FarmerDashboard: React.FC = () => {
         location: data.location,
         specialty: data.specialty,
         description: data.description,
-        farm_image: farmImageUrl, // Use the updated image URL
+        farm_image: farmImageUrl, // Send the URL, not the file object
       });
   
       setIsEditFormOpen(false); // Close the edit form
@@ -88,7 +88,7 @@ const FarmerDashboard: React.FC = () => {
       console.error('Error updating farm details:', error);
     }
   };
-
+  
   return (
     <div className="bg-gray-50 min-h-screen flex">
       {/* Sidebar */}
@@ -127,17 +127,17 @@ const FarmerDashboard: React.FC = () => {
               {/* Farm Image Upload */}
               <div className="relative">
                 <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-200">
-                  {farmImagePreview || user?.farmer_profile?.farm_image ? (
-                    <img
-                      src={farmImagePreview ? farmImagePreview : user?.farmer_profile?.farm_image || ''}
-                      alt="Farm Preview"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                      <ImageIcon className="h-12 w-12 text-gray-400" />
-                    </div>
-                  )}
+                {farmImagePreview || user?.farmer_profile?.farm_image ? (
+                  <img
+                    src={farmImagePreview || user?.farmer_profile?.farm_image || ''}
+                    alt="Farm Preview"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                    <ImageIcon className="h-12 w-12 text-gray-400" />
+                  </div>
+                )}
                 </div>
                 <button
                   onClick={() => setIsEditFormOpen(true)}

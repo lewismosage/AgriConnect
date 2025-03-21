@@ -291,15 +291,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (farmerProfile.location) formData.append('location', farmerProfile.location);
       if (farmerProfile.specialty) formData.append('specialty', farmerProfile.specialty);
       if (farmerProfile.description) formData.append('description', farmerProfile.description);
-      if (farmerProfile.farm_image) formData.append('farm_image', farmerProfile.farm_image);
-
+  
+      // Append farm_image only if it's a File
+      if (farmerProfile.farm_image && typeof farmerProfile.farm_image !== 'string') {
+        formData.append('farm_image', farmerProfile.farm_image);
+      }
+  
+      console.log([...formData.entries()]); // Log form data for debugging
+  
       const response = await axios.patch(`/api/accounts/farmer/profile/update/`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
-
+  
       // Update the user context with the new farmer profile data
       if (user) {
         const updatedUser = {
@@ -312,7 +318,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         setUser(updatedUser);
         localStorage.setItem("user", JSON.stringify(updatedUser)); // Save updated user data
       }
-
+  
       toast.success("Farm details updated successfully!");
     } catch (error) {
       console.error("Failed to update farm details:", error);
