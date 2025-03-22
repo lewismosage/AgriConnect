@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 import {
   BarChart, Package, Truck, DollarSign, MessageSquare, Bell, 
   Settings, LogOut, Image as ImageIcon, Edit, Menu, X, ChevronRight, Home, ShoppingBag
@@ -27,6 +28,7 @@ const FarmerDashboard: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const navigate = useNavigate(); // Initialize useNavigate
 
   // Dynamically get the farm name from the user's farmer_profile
   const farmName = user?.farmer_profile?.farm_name || "Farm";
@@ -121,11 +123,11 @@ const FarmerDashboard: React.FC = () => {
 
   // Navigation items
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: <Home className="w-5 h-5" /> },
-    { id: 'products', label: 'Products', icon: <ShoppingBag className="w-5 h-5" /> },
-    { id: 'messages', label: 'Messages', icon: <MessageSquare className="w-5 h-5" /> },
-    { id: 'notifications', label: 'Notifications', icon: <Bell className="w-5 h-5" /> },
-    { id: 'settings', label: 'Settings', icon: <Settings className="w-5 h-5" /> },
+    { id: 'dashboard', label: 'Dashboard', icon: <Home className="w-5 h-5" />,},
+    { id: 'products', label: 'Products', icon: <ShoppingBag className="w-5 h-5" />, onClick: () => navigate('/farm-products') },
+    { id: 'messages', label: 'Messages', icon: <MessageSquare className="w-5 h-5" />, onClick: () => navigate('/messages') },
+    { id: 'notifications', label: 'Notifications', icon: <Bell className="w-5 h-5" />, onClick: () => navigate('/notifications') },
+    { id: 'settings', label: 'Settings', icon: <Settings className="w-5 h-5" />, onClick: () => navigate('/settings') },
     { id: 'spacer', label: '', icon: null }, // Empty space
     { id: 'divider', isDivider: true }, // Divider
     { id: 'logout', label: 'Logout', icon: <LogOut className="w-5 h-5" />, onClick: logout },
@@ -204,7 +206,10 @@ const FarmerDashboard: React.FC = () => {
                             ? 'bg-green-50 text-green-700'
                             : 'text-gray-700 hover:bg-gray-100'
                         }`}
-                        onClick={() => item.onClick ? item.onClick() : setActiveTab(item.id)}
+                        onClick={() => {
+                          if (item.onClick) item.onClick();
+                          setActiveTab(item.id);
+                        }}
                       >
                         <span className="mr-3">{item.icon}</span>
                         <span className={`${sidebarOpen ? 'block' : 'hidden'} md:block`}>

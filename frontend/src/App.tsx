@@ -20,6 +20,9 @@ import FarmerDashboard from "./pages/FarmerDashboard";
 import CustomerDashboard from "./pages/CustomerDashboard";
 import AboutPage from "./pages/AboutPage";
 import FarmRegistration from "./pages/FarmRegistration";
+import FarmProducts from "./pages/FarmProducts";
+import Messages from './pages/Messages';
+import Notifications from './pages/Notifications';
 
 function App() {
   return (
@@ -40,6 +43,10 @@ function App() {
               <Route path="/farms" element={<FarmsPage />} />
               <Route path="/cart" element={<CartPage />} />
               <Route path="/farm-registration" element={<FarmRegistration />} />
+              <Route path="/farm-products" element={<FarmProducts />} />
+              <Route path="/messages" element={<Messages />} />
+              <Route path="/notifications" element={<Notifications />} />
+              <Route path="/settings" element={<Settings />} />
 
               <Route
                 path="/inventory"

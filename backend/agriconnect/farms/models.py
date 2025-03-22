@@ -4,7 +4,6 @@ from accounts.models import User
 class Farm(models.Model):
     name = models.CharField(max_length=255)
     location = models.CharField(max_length=255)
-    specialty = models.CharField(max_length=255)
     description = models.TextField()
     image = models.ImageField(upload_to='farm_images/', null=True, blank=True)
     farmer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='farms')
