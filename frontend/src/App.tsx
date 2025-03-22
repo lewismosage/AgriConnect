@@ -23,6 +23,7 @@ import FarmRegistration from "./pages/FarmRegistration";
 import FarmProducts from "./pages/FarmProducts";
 import Messages from './pages/Messages';
 import Notifications from './pages/Notifications';
+import FarmDetailPage from './pages/FarmDetailPage';
 
 function App() {
   return (
@@ -41,6 +42,7 @@ function App() {
               <Route path="/about" element={<AboutPage />} />
               <Route path="/products" element={<ProductsPage />} />
               <Route path="/farms" element={<FarmsPage />} />
+              <Route path="/farms/:farmId" element={<FarmDetailPage />} />
               <Route path="/cart" element={<CartPage />} />
               <Route path="/farm-registration" element={<FarmRegistration />} />
               <Route path="/farm-products" element={<FarmProducts />} />

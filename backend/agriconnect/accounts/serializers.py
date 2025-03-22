@@ -78,12 +78,13 @@ class FarmerRegistrationSerializer(serializers.Serializer):
         user = User.objects.create_user(**user_data)
         farmer_profile = FarmerProfile.objects.create(user=user, **farmer_profile_data)
 
-        # Create a Farm instance for the farmer
+        # Create a Farm instance for the farmer using the farm_name from the farmer_profile
         Farm.objects.create(
-            name=f"{user.first_name}'s Farm",  # Default farm name
+            name=farmer_profile.farm_name,  # Use the farm_name from the farmer_profile
             location=farmer_profile.location,
             description=farmer_profile.description,
-            farmer=user
+            farmer=user,
+            specialty=farmer_profile.specialty  # Include the specialty
         )
 
         return {

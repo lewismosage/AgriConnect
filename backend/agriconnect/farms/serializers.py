@@ -4,4 +4,4 @@ from .models import Farm
 class FarmSerializer(serializers.ModelSerializer):
     class Meta:
         model = Farm
-        fields = ['id', 'name', 'location', 'description', 'image', 'farmer']
+        fields = ['id', 'name', 'location', 'description', 'image', 'farmer', 'specialty']
