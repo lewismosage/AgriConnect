@@ -4,5 +4,4 @@ from .models import Farm
 class FarmSerializer(serializers.ModelSerializer):
     class Meta:
         model = Farm
-        fields = '__all__'
-        read_only_fields = ('farmer',)
+        fields = ['id', 'name', 'location', 'description', 'image', 'farmer']

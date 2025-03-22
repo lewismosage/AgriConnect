@@ -7,29 +7,29 @@ axios.defaults.withCredentials = true; // Ensure cookies are sent with requests
 
 // Add request interceptor to include JWT token
 axios.interceptors.request.use((config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
 
-    // Add CSRF token to headers for non-GET requests
-    if (config.method !== 'get' && config.method !== 'GET') {
-        const csrfToken = getCsrfTokenFromCookies(); // Helper function to get CSRF token from cookies
-        if (csrfToken) {
-            config.headers['X-CSRFToken'] = csrfToken;
-        }
+  // Add CSRF token to headers for non-GET requests
+  if (config.method !== 'get' && config.method !== 'GET') {
+    const csrfToken = getCsrfTokenFromCookies(); // Helper function to get CSRF token from cookies
+    if (csrfToken) {
+      config.headers['X-CSRFToken'] = csrfToken;
     }
+  }
 
-    return config;
+  return config;
 });
 
 // Helper function to extract CSRF token from cookies
 function getCsrfTokenFromCookies() {
-    const cookieValue = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('csrftoken='))
-        ?.split('=')[1];
-    return cookieValue;
+  const cookieValue = document.cookie
+    .split('; ')
+    .find(row => row.startsWith('csrftoken='))
+    ?.split('=')[1];
+  return cookieValue;
 }
 
 export default axios;

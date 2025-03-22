@@ -6,3 +6,8 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+// src/env.d.ts
+interface ImportMetaEnv {
+  VITE_API_URL: string;
+}
