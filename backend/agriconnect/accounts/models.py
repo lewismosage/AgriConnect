@@ -1,3 +1,4 @@
+# accounts/models.py
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -18,6 +19,7 @@ class User(AbstractUser):
 
 class FarmerProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='farmer_profile')
+    farm_name = models.CharField(max_length=255, blank=True, null=True)  # Make farm_name optional
     location = models.CharField(max_length=255)
     specialty = models.CharField(max_length=255)
     description = models.TextField()
