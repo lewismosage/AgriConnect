@@ -165,7 +165,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   
       // Ensure the farm_image URL is complete
       if (response.data.farmer_profile?.farm_image) {
-        response.data.farmer_profile.farm_image = `${process.env.REACT_APP_BACKEND_URL}${response.data.farmer_profile.farm_image}`;
+        if (!response.data.farmer_profile.farm_image.startsWith('http')) {
+          response.data.farmer_profile.farm_image = `${import.meta.env.VITE_BACKEND_URL}${response.data.farmer_profile.farm_image}`;
+        }
       }
   
       setUser(response.data);
@@ -191,7 +193,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   
       // Ensure the farm_image URL is complete
       if (user.farmer_profile?.farm_image) {
-        user.farmer_profile.farm_image = `${process.env.REACT_APP_BACKEND_URL}${user.farmer_profile.farm_image}`;
+        if (!user.farmer_profile.farm_image.startsWith('http')) {
+          user.farmer_profile.farm_image = `${import.meta.env.VITE_BACKEND_URL}${user.farmer_profile.farm_image}`;
+        }
       }
   
       localStorage.setItem("token", access);

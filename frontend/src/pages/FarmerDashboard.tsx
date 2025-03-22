@@ -145,17 +145,13 @@ const FarmerDashboard: React.FC = () => {
           >
             {farmImagePreview || user?.farmer_profile?.farm_image ? (
               <img
-                src={
-                  farmImagePreview ||
-                  `${import.meta.env.VITE_BACKEND_URL}${user?.farmer_profile?.farm_image}` ||
-                  ''
-                }
+                src={farmImagePreview || user?.farmer_profile?.farm_image || ''}
                 alt="Farm Preview"
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                <ImageIcon className="h-4 w-4 text-gray-400" />
+              <div className="w-full h-full flex items-center justify-center">
+                <ImageIcon className="h-8 w-8 text-gray-400" />
               </div>
             )}
           </div>
@@ -249,21 +245,17 @@ const FarmerDashboard: React.FC = () => {
                 <div className="hidden md:flex items-center">
                   <div className="relative">
                     <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-200">
-                      {farmImagePreview || user?.farmer_profile?.farm_image ? (
-                        <img
-                          src={
-                            farmImagePreview ||
-                            `${import.meta.env.VITE_BACKEND_URL}${user?.farmer_profile?.farm_image}` ||
-                            ''
-                          }
-                          alt="Farm Preview"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                          <ImageIcon className="h-8 w-8 text-gray-400" />
-                        </div>
-                      )}
+                    {farmImagePreview || user?.farmer_profile?.farm_image ? (
+                      <img
+                        src={farmImagePreview || user?.farmer_profile?.farm_image || ''}
+                        alt="Farm Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <ImageIcon className="h-8 w-8 text-gray-400" />
+                      </div>
+                    )}
                     </div>
                     <button
                       onClick={() => setIsEditFormOpen(true)}
@@ -538,21 +530,17 @@ const FarmerDashboard: React.FC = () => {
                 </label>
                 <div className="mt-1 flex items-center">
                   <div className="w-16 h-16 mr-4 rounded-full overflow-hidden bg-gray-100 border border-gray-200">
-                    {farmImagePreview || user?.farmer_profile?.farm_image ? (
-                      <img
-                        src={
-                          farmImagePreview ||
-                          `${import.meta.env.VITE_BACKEND_URL}${user?.farmer_profile?.farm_image}` ||
-                          ''
-                        }
-                        alt="Farm Preview"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <ImageIcon className="h-8 w-8 text-gray-400" />
-                      </div>
-                    )}
+                  {farmImagePreview || user?.farmer_profile?.farm_image ? (
+                    <img
+                      src={farmImagePreview || user?.farmer_profile?.farm_image || ''}
+                      alt="Farm Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <ImageIcon className="h-8 w-8 text-gray-400" />
+                    </div>
+                  )}
                   </div>
                   <input
                     type="file"
