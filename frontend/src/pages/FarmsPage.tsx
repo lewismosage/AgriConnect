@@ -45,7 +45,7 @@ const FarmsPage: React.FC = () => {
           rating: farm.rating || 0,
           specialty: farm.specialty || 'No specialty',
           description: farm.description,
-          image: farm.farm_image || farm.image || 'https://via.placeholder.com/300', // Use farm_image if available
+          image: farm.farm_image || farm.image
         }));
 
         setFarms(transformedFarms);
