@@ -884,15 +884,18 @@ const FarmRegistration = () => {
             type="tel"
             id="mpesaNumber"
             {...registerPayment('mpesaNumber')}
-            placeholder="e.g., 254712345678"
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm"
+            placeholder="e.g., 0712345678"
+            className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
           />
           {paymentErrors.mpesaNumber && (
             <p className="mt-1 text-sm text-red-600">{paymentErrors.mpesaNumber.message}</p>
           )}
-          <p className="mt-2 text-sm text-gray-500">
+          <div>
+          <span className="text-green-500 mr-2">&#9432;</span>
+          <p className="inline text-sm text-green-700">
             You will receive an STK push to complete the payment.
           </p>
+        </div>
         </div>
       )}
 
@@ -907,7 +910,7 @@ const FarmRegistration = () => {
               id="cardNumber"
               {...registerPayment('bankDetails.cardNumber')}
               placeholder="XXXX XXXX XXXX XXXX"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm"
+              className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
             />
             {paymentErrors.bankDetails?.cardNumber && (
               <p className="mt-1 text-sm text-red-600">{paymentErrors.bankDetails.cardNumber.message}</p>
@@ -924,7 +927,7 @@ const FarmRegistration = () => {
                 id="expiryDate"
                 {...registerPayment('bankDetails.expiryDate')}
                 placeholder="MM/YY"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm"
+                className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
               />
               {paymentErrors.bankDetails?.expiryDate && (
                 <p className="mt-1 text-sm text-red-600">{paymentErrors.bankDetails.expiryDate.message}</p>
@@ -940,7 +943,7 @@ const FarmRegistration = () => {
                 id="cvv"
                 {...registerPayment('bankDetails.cvv')}
                 placeholder="123"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm"
+                className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
               />
               {paymentErrors.bankDetails?.cvv && (
                 <p className="mt-1 text-sm text-red-600">{paymentErrors.bankDetails.cvv.message}</p>
@@ -956,8 +959,8 @@ const FarmRegistration = () => {
               type="text"
               id="cardHolderName"
               {...registerPayment('bankDetails.name')}
-              placeholder="John Doe"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm"
+              placeholder=""
+              className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
             />
             {paymentErrors.bankDetails?.name && (
               <p className="mt-1 text-sm text-red-600">{paymentErrors.bankDetails.name.message}</p>
