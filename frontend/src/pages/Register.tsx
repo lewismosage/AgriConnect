@@ -92,16 +92,22 @@ const Register = () => {
       const registerData = {
         email: formData.email,
         password: formData.password,
-        full_name: `${formData.firstName} ${formData.lastName}`, // Combine first and last name
+        full_name: `${formData.firstName} ${formData.lastName}`,
         phone_number: formData.phoneNumber,
-        is_farmer: false, // Set user type to 'consumer'
+        is_farmer: false,
         is_consumer: true,
       };
       await register(registerData);
       navigate("/customer-dashboard");
     } catch (error) {
-      console.error("Registration error:", error);
-      setError(error instanceof Error ? error.message : "Registration failed");
+      console.error("Registration failed:", error);
+  
+      // Handle the specific email error
+      if (error instanceof Error && error.message.includes("A user with this email already exists")) {
+        setError("A user with this email already exists.");
+      } else {
+        setError(error instanceof Error ? error.message : "Registration failed");
+      }
     } finally {
       setIsLoading(false);
     }

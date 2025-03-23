@@ -209,7 +209,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await axios.post("/api/auth/login/", {
+      const response = await axios.post("/api/accounts/login/", {
         email,
         password,
       });
@@ -260,15 +260,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       navigate("/customer-dashboard");
     } catch (error) {
       console.error("Registration failed:", error);
+  
       if (axios.isAxiosError(error) && error.response?.data) {
-        const errorMessage = Object.entries(error.response.data)
-          .map(([key, value]) => `${key}: ${value}`)
-          .join("\n");
-        toast.error(errorMessage);
+        // Check for the specific email error
+        if (error.response.data.email) {
+          const emailError = error.response.data.email[0]; // Extract the first error message
+          throw new Error(emailError); // Throw the specific email error
+        } else {
+          // Handle other validation errors
+          const errorMessage = Object.entries(error.response.data)
+            .map(([key, value]) => `${key}: ${value}`)
+            .join("\n");
+          throw new Error(errorMessage);
+        }
       } else {
-        toast.error("Registration failed. Please try again.");
+        throw new Error("Registration failed. Please try again.");
       }
-      throw error;
     }
   };
   
