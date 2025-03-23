@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Check, ChevronsRight, MapPin, User, CreditCard, ArrowRight } from 'lucide-react';
+import { Check, ChevronsRight, MapPin, User, CreditCard, ArrowRight, Upload } from 'lucide-react';
 import { Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react';
 import { FarmerRegisterData, useAuth } from '../contexts/AuthContext'; // Import useAuth
 
@@ -13,6 +13,7 @@ const farmDetailsSchema = z.object({
   location: z.string().min(1, 'Please enter a location'),
   specialty: z.string().min(1, 'Please enter a specialty'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
+  // We'll handle the image validation separately since it's not a simple text field
 });
 
 const farmerDetailsSchema = z.object({
@@ -54,6 +55,9 @@ const FarmRegistration = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
   const {
@@ -101,7 +105,22 @@ const FarmRegistration = () => {
     location: '',
     specialty: '',
     description: '',
+    profileImage: null as File | null,
   });
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setProfileImage(file);
+      
+      // Create a preview URL for the image
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const validatePassword = (password: string | undefined) => {
     if (!password) {
@@ -137,6 +156,13 @@ const FarmRegistration = () => {
     try {
       setIsLoading(true);
 
+      // Validate profile image
+      if (!profileImage) {
+        setError('Please upload a farm profile image');
+        setIsLoading(false);
+        return;
+      }
+
       // Update formData state with farm details
       setFormData((prev) => ({
         ...prev,
@@ -144,6 +170,7 @@ const FarmRegistration = () => {
         location: data.location,
         specialty: data.specialty,
         description: data.description,
+        profileImage: profileImage,
       }));
 
       setStep(2); // Move to the next step
@@ -178,13 +205,15 @@ const FarmRegistration = () => {
   const onSelectPlan = (plan: 'free' | 'premium') => {
     setSelectedPlan(plan);
     if (plan === 'free') {
-      setStep(4); 
+      // For free plan, skip the payment step and directly complete registration
+      completeRegistration();
     } else {
-      setStep(4); 
+      // For premium plan, proceed to payment
+      setStep(4);
     }
   };
 
-  const onSubmitPayment = async (data: PaymentDetailsForm) => {
+  const completeRegistration = async () => {
     try {
       setIsLoading(true);
   
@@ -219,22 +248,32 @@ const FarmRegistration = () => {
           location: formData.location,
           specialty: formData.specialty,
           description: formData.description,
+          // Include profile image if available
+          profile_image: formData.profileImage,
         },
       };
   
       // Submit the farmer registration data to the backend using registerFarmerAuth from AuthContext
       await registerFarmerAuth(farmerData);
   
+      // Show success screen
+      setStep(5);
+  
       // Delay navigation to allow the user to see the success message
       setTimeout(() => {
         navigate('/farmer-dashboard');
-      }, 2000); 
+      }, 3000);
     } catch (error) {
       console.error('Registration error:', error);
       setError(error instanceof Error ? error.message : 'Registration failed');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const onSubmitPayment = async (data: PaymentDetailsForm) => {
+    // For premium plan with payment details
+    await completeRegistration();
   };
 
   const renderStepIndicator = () => (
@@ -326,13 +365,72 @@ const FarmRegistration = () => {
         )}
       </div>
 
+      {/* Farm Profile Image Upload */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Farm Profile Image
+        </label>
+        <div className="flex items-center space-x-4">
+          <div 
+            className={`relative border-2 border-dashed rounded-md p-4 ${
+              imagePreview ? 'border-emerald-300 bg-emerald-50' : 'border-gray-300 hover:border-emerald-400'
+            } focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-emerald-500 cursor-pointer`}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              id="profileImage"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="sr-only"
+            />
+            <div className="space-y-1 text-center">
+              {imagePreview ? (
+                <div className="flex flex-col items-center justify-center">
+                  <img 
+                    src={imagePreview} 
+                    alt="Profile Preview" 
+                    className="h-24 w-24 object-cover rounded-md"
+                  />
+                  <span className="text-xs text-emerald-500 mt-2">Change image</span>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center">
+                  <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                  <span className="block text-sm font-medium text-gray-700">
+                    Upload farm image
+                  </span>
+                  <span className="block text-xs text-gray-500">
+                    PNG, JPG, GIF up to 5MB
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        {error && error.includes('image') && (
+          <p className="mt-1 text-sm text-red-600">{error}</p>
+        )}
+      </div>
+
       <div className="flex justify-end">
         <button
           type="submit"
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
+          disabled={isLoading}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50"
         >
-          Next Step
-          <ArrowRight className="ml-2 h-4 w-4" />
+          {isLoading ? (
+            <>
+              <span className="inline-block h-4 w-4 rounded-full border-2 border-t-transparent border-white animate-spin mr-2"></span>
+              Processing...
+            </>
+          ) : (
+            <>
+              Next Step
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </>
+          )}
         </button>
       </div>
     </form>
@@ -558,10 +656,20 @@ const FarmRegistration = () => {
         </button>
         <button
           type="submit"
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
+          disabled={isLoading}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50"
         >
-          Next Step
-          <ArrowRight className="ml-2 h-4 w-4" />
+          {isLoading ? (
+            <>
+              <span className="inline-block h-4 w-4 rounded-full border-2 border-t-transparent border-white animate-spin mr-2"></span>
+              Processing...
+            </>
+          ) : (
+            <>
+              Next Step
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </>
+          )}
         </button>
       </div>
     </form>
@@ -572,8 +680,17 @@ const FarmRegistration = () => {
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         {/* Free Plan */}
         <div className={`border rounded-lg p-6 ${selectedPlan === 'free' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200'}`}>
-          <h3 className="text-lg font-medium text-gray-900">Free Trial</h3>
-          <p className="mt-2 text-sm text-gray-500">Start with a free trial to explore AgriConnect.</p>
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="text-lg font-medium text-gray-900">Free Trial</h3>
+              <p className="mt-2 text-sm text-gray-500">Start with a free trial to explore AgriConnect.</p>
+            </div>
+            {selectedPlan === 'free' && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                Selected
+              </span>
+            )}
+          </div>
           <p className="mt-4">
             <span className="text-3xl font-bold text-gray-900">$0</span>
             <span className="text-sm text-gray-500">/month</span>
@@ -587,57 +704,95 @@ const FarmRegistration = () => {
               <Check className="h-4 w-4 text-emerald-500 mr-2" />
               <span className="text-sm text-gray-600">Basic features</span>
             </li>
+            <li className="flex items-center">
+              <Check className="h-4 w-4 text-emerald-500 mr-2" />
+              <span className="text-sm text-gray-600">No payment required</span>
+            </li>
           </ul>
           <button
             type="button"
             onClick={() => onSelectPlan('free')}
+            disabled={isLoading}
             className={`mt-8 w-full inline-flex justify-center items-center px-4 py-2 border text-sm font-medium rounded-md ${
               selectedPlan === 'free'
                 ? 'border-transparent text-white bg-emerald-600 hover:bg-emerald-700'
                 : 'border-emerald-500 text-emerald-600 hover:bg-emerald-50'
-            }`}
+            } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed`}
           >
-            Select Plan
+            {isLoading && selectedPlan === 'free' ? (
+              <>
+                <span className="inline-block h-4 w-4 rounded-full border-2 border-t-transparent border-white animate-spin mr-2"></span>
+                Processing...
+              </>
+            ) : (
+              'Select Free Trial'
+            )}
           </button>
         </div>
 
         {/* Premium Plan */}
         <div className={`border rounded-lg p-6 ${selectedPlan === 'premium' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200'}`}>
-          <h3 className="text-lg font-medium text-gray-900">Premium</h3>
-          <p className="mt-2 text-sm text-gray-500">Unlock advanced features for your farm.</p>
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="text-lg font-medium text-gray-900">Premium</h3>
+              <p className="mt-2 text-sm text-gray-500">Full access to all premium features.</p>
+            </div>
+            {selectedPlan === 'premium' && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                Selected
+              </span>
+            )}
+          </div>
           <p className="mt-4">
-            <span className="text-3xl font-bold text-gray-900">$10</span>
+            <span className="text-3xl font-bold text-gray-900">$19.99</span>
             <span className="text-sm text-gray-500">/month</span>
           </p>
           <ul className="mt-6 space-y-4">
             <li className="flex items-center">
               <Check className="h-4 w-4 text-emerald-500 mr-2" />
-              <span className="text-sm text-gray-600">Advanced analytics</span>
+              <span className="text-sm text-gray-600">Unlimited product listings</span>
             </li>
             <li className="flex items-center">
               <Check className="h-4 w-4 text-emerald-500 mr-2" />
-              <span className="text-sm text-gray-600">Priority support</span>
+              <span className="text-sm text-gray-600">Premium analytics</span>
+            </li>
+            <li className="flex items-center">
+              <Check className="h-4 w-4 text-emerald-500 mr-2" />
+              <span className="text-sm text-gray-600">Priority customer support</span>
+            </li>
+            <li className="flex items-center">
+              <Check className="h-4 w-4 text-emerald-500 mr-2" />
+              <span className="text-sm text-gray-600">Advanced marketing tools</span>
             </li>
           </ul>
           <button
             type="button"
             onClick={() => onSelectPlan('premium')}
+            disabled={isLoading}
             className={`mt-8 w-full inline-flex justify-center items-center px-4 py-2 border text-sm font-medium rounded-md ${
               selectedPlan === 'premium'
                 ? 'border-transparent text-white bg-emerald-600 hover:bg-emerald-700'
                 : 'border-emerald-500 text-emerald-600 hover:bg-emerald-50'
-            }`}
+            } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed`}
           >
-            Select Plan
+            {isLoading && selectedPlan === 'premium' ? (
+              <>
+                <span className="inline-block h-4 w-4 rounded-full border-2 border-t-transparent border-white animate-spin mr-2"></span>
+                Processing...
+              </>
+            ) : (
+              'Select Premium Plan'
+            )}
           </button>
         </div>
       </div>
 
-      <div className="flex justify-between">
+      <div className="flex justify-between mt-8">
         <button
           type="button"
           onClick={() => setStep(2)}
-          className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
+          disabled={isLoading}
+          className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50"
         >
           Back
         </button>
@@ -647,62 +802,102 @@ const FarmRegistration = () => {
 
   const renderPaymentForm = () => (
     <form onSubmit={handleSubmitPayment(onSubmitPayment)} className="space-y-6">
-      {/* Payment form fields */}
       <div>
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
           Payment Method
         </label>
-        <div className="mt-1 space-y-4">
-          <div className="flex items-center">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="relative">
             <input
               type="radio"
               id="mpesa"
               value="mpesa"
               {...registerPayment('paymentMethod')}
-              className="focus:ring-emerald-500 h-4 w-4 text-emerald-600 border-gray-300"
+              className="sr-only"
             />
-            <label htmlFor="mpesa" className="ml-3 block text-sm font-medium text-gray-700">
-              Pay with MPESA
+            <label
+              htmlFor="mpesa"
+              className={`block p-4 border rounded-md cursor-pointer ${
+                watchPayment('paymentMethod') === 'mpesa'
+                  ? 'border-emerald-500 bg-emerald-50'
+                  : 'border-gray-300'
+              }`}
+            >
+              <div className="flex items-center">
+                <div className={`rounded-full w-5 h-5 border flex items-center justify-center ${
+                  watchPayment('paymentMethod') === 'mpesa' 
+                    ? 'border-emerald-500' 
+                    : 'border-gray-400'
+                }`}>
+                  {watchPayment('paymentMethod') === 'mpesa' && (
+                    <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+                  )}
+                </div>
+                <span className="ml-3 font-medium">M-PESA</span>
+              </div>
             </label>
           </div>
-          <div className="flex items-center">
+
+          <div className="relative">
             <input
               type="radio"
               id="bank"
               value="bank"
               {...registerPayment('paymentMethod')}
-              className="focus:ring-emerald-500 h-4 w-4 text-emerald-600 border-gray-300"
+              className="sr-only"
             />
-            <label htmlFor="bank" className="ml-3 block text-sm font-medium text-gray-700">
-              Pay with Bank
+            <label
+              htmlFor="bank"
+              className={`block p-4 border rounded-md cursor-pointer ${
+                watchPayment('paymentMethod') === 'bank'
+                  ? 'border-emerald-500 bg-emerald-50'
+                  : 'border-gray-300'
+              }`}
+            >
+              <div className="flex items-center">
+                <div className={`rounded-full w-5 h-5 border flex items-center justify-center ${
+                  watchPayment('paymentMethod') === 'bank' 
+                    ? 'border-emerald-500' 
+                    : 'border-gray-400'
+                }`}>
+                  {watchPayment('paymentMethod') === 'bank' && (
+                    <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+                  )}
+                </div>
+                <span className="ml-3 font-medium">Bank Card</span>
+              </div>
             </label>
           </div>
         </div>
+        {paymentErrors.paymentMethod && (
+          <p className="mt-1 text-sm text-red-600">{paymentErrors.paymentMethod.message}</p>
+        )}
       </div>
-  
+
+      {/* Conditional payment fields based on payment method */}
       {watchPayment('paymentMethod') === 'mpesa' && (
         <div>
-          <div className="mb-4 p-4 bg-blue-50 rounded-lg flex items-center">
-              <span className="text-blue-500 mr-2">&#9432;</span>
-              <p className="text-sm text-blue-700">
-                You will receive an M-Pesa prompt on your phone to complete the
-                payment.
-              </p>
-            </div>
           <label htmlFor="mpesaNumber" className="block text-sm font-medium text-gray-700">
-            MPESA Number
+            M-PESA Phone Number
           </label>
           <input
             type="tel"
             id="mpesaNumber"
             {...registerPayment('mpesaNumber')}
-            className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+            placeholder="e.g., 254712345678"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm"
           />
+          {paymentErrors.mpesaNumber && (
+            <p className="mt-1 text-sm text-red-600">{paymentErrors.mpesaNumber.message}</p>
+          )}
+          <p className="mt-2 text-sm text-gray-500">
+            You will receive an STK push to complete the payment.
+          </p>
         </div>
       )}
-  
+
       {watchPayment('paymentMethod') === 'bank' && (
-        <div className="space-y-6">
+        <>
           <div>
             <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-700">
               Card Number
@@ -711,12 +906,15 @@ const FarmRegistration = () => {
               type="text"
               id="cardNumber"
               {...registerPayment('bankDetails.cardNumber')}
-              placeholder="1234 5678 9012 3456"
-              className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+              placeholder="XXXX XXXX XXXX XXXX"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm"
             />
+            {paymentErrors.bankDetails?.cardNumber && (
+              <p className="mt-1 text-sm text-red-600">{paymentErrors.bankDetails.cardNumber.message}</p>
+            )}
           </div>
-  
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700">
                 Expiry Date
@@ -726,10 +924,13 @@ const FarmRegistration = () => {
                 id="expiryDate"
                 {...registerPayment('bankDetails.expiryDate')}
                 placeholder="MM/YY"
-                className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm"
               />
+              {paymentErrors.bankDetails?.expiryDate && (
+                <p className="mt-1 text-sm text-red-600">{paymentErrors.bankDetails.expiryDate.message}</p>
+              )}
             </div>
-  
+
             <div>
               <label htmlFor="cvv" className="block text-sm font-medium text-gray-700">
                 CVV
@@ -739,79 +940,140 @@ const FarmRegistration = () => {
                 id="cvv"
                 {...registerPayment('bankDetails.cvv')}
                 placeholder="123"
-                className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm"
               />
+              {paymentErrors.bankDetails?.cvv && (
+                <p className="mt-1 text-sm text-red-600">{paymentErrors.bankDetails.cvv.message}</p>
+              )}
             </div>
           </div>
-  
+
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-              Name on Card
+            <label htmlFor="cardHolderName" className="block text-sm font-medium text-gray-700">
+              Cardholder Name
             </label>
             <input
               type="text"
-              id="name"
+              id="cardHolderName"
               {...registerPayment('bankDetails.name')}
-              className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+              placeholder="John Doe"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm"
             />
+            {paymentErrors.bankDetails?.name && (
+              <p className="mt-1 text-sm text-red-600">{paymentErrors.bankDetails.name.message}</p>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Order Summary */}
+      <div className="mt-6 bg-gray-50 p-4 rounded-md">
+        <h3 className="text-sm font-medium text-gray-900">Order Summary</h3>
+        <div className="mt-2 border-t border-gray-200 pt-2">
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-500">Premium Plan (Monthly)</span>
+            <span className="font-medium text-gray-900">$19.99</span>
+          </div>
+          <div className="flex justify-between text-sm mt-1">
+            <span className="text-gray-500">Taxes</span>
+            <span className="font-medium text-gray-900">$0.00</span>
+          </div>
+          <div className="flex justify-between text-base mt-2 border-t border-gray-200 pt-2">
+            <span className="font-medium">Total</span>
+            <span className="font-medium text-gray-900">$19.99</span>
           </div>
         </div>
-      )}
-  
+      </div>
+
+      {/* Error message */}
+      {error && <p className="text-sm text-red-600">{error}</p>}
+
       <div className="flex justify-between">
         <button
           type="button"
           onClick={() => setStep(3)}
-          className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
+          disabled={isLoading}
+          className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50"
         >
           Back
         </button>
         <button
           type="submit"
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
+          disabled={isLoading || !watchPayment('paymentMethod')}
+          className="inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50"
         >
-          Complete Registration
+          {isLoading ? (
+            <>
+              <span className="inline-block h-4 w-4 rounded-full border-2 border-t-transparent border-white animate-spin mr-2"></span>
+              Processing...
+            </>
+          ) : (
+            'Complete Registration'
+          )}
         </button>
       </div>
     </form>
   );
 
-  const renderSuccess = () => {
-    console.log("Rendering success screen"); // Debugging statement
-    return (
-      <div className="text-center">
-        <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100">
-          <Check className="h-6 w-6 text-emerald-600" />
-        </div>
-        <h3 className="mt-2 text-lg font-medium text-gray-900">Registration Successful!</h3>
-        <p className="mt-2 text-sm text-gray-500">
-          Your FARM has been registered successfully. You will be redirected to your dashboard shortly.
-        </p>
-        <div className="mt-6">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-500 mx-auto"></div>
-        </div>
+  const renderSuccessScreen = () => (
+    <div className="text-center py-8">
+      <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100">
+        <Check className="h-8 w-8 text-green-600" />
       </div>
-    );
-  };
+      <h2 className="mt-6 text-2xl font-bold text-gray-900">Registration Successful!</h2>
+      <p className="mt-2 text-lg text-gray-500">
+        Your farm has been successfully registered on AgriConnect.
+      </p>
+      <p className="mt-1 text-sm text-gray-500">
+        {selectedPlan === 'free' 
+          ? 'You have started your free trial. Enjoy exploring AgriConnect!'
+          : 'Your premium account is now active. Enjoy all the premium features!'}
+      </p>
+      <div className="mt-8">
+        <button
+          type="button"
+          onClick={() => navigate('/farmer-dashboard')}
+          className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
+        >
+          Go to Dashboard
+          <ArrowRight className="ml-2 h-5 w-5" />
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="text-center text-3xl font-extrabold text-gray-900">Register Your Farm</h2>
+      <div className="sm:mx-auto sm:w-full sm:max-w-md mb-4">
+        <h2 className="text-center text-3xl font-extrabold text-gray-900">
+          Farm Registration
+        </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          Complete the following steps to join the AgriConnect Farmers Directory
+          {step === 1 && "Tell us about your farm"}
+          {step === 2 && "Create your farmer account"}
+          {step === 3 && "Choose your subscription plan"}
+          {step === 4 && "Complete your payment details"}
+          {step === 5 && "Welcome to AgriConnect!"}
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-2xl">
+      {/* Progress steps (don't show on success screen) */}
+      {step < 5 && renderStepIndicator()}
+
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          {renderStepIndicator()}
-          
+          {/* Error display at the top if global error */}
+          {error && !error.includes('image') && step !== 5 && (
+            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+              <p>{error}</p>
+            </div>
+          )}
+
           {step === 1 && renderFarmDetailsForm()}
           {step === 2 && renderFarmerDetailsForm()}
           {step === 3 && renderPlanSelection()}
           {step === 4 && renderPaymentForm()}
-          {step === 5 && renderSuccess()}
+          {step === 5 && renderSuccessScreen()}
         </div>
       </div>
     </div>
