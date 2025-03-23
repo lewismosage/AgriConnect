@@ -98,7 +98,7 @@ const Register = () => {
         is_consumer: true,
       };
       await register(registerData);
-      navigate("/dashboard");
+      navigate("/customer-dashboard");
     } catch (error) {
       console.error("Registration error:", error);
       setError(error instanceof Error ? error.message : "Registration failed");
@@ -145,51 +145,6 @@ const Register = () => {
           )}
 
           <form className="space-y-6" onSubmit={handleSubmit}>
-            <div className="flex justify-center">
-              <div className="relative">
-                <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-200">
-                  {profilePicturePreview ? (
-                    <img
-                      src={profilePicturePreview}
-                      alt="Profile Preview"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                      <User className="h-12 w-12 text-gray-400" />
-                    </div>
-                  )}
-                </div>
-                <label
-                  htmlFor="profilePicture"
-                  className="absolute bottom-0 right-0 bg-white p-1 rounded-full border border-gray-300 cursor-pointer"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6 text-gray-600"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
-                  <input
-                    id="profilePicture"
-                    name="profilePicture"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleProfilePictureChange}
-                    className="hidden"
-                  />
-                </label>
-              </div>
-            </div>
-
             {/* Personal details */}
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div>

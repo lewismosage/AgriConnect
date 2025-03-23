@@ -69,6 +69,20 @@ export interface Farm {
   image: string;
 }
 
+export interface Product {
+  id: string;
+  name: string;
+  farm: Farm;
+  price: number;
+  rating: number;
+  image?: string;
+  category: string;
+  description: string;
+  isOrganic: boolean;
+  inStock: boolean;
+  localDelivery: boolean;
+}
+
 // Update the User interface to include farmer_profile
 interface User {
   id: number;
@@ -237,7 +251,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const register = async (userData: RegisterData) => {
     try {
-      const response = await axios.post("/api/auth/register/", userData);
+      const response = await axios.post("/api/accounts/register/", userData);
       const { access, user } = response.data;
       localStorage.setItem("token", access);
       localStorage.setItem("user", JSON.stringify(user));

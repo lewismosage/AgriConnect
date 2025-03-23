@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import {
   ShoppingBag, PlusCircle, Filter, Edit, Trash2, 
   X, ArrowLeft, Search, Image as ImageIcon
@@ -13,6 +14,7 @@ interface Product {
   unit: string;
   price: number;
   image?: string;
+  farm: string; // Added farm ID
 }
 
 // Initial product categories
@@ -28,55 +30,6 @@ const productCategories = [
   'Other'
 ];
 
-// Initial demo products
-const initialProducts: Product[] = [
-  {
-    id: '1',
-    name: 'Organic Tomatoes',
-    category: 'Vegetables',
-    quantity: 45,
-    unit: 'lb',
-    price: 4.99,
-    image: '/api/placeholder/100/100'
-  },
-  {
-    id: '2',
-    name: 'Farm Fresh Eggs',
-    category: 'Eggs',
-    quantity: 12,
-    unit: 'dozen',
-    price: 6.99,
-    image: '/api/placeholder/100/100'
-  },
-  {
-    id: '3',
-    name: 'Raw Honey',
-    category: 'Honey',
-    quantity: 8,
-    unit: 'jar',
-    price: 12.99,
-    image: '/api/placeholder/100/100'
-  },
-  {
-    id: '4',
-    name: 'Organic Apples',
-    category: 'Fruits',
-    quantity: 35,
-    unit: 'lb',
-    price: 3.49,
-    image: '/api/placeholder/100/100'
-  },
-  {
-    id: '5',
-    name: 'Grass-fed Milk',
-    category: 'Dairy',
-    quantity: 15,
-    unit: 'gallon',
-    price: 7.99,
-    image: '/api/placeholder/100/100'
-  }
-];
-
 const FarmProducts: React.FC = () => {
   // State management
   const [products, setProducts] = useState<Product[]>([]);
@@ -87,7 +40,7 @@ const FarmProducts: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [productForm, setProductForm] = useState<Omit<Product, 'id'>>({
+  const [productForm, setProductForm] = useState<Omit<Product, 'id' | 'farm'>>({
     name: '',
     category: 'Vegetables',
     quantity: 0,
@@ -96,24 +49,26 @@ const FarmProducts: React.FC = () => {
   });
   const [productImagePreview, setProductImagePreview] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [farmId, setFarmId] = useState<string | null>(null);
 
-  // Load products from localStorage on component mount
+  // Fetch farm ID and products on component mount
   useEffect(() => {
-    const savedProducts = localStorage.getItem('farmProducts');
-    if (savedProducts) {
-      setProducts(JSON.parse(savedProducts));
-    } else {
-      setProducts(initialProducts);
-      localStorage.setItem('farmProducts', JSON.stringify(initialProducts));
-    }
+    const fetchFarmAndProducts = async () => {
+      try {
+        // Fetch farm ID
+        const farmResponse = await axios.get('/api/farms/my-farm/');
+        setFarmId(farmResponse.data.id);
+
+        // Fetch products for the farm
+        const productsResponse = await axios.get(`/api/farms/${farmResponse.data.id}/products/`);
+        setProducts(productsResponse.data);
+      } catch (error) {
+        console.error('Failed to fetch farm or products:', error);
+      }
+    };
+
+    fetchFarmAndProducts();
   }, []);
-
-  // Update localStorage when products change
-  useEffect(() => {
-    if (products.length > 0) {
-      localStorage.setItem('farmProducts', JSON.stringify(products));
-    }
-  }, [products]);
 
   // Filter products based on selected category and search query
   useEffect(() => {
@@ -171,49 +126,75 @@ const FarmProducts: React.FC = () => {
   };
 
   // Add a new product
-  const handleAddProduct = () => {
-    const newProduct: Product = {
-      id: Date.now().toString(),
-      ...productForm,
-      image: productImagePreview || undefined
-    };
-    
-    setProducts(prev => [...prev, newProduct]);
-    resetForm();
-    setIsAddModalOpen(false);
+  const handleAddProduct = async () => {
+    if (!farmId) return;
+
+    const formData = new FormData();
+    formData.append('name', productForm.name);
+    formData.append('category', productForm.category);
+    formData.append('quantity', productForm.quantity.toString());
+    formData.append('unit', productForm.unit);
+    formData.append('price', productForm.price.toString());
+    if (productImagePreview) {
+      const blob = await fetch(productImagePreview).then(res => res.blob());
+      formData.append('image', blob);
+    }
+
+    try {
+      const response = await axios.post('/api/products/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      setProducts(prev => [...prev, response.data]);
+      resetForm();
+      setIsAddModalOpen(false);
+    } catch (error) {
+      console.error('Failed to add product:', error);
+    }
   };
 
   // Edit existing product
-  const handleEditProduct = () => {
-    if (!currentProduct) return;
-    
-    setProducts(prev => 
-      prev.map(product => 
-        product.id === currentProduct.id 
-          ? {
-              ...product,
-              name: productForm.name,
-              category: productForm.category,
-              quantity: productForm.quantity,
-              unit: productForm.unit,
-              price: productForm.price,
-              image: productImagePreview || product.image
-            }
-          : product
-      )
-    );
-    
-    resetForm();
-    setIsEditModalOpen(false);
+  const handleEditProduct = async () => {
+    if (!currentProduct || !farmId) return;
+
+    const formData = new FormData();
+    formData.append('name', productForm.name);
+    formData.append('category', productForm.category);
+    formData.append('quantity', productForm.quantity.toString());
+    formData.append('unit', productForm.unit);
+    formData.append('price', productForm.price.toString());
+    if (productImagePreview) {
+      const blob = await fetch(productImagePreview).then(res => res.blob());
+      formData.append('image', blob);
+    }
+
+    try {
+      const response = await axios.put(`/api/products/${currentProduct.id}/`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      setProducts(prev => prev.map(product => product.id === currentProduct.id ? response.data : product));
+      resetForm();
+      setIsEditModalOpen(false);
+    } catch (error) {
+      console.error('Failed to update product:', error);
+    }
   };
 
   // Delete a product
-  const handleDeleteProduct = () => {
+  const handleDeleteProduct = async () => {
     if (!currentProduct) return;
-    
-    setProducts(prev => prev.filter(product => product.id !== currentProduct.id));
-    setCurrentProduct(null);
-    setIsDeleteModalOpen(false);
+
+    try {
+      await axios.delete(`/api/products/${currentProduct.id}/`);
+      setProducts(prev => prev.filter(product => product.id !== currentProduct.id));
+      setCurrentProduct(null);
+      setIsDeleteModalOpen(false);
+    } catch (error) {
+      console.error('Failed to delete product:', error);
+    }
   };
 
   // Open edit modal with current product data

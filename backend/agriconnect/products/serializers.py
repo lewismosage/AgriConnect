@@ -1,11 +1,20 @@
+# products/serializers.py
 from rest_framework import serializers
 from .models import Product
+from farms.models import Farm
+
+class FarmSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Farm
+        fields = ['id', 'name', 'location']
 
 class ProductSerializer(serializers.ModelSerializer):
+    farm = FarmSerializer(read_only=True) # Include farm details
+
     class Meta:
         model = Product
-        fields = ['id', 'name', 'category', 'quantity', 'unit', 'price', 'image']
-        read_only_fields = ['id']
+        fields = ['id', 'name', 'category', 'quantity', 'unit', 'price', 'image', 'farm']
+        read_only_fields = ['id', 'farm']
 
     def create(self, validated_data):
         # Automatically associate the product with the farm of the logged-in farmer

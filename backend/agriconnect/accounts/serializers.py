@@ -13,7 +13,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'email', 'password', 'first_name', 'last_name', 'full_name', 'phone_number', 'profile_picture', 'user_type', 'farmer_profile']
         extra_kwargs = {
             'password': {'write_only': True},
-            'username': {'required': False},  # Make username optional
+            'username': {'required': False},
         }
 
     def get_full_name(self, obj):
@@ -31,9 +31,8 @@ class UserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         if 'username' not in validated_data:
-            # Use the email as the username
             email = validated_data.get('email')
-            username = email.split('@')[0]  # Use the part before the @ symbol
+            username = email.split('@')[0]
             counter = 1
             while User.objects.filter(username=username).exists():
                 username = f"{email.split('@')[0]}_{counter}"
@@ -45,10 +44,11 @@ class UserSerializer(serializers.ModelSerializer):
 class FarmerProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = FarmerProfile
-        fields = ['farm_name', 'location', 'specialty', 'description', 'farm_image']
+        fields = ['farm_name', 'location', 'specialty', 'description', 'farm_image', 'farm']
         extra_kwargs = {
-            'farm_name': {'required': False},  # Make farm_name optional
+            'farm_name': {'required': False},
             'farm_image': {'required': False},
+            'farm': {'required': False},
         }
 
 class FarmerRegistrationSerializer(serializers.Serializer):
@@ -66,9 +66,8 @@ class FarmerRegistrationSerializer(serializers.Serializer):
         farmer_profile_data = validated_data.pop('farmer_profile')
 
         if 'username' not in user_data:
-            # Use the email as the username
             email = user_data.get('email')
-            username = email.split('@')[0]  # Use the part before the @ symbol
+            username = email.split('@')[0]
             counter = 1
             while User.objects.filter(username=username).exists():
                 username = f"{email.split('@')[0]}_{counter}"
@@ -76,15 +75,21 @@ class FarmerRegistrationSerializer(serializers.Serializer):
             user_data['username'] = username
 
         user = User.objects.create_user(**user_data)
-        farmer_profile = FarmerProfile.objects.create(user=user, **farmer_profile_data)
 
-        # Create a Farm instance for the farmer using the farm_name from the farmer_profile
-        Farm.objects.create(
-            name=farmer_profile.farm_name,  # Use the farm_name from the farmer_profile
-            location=farmer_profile.location,
-            description=farmer_profile.description,
+        # Create the Farm instance
+        farm = Farm.objects.create(
+            name=farmer_profile_data.get('farm_name', 'Unnamed Farm'),
+            location=farmer_profile_data.get('location'),
+            description=farmer_profile_data.get('description'),
             farmer=user,
-            specialty=farmer_profile.specialty  # Include the specialty
+            specialty=farmer_profile_data.get('specialty'),
+        )
+
+        # Create the FarmerProfile and link it to the Farm
+        farmer_profile = FarmerProfile.objects.create(
+            user=user,
+            farm=farm,  # Link the Farm instance
+            **farmer_profile_data
         )
 
         return {

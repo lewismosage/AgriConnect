@@ -1,44 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Filter } from 'lucide-react';
-import ProductCard from '../components/ProductCard';
-import { Product } from '../types';
-
-const SAMPLE_PRODUCTS: Product[] = [
-  {
-    id: '1',
-    name: 'Organic Tomatoes',
-    farm: "Miller's Family Farm",
-    price: 4.99,
-    rating: 4.8,
-    image: 'https://images.unsplash.com/photo-1546470427-1ec0a9b0be9b',
-    category: 'Vegetables',
-    description: 'Fresh, locally grown organic tomatoes',
-    isOrganic: true,
-    inStock: true,
-    localDelivery: true
-  },
-  {
-    id: '2',
-    name: 'Farm Fresh Eggs',
-    farm: 'Happy Hens Farm',
-    price: 6.99,
-    rating: 4.8,
-    image: 'https://images.unsplash.com/photo-1569288052389-dac9b0ac7c4a',
-    category: 'Dairy & Eggs',
-    description: 'Free-range eggs from happy hens',
-    isOrganic: true,
-    inStock: true,
-    localDelivery: true
-  },
-  // Add more sample products as needed
-];
+import ProductCard from './../pages/ProductCard';
+import { Product } from './../contexts/AuthContext';
+import axios from 'axios';
 
 const ProductsPage: React.FC = () => {
+  const [products, setProducts] = useState<Product[]>([]);
   const [filters, setFilters] = useState({
     organicOnly: false,
     inStock: false,
     localDelivery: false
   });
+
+  // Fetch all products from the backend
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await axios.get('/api/products/');
+        setProducts(response.data);
+      } catch (error) {
+        console.error('Failed to fetch products:', error);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   const handleAddToCart = (product: Product) => {
     // Implement cart functionality
@@ -62,7 +48,7 @@ const ProductsPage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {SAMPLE_PRODUCTS.map(product => (
+          {products.map(product => (
             <ProductCard
               key={product.id}
               product={product}
