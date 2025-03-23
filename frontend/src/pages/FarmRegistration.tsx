@@ -55,7 +55,7 @@ const FarmRegistration = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [farmImage, setFarmImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
@@ -105,14 +105,14 @@ const FarmRegistration = () => {
     location: '',
     specialty: '',
     description: '',
-    profileImage: null as File | null,
+    farmImage: null as File | null,
   });
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setProfileImage(file);
-      
+      setFarmImage(file); 
+  
       // Create a preview URL for the image
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -155,14 +155,14 @@ const FarmRegistration = () => {
   const onSubmitFarmDetails = async (data: FarmDetailsForm) => {
     try {
       setIsLoading(true);
-
-      // Validate profile image
-      if (!profileImage) {
+  
+      // Validate farm image
+      if (!farmImage) { // Use farmImage instead of profileImage
         setError('Please upload a farm profile image');
         setIsLoading(false);
         return;
       }
-
+  
       // Update formData state with farm details
       setFormData((prev) => ({
         ...prev,
@@ -170,9 +170,9 @@ const FarmRegistration = () => {
         location: data.location,
         specialty: data.specialty,
         description: data.description,
-        profileImage: profileImage,
+        farmImage: farmImage, 
       }));
-
+  
       setStep(2); // Move to the next step
     } catch (error) {
       setError('Failed to save farm details. Please try again.');
@@ -248,8 +248,7 @@ const FarmRegistration = () => {
           location: formData.location,
           specialty: formData.specialty,
           description: formData.description,
-          // Include profile image if available
-          profile_image: formData.profileImage,
+          farm_image: farmImage, 
         },
       };
   
@@ -358,7 +357,7 @@ const FarmRegistration = () => {
           id="description"
           rows={3}
           {...registerFarm('description')}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm"
+          className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
         />
         {farmErrors.description && (
           <p className="mt-1 text-sm text-red-600">{farmErrors.description.message}</p>
@@ -380,7 +379,7 @@ const FarmRegistration = () => {
             <input
               ref={fileInputRef}
               type="file"
-              id="profileImage"
+              id="farmImage" // Use farmImage instead of profileImage
               accept="image/*"
               onChange={handleImageChange}
               className="sr-only"
@@ -390,7 +389,7 @@ const FarmRegistration = () => {
                 <div className="flex flex-col items-center justify-center">
                   <img 
                     src={imagePreview} 
-                    alt="Profile Preview" 
+                    alt="Farm Preview" 
                     className="h-24 w-24 object-cover rounded-md"
                   />
                   <span className="text-xs text-emerald-500 mt-2">Change image</span>

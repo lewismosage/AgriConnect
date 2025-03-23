@@ -103,8 +103,35 @@ class UserDetailView(APIView):
         return Response(serializer.data)
 
 class FarmerRegistrationView(APIView):
+    parser_classes = [MultiPartParser, FormParser]
+
     def post(self, request):
-        serializer = FarmerRegistrationSerializer(data=request.data)
+        # Manually parse the nested user and farmer_profile data
+        user_data = {
+            'email': request.data.get('user[email]'),
+            'password': request.data.get('user[password]'),
+            'first_name': request.data.get('user[first_name]'),
+            'last_name': request.data.get('user[last_name]'),
+            'phone_number': request.data.get('user[phone_number]'),
+            'user_type': request.data.get('user[user_type]'),
+        }
+
+        farmer_profile_data = {
+            'farm_name': request.data.get('farmer_profile[farm_name]'),
+            'location': request.data.get('farmer_profile[location]'),
+            'specialty': request.data.get('farmer_profile[specialty]'),
+            'description': request.data.get('farmer_profile[description]'),
+            'farm_image': request.FILES.get('farmer_profile[farm_image]'),
+        }
+
+        # Combine the data into the expected format
+        data = {
+            'user': user_data,
+            'farmer_profile': farmer_profile_data,
+        }
+
+        # Pass the parsed data to the serializer
+        serializer = FarmerRegistrationSerializer(data=data)
         if serializer.is_valid():
             data = serializer.save()
             refresh = RefreshToken.for_user(data['user'])

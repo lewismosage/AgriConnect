@@ -12,9 +12,9 @@ interface Product {
   category: string;
   quantity: number;
   unit: string;
-  price: number;
+  price: number; // Ensure price is a number
   image?: string;
-  farm: string; // Added farm ID
+  farm: string;
 }
 
 // Initial product categories
@@ -58,16 +58,16 @@ const FarmProducts: React.FC = () => {
         // Fetch farm ID
         const farmResponse = await axios.get('/api/farms/my-farm/');
         setFarmId(farmResponse.data.id);
-    
+
         // Fetch products for the farm
         const productsResponse = await axios.get(`/api/farms/${farmResponse.data.id}/products/`);
-        
+
         // Ensure price is a number
         const products = productsResponse.data.map((product: Product) => ({
           ...product,
-          price: typeof product.price === 'string' ? parseFloat(product.price) : product.price, // Handle string prices
+          price: typeof product.price === 'string' ? parseFloat(product.price) : product.price, // Convert string to number
         }));
-    
+
         setProducts(products);
       } catch (error) {
         console.error('Failed to fetch farm or products:', error);
@@ -80,11 +80,11 @@ const FarmProducts: React.FC = () => {
   // Filter products based on selected category and search query
   useEffect(() => {
     let result = products;
-    
+
     if (selectedCategory !== 'All') {
       result = result.filter(product => product.category === selectedCategory);
     }
-    
+
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(product => 
@@ -92,7 +92,7 @@ const FarmProducts: React.FC = () => {
         product.category.toLowerCase().includes(query)
       );
     }
-    
+
     setFilteredProducts(result);
   }, [selectedCategory, products, searchQuery]);
 
@@ -101,10 +101,10 @@ const FarmProducts: React.FC = () => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     handleResize();
     window.addEventListener('resize', handleResize);
-    
+
     return () => {
       window.removeEventListener('resize', handleResize);
     };
@@ -125,7 +125,7 @@ const FarmProducts: React.FC = () => {
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    
+
     setProductForm(prev => ({
       ...prev,
       [name]: name === 'quantity' || name === 'price' ? parseFloat(value) || 0 : value
@@ -135,20 +135,20 @@ const FarmProducts: React.FC = () => {
   // Add a new product
   const handleAddProduct = async () => {
     if (!farmId) return;
-  
+
     const formData = new FormData();
     formData.append('name', productForm.name);
     formData.append('category', productForm.category);
     formData.append('quantity', productForm.quantity.toString());
     formData.append('unit', productForm.unit);
     formData.append('price', productForm.price.toString());
-  
+
     // Append the image file if it exists
     if (productImagePreview) {
       const blob = await fetch(productImagePreview).then((res) => res.blob());
       formData.append('image', blob, 'product-image.png'); // Provide a filename
     }
-  
+
     try {
       const response = await axios.post('/api/products/', formData, {
         headers: {
@@ -166,20 +166,20 @@ const FarmProducts: React.FC = () => {
   // Edit existing product
   const handleEditProduct = async () => {
     if (!currentProduct || !farmId) return;
-  
+
     const formData = new FormData();
     formData.append('name', productForm.name);
     formData.append('category', productForm.category);
     formData.append('quantity', productForm.quantity.toString());
     formData.append('unit', productForm.unit);
     formData.append('price', productForm.price.toString());
-  
+
     // Append the image file if it exists
     if (productImagePreview) {
       const blob = await fetch(productImagePreview).then((res) => res.blob());
       formData.append('image', blob, 'product-image.png'); // Provide a filename
     }
-  
+
     try {
       const response = await axios.put(`/api/products/${currentProduct.id}/`, formData, {
         headers: {
@@ -252,7 +252,7 @@ const FarmProducts: React.FC = () => {
             <ShoppingBag className="w-6 h-6 text-green-600 mr-2" />
             <h1 className="text-2xl font-bold text-gray-900">Farm Products</h1>
           </div>
-          
+
           <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3 w-full md:w-auto">
             <div className="relative flex-grow md:max-w-xs">
               <input
@@ -264,7 +264,7 @@ const FarmProducts: React.FC = () => {
               />
               <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
             </div>
-            
+
             <button
               onClick={() => {
                 resetForm();
@@ -348,7 +348,7 @@ const FarmProducts: React.FC = () => {
                       {product.quantity} {product.unit}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ${product.price.toFixed(2)}/{product.unit}
+                      ${typeof product.price === 'number' ? product.price.toFixed(2) : '0.00'}/{product.unit}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end space-x-2">
@@ -402,7 +402,7 @@ const FarmProducts: React.FC = () => {
                       </span>
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 mt-3">
                     <div className="text-sm text-gray-500">
                       <span className="block text-xs text-gray-400">Quantity</span>
@@ -410,10 +410,10 @@ const FarmProducts: React.FC = () => {
                     </div>
                     <div className="text-sm text-gray-900">
                       <span className="block text-xs text-gray-400">Price</span>
-                      ${product.price.toFixed(2)}/{product.unit}
+                      ${typeof product.price === 'number' ? product.price.toFixed(2) : '0.00'}/{product.unit}
                     </div>
                   </div>
-                  
+
                   <div className="border-t mt-3 pt-3 flex justify-end space-x-2">
                     <button
                       onClick={() => openEditModal(product)}
@@ -458,7 +458,7 @@ const FarmProducts: React.FC = () => {
                   <X className="h-5 w-5" />
                 </button>
               </div>
-              
+
               <div className="space-y-4">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
@@ -621,7 +621,7 @@ const FarmProducts: React.FC = () => {
               <p className="mb-6">
                 Are you sure you want to delete <span className="font-medium">{currentProduct.name}</span>? This action cannot be undone.
               </p>
-              
+
               <div className="flex justify-end space-x-4">
                 <button
                   type="button"

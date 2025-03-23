@@ -9,6 +9,8 @@ class Farm(models.Model):
     image = models.ImageField(upload_to='farm_images/', null=True, blank=True)
     farmer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='farms')
     specialty = models.CharField(max_length=255, default="Agriculture")
+    rating = models.FloatField(default=0)
+    ratings = models.JSONField(default=list)
 
     def __str__(self):
         return self.name

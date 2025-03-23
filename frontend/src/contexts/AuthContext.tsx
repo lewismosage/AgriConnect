@@ -281,22 +281,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   
   const registerFarmer = async (farmerData: FarmerRegisterData) => {
     try {
-      const response = await axios.post("/api/accounts/register/farmer/", farmerData);
+      // Create a FormData object
+      const formData = new FormData();
+  
+      // Append user data as nested fields
+      formData.append('user[email]', farmerData.user.email);
+      formData.append('user[password]', farmerData.user.password);
+      formData.append('user[first_name]', farmerData.user.first_name);
+      formData.append('user[last_name]', farmerData.user.last_name);
+      formData.append('user[phone_number]', farmerData.user.phone_number);
+      formData.append('user[user_type]', farmerData.user.user_type);
+  
+      // Append farmer profile data as nested fields
+      formData.append('farmer_profile[farm_name]', farmerData.farmer_profile.farm_name);
+      formData.append('farmer_profile[location]', farmerData.farmer_profile.location);
+      formData.append('farmer_profile[specialty]', farmerData.farmer_profile.specialty);
+      formData.append('farmer_profile[description]', farmerData.farmer_profile.description);
+  
+      // Append the farm image file if it exists
+      if (farmerData.farmer_profile.farm_image) {
+        formData.append('farmer_profile[farm_image]', farmerData.farmer_profile.farm_image);
+      }
+  
+      // Send the request with multipart/form-data
+      const response = await axios.post('/api/accounts/register/farmer/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data', // Set the content type
+        },
+      });
+  
       const { access, user, farmer_profile } = response.data;
-      localStorage.setItem("token", access);
-      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem('token', access);
+      localStorage.setItem('user', JSON.stringify(user));
       setUser(user);
-      toast.success("Farmer registration successful!");
+      toast.success('Farmer registration successful!');
       return response.data; // Return the response data
     } catch (error) {
-      console.error("Farmer registration failed:", error);
+      console.error('Farmer registration failed:', error);
       if (axios.isAxiosError(error) && error.response?.data) {
         const errorMessage = Object.entries(error.response.data)
           .map(([key, value]) => `${key}: ${value}`)
-          .join("\n");
+          .join('\n');
         toast.error(errorMessage);
       } else {
-        toast.error("Farmer registration failed. Please try again.");
+        toast.error('Farmer registration failed. Please try again.');
       }
       throw error;
     }

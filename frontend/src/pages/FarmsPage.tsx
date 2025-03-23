@@ -45,7 +45,7 @@ const FarmsPage: React.FC = () => {
           rating: farm.rating || 0,
           specialty: farm.specialty || 'No specialty',
           description: farm.description,
-          image: farm.image || 'https://via.placeholder.com/300',
+          image: farm.farm_image || farm.image || 'https://via.placeholder.com/300', // Use farm_image if available
         }));
 
         setFarms(transformedFarms);
@@ -86,11 +86,16 @@ const FarmsPage: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {farms.map((farm) => (
-            <Link key={farm.id} to={`/farms/${farm.id}`} className="block">
+            <Link
+              key={farm.id}
+              to={`/farms/${farm.id}`}
+              state={{ farm }} // Pass the farm data as state
+              className="block"
+            >
               <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition duration-300">
                 <div className="relative h-48">
                   <img
-                    src={farm.image || 'https://via.placeholder.com/300'} // Fallback image
+                    src={farm.image} // Use the farm image
                     alt={farm.name}
                     className="w-full h-full object-cover"
                   />
