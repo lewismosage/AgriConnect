@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Star, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { Farm } from '../contexts/AuthContext'; // Import Farm from AuthContext
+import { Farm } from '../contexts/AuthContext';
 
 const SAMPLE_FARMS: Farm[] = [
   {
@@ -12,7 +12,7 @@ const SAMPLE_FARMS: Farm[] = [
     rating: 4.8,
     specialty: 'Heirloom Vegetables',
     description: 'Three generations of sustainable farming, specializing in heirloom vegetables and organic practices.',
-    image: 'https://images.unsplash.com/photo-1500076656116-558758c991c1'
+    image: 'https://images.unsplash.com/photo-1500076656116-558758c991c1',
   },
   {
     id: '2',
@@ -21,8 +21,8 @@ const SAMPLE_FARMS: Farm[] = [
     rating: 4.9,
     specialty: 'Free-Range Eggs',
     description: 'Family-owned farm dedicated to raising happy, healthy hens for the freshest eggs.',
-    image: 'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7'
-  }
+    image: 'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7',
+  },
 ];
 
 const FarmsPage: React.FC = () => {
@@ -34,7 +34,7 @@ const FarmsPage: React.FC = () => {
   useEffect(() => {
     const fetchFarms = async () => {
       try {
-        const response = await axios.get('/api/farms/'); 
+        const response = await axios.get('/api/farms/');
         console.log('Backend response:', response.data);
 
         // Transform the data to match the Farm type
@@ -42,7 +42,7 @@ const FarmsPage: React.FC = () => {
           id: farm.id,
           name: farm.name,
           location: farm.location,
-          rating: farm.rating || 0, 
+          rating: farm.rating || 0,
           specialty: farm.specialty || 'No specialty',
           description: farm.description,
           image: farm.image || 'https://via.placeholder.com/300',
@@ -65,7 +65,7 @@ const FarmsPage: React.FC = () => {
   if (loading) {
     return (
       <div className="bg-gray-50 min-h-screen flex items-center justify-center">
-        <div className="text-lg text-gray-700">Loading farms...</div>
+        <div className="spinner"></div> {/* Circular spinner */}
       </div>
     );
   }
@@ -83,9 +83,9 @@ const FarmsPage: React.FC = () => {
     <div className="bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Our Local Farmers</h1>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {farms.map(farm => (
+          {farms.map((farm) => (
             <Link key={farm.id} to={`/farms/${farm.id}`} className="block">
               <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition duration-300">
                 <div className="relative h-48">
