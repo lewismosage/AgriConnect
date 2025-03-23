@@ -9,7 +9,8 @@ class FarmSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'location']
 
 class ProductSerializer(serializers.ModelSerializer):
-    farm = FarmSerializer(read_only=True) # Include farm details
+    farm = FarmSerializer(read_only=True)  # Include farm details
+    image = serializers.ImageField(required=False)  # Allow image uploads
 
     class Meta:
         model = Product

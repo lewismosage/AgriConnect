@@ -1,6 +1,6 @@
 import React from 'react';
 import { Heart } from 'lucide-react';
-import { Product } from '../types';
+import { Product } from '../contexts/AuthContext';
 
 interface ProductCardProps {
   product: Product;
@@ -9,13 +9,20 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, onToggleWishlist }) => {
+  // Fallback image URL
+  const imageUrl = product.image || 'https://via.placeholder.com/300'; // Replace with a valid fallback image URL
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
       <div className="relative">
         <img
-          src={product.image}
+          src={imageUrl} // Use the fallback image if product.image is missing
           alt={product.name}
           className="w-full h-48 object-cover"
+          onError={(e) => {
+            // Handle image loading errors
+            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/300';
+          }}
         />
         {product.isOrganic && (
           <span className="absolute top-2 left-2 bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">
@@ -32,7 +39,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, onToggl
 
       <div className="p-4">
         <h3 className="text-lg font-semibold mb-1">{product.name}</h3>
-        <p className="text-sm text-gray-600 mb-2">{product.farm}</p>
+        <p className="text-sm text-gray-600 mb-2">{product.farm.name}</p> {/* Access farm.name */}
         
         <div className="flex items-center mb-3">
           <div className="flex items-center">
@@ -53,7 +60,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, onToggl
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="text-xl font-bold text-green-600">${product.price.toFixed(2)}</span>
+          <span className="text-xl font-bold text-green-600">
+            ${typeof product.price === 'number' ? product.price.toFixed(2) : 'N/A'}
+          </span>
           <button
             onClick={() => onAddToCart(product)}
             className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-300"

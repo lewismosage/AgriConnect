@@ -2,10 +2,12 @@
 from rest_framework import generics, permissions
 from .models import Product
 from .serializers import ProductSerializer
+from rest_framework.parsers import MultiPartParser, FormParser
 
 class ProductListCreateView(generics.ListCreateAPIView):
     serializer_class = ProductSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    parser_classes = [MultiPartParser, FormParser]
 
     def get_queryset(self):
         # Check if a specific farm is requested

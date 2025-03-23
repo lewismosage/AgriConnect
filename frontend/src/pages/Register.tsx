@@ -92,6 +92,8 @@ const Register = () => {
       const registerData = {
         email: formData.email,
         password: formData.password,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
         full_name: `${formData.firstName} ${formData.lastName}`,
         phone_number: formData.phoneNumber,
         is_farmer: false,

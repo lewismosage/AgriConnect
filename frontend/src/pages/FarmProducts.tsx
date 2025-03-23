@@ -58,10 +58,17 @@ const FarmProducts: React.FC = () => {
         // Fetch farm ID
         const farmResponse = await axios.get('/api/farms/my-farm/');
         setFarmId(farmResponse.data.id);
-
+    
         // Fetch products for the farm
         const productsResponse = await axios.get(`/api/farms/${farmResponse.data.id}/products/`);
-        setProducts(productsResponse.data);
+        
+        // Ensure price is a number
+        const products = productsResponse.data.map((product: Product) => ({
+          ...product,
+          price: typeof product.price === 'string' ? parseFloat(product.price) : product.price, // Handle string prices
+        }));
+    
+        setProducts(products);
       } catch (error) {
         console.error('Failed to fetch farm or products:', error);
       }
@@ -128,25 +135,27 @@ const FarmProducts: React.FC = () => {
   // Add a new product
   const handleAddProduct = async () => {
     if (!farmId) return;
-
+  
     const formData = new FormData();
     formData.append('name', productForm.name);
     formData.append('category', productForm.category);
     formData.append('quantity', productForm.quantity.toString());
     formData.append('unit', productForm.unit);
     formData.append('price', productForm.price.toString());
+  
+    // Append the image file if it exists
     if (productImagePreview) {
-      const blob = await fetch(productImagePreview).then(res => res.blob());
-      formData.append('image', blob);
+      const blob = await fetch(productImagePreview).then((res) => res.blob());
+      formData.append('image', blob, 'product-image.png'); // Provide a filename
     }
-
+  
     try {
       const response = await axios.post('/api/products/', formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          'Content-Type': 'multipart/form-data', // Set the correct content type
         },
       });
-      setProducts(prev => [...prev, response.data]);
+      setProducts((prev) => [...prev, response.data]);
       resetForm();
       setIsAddModalOpen(false);
     } catch (error) {
@@ -157,25 +166,29 @@ const FarmProducts: React.FC = () => {
   // Edit existing product
   const handleEditProduct = async () => {
     if (!currentProduct || !farmId) return;
-
+  
     const formData = new FormData();
     formData.append('name', productForm.name);
     formData.append('category', productForm.category);
     formData.append('quantity', productForm.quantity.toString());
     formData.append('unit', productForm.unit);
     formData.append('price', productForm.price.toString());
+  
+    // Append the image file if it exists
     if (productImagePreview) {
-      const blob = await fetch(productImagePreview).then(res => res.blob());
-      formData.append('image', blob);
+      const blob = await fetch(productImagePreview).then((res) => res.blob());
+      formData.append('image', blob, 'product-image.png'); // Provide a filename
     }
-
+  
     try {
       const response = await axios.put(`/api/products/${currentProduct.id}/`, formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          'Content-Type': 'multipart/form-data', // Set the correct content type
         },
       });
-      setProducts(prev => prev.map(product => product.id === currentProduct.id ? response.data : product));
+      setProducts((prev) =>
+        prev.map((product) => (product.id === currentProduct.id ? response.data : product))
+      );
       resetForm();
       setIsEditModalOpen(false);
     } catch (error) {

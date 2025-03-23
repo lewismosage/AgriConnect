@@ -38,12 +38,16 @@ const CustomerDashboard: React.FC = () => {
           {/* Sidebar Navigation */}
           <div className="md:col-span-1">
             <div className="bg-white p-6 rounded-lg shadow-sm">
-              <div className="flex items-center space-x-4 mb-6">
+            <div className="flex items-center space-x-4 mb-6">
                 <div className="bg-green-100 p-3 rounded-full">
                   <User className="w-6 h-6 text-green-600" />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900">{user?.first_name} {user?.last_name}</p>
+                  <p className="font-medium text-gray-900">
+                    {user?.first_name && user?.last_name
+                      ? `${user.first_name} ${user.last_name}`
+                      : user?.username || user?.email} {/* Fallback to username or email */}
+                  </p>
                   <p className="text-sm text-gray-500">{user?.email}</p>
                 </div>
               </div>

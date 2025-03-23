@@ -17,7 +17,14 @@ const ProductsPage: React.FC = () => {
     const fetchProducts = async () => {
       try {
         const response = await axios.get('/api/products/');
-        setProducts(response.data);
+        
+        // Ensure price is a number
+        const products = response.data.map((product: Product) => ({
+          ...product,
+          price: typeof product.price === 'string' ? parseFloat(product.price) : product.price, // Convert price to a number
+        }));
+    
+        setProducts(products);
       } catch (error) {
         console.error('Failed to fetch products:', error);
       }

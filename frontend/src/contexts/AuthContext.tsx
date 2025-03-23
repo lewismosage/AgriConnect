@@ -61,10 +61,10 @@ interface FarmerProfile {
 //Farm Type
 export interface Farm {
   id: string;
-  name: string;
-  location: string; 
-  rating?: number; 
-  specialty?: string; 
+  name: string; 
+  location: string;
+  rating?: number;
+  specialty?: string;
   description: string;
   image: string;
 }
