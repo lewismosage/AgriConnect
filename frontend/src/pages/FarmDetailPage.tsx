@@ -5,13 +5,15 @@ import axios from 'axios';
 import { Farm } from '../contexts/AuthContext';
 import StarRating from '../components/StarRating';
 
-// Product type definition
 interface Product {
   id: string;
   name: string;
   season: string;
   price: string;
   unit: string;
+  category: string;
+  description: string;
+  image?: string;
 }
 
 const FarmDetailPage: React.FC = () => {
@@ -30,17 +32,18 @@ const FarmDetailPage: React.FC = () => {
   // Fetch farm details and products
   useEffect(() => {
     const fetchFarmDetails = async () => {
-      if (!farmId || location.state?.farm) return;
-
+      setLoading(true);
       try {
-        // Fetch farm data
-        const farmResponse = await axios.get(`/api/farms/${farmId}`);
-        setFarm(farmResponse.data);
-        setRating(farmResponse.data.rating);
-        setTotalRatings(farmResponse.data.ratings.length);
+        // Fetch farm data if not passed via state
+        if (!location.state?.farm) {
+          const farmResponse = await axios.get(`/api/farms/${farmId}/`);
+          setFarm(farmResponse.data);
+          setRating(farmResponse.data.rating);
+          setTotalRatings(farmResponse.data.ratings.length);
+        }
 
-        // Fetch products for the farm
-        const productsResponse = await axios.get(`/api/farms/${farmId}/products`);
+        // Always fetch products for the farm
+        const productsResponse = await axios.get(`/api/farms/${farmId}/products/`);
         setProducts(productsResponse.data);
       } catch (err) {
         console.error('Error fetching farm details:', err);
@@ -50,7 +53,9 @@ const FarmDetailPage: React.FC = () => {
       }
     };
 
-    fetchFarmDetails();
+    if (farmId) {
+      fetchFarmDetails();
+    }
   }, [farmId, location.state?.farm]);
 
   const handleRatingSubmit = (newRating: number) => {
@@ -80,7 +85,7 @@ const FarmDetailPage: React.FC = () => {
       <div className="relative">
         <div className="h-64 w-full relative">
           <img
-            src={farm.image || 'https://via.placeholder.com/1200x400'}
+            src={farm.image}
             alt={farm.name}
             className="w-full h-full object-cover"
           />
@@ -160,11 +165,14 @@ const FarmDetailPage: React.FC = () => {
                       <h3 className="text-lg font-medium text-gray-900 mb-2">{product.name}</h3>
                       <div className="flex items-center text-gray-600 mb-1">
                         <Calendar className="w-4 h-4 mr-2" />
-                        <span className="text-sm">{product.season}</span>
+                        <span className="text-sm">{product.season || 'Available year-round'}</span>
                       </div>
+                      {product.description && (
+                        <p className="text-gray-500 text-sm mt-2">{product.description}</p>
+                      )}
                     </div>
                     <div className="text-right">
-                      <div className="text-green-600 font-semibold">${product.price}{product.unit}</div>
+                      <div className="text-green-600 font-semibold">${product.price} / {product.unit}</div>
                     </div>
                   </div>
                 ))
