@@ -14,16 +14,16 @@ const FarmsPage: React.FC = () => {
     const fetchFarms = async () => {
       try {
         const response = await axios.get('/api/farms/');
-
-        // Transform the data to match the Farm type
-        const transformedFarms = response.data.map((farm: any) => ({
+        
+        // Transform the data with proper type safety
+        const transformedFarms = response.data.map((farm: any): Farm => ({
           id: farm.id,
           name: farm.name,
           location: farm.location,
-          rating: typeof farm.rating === 'number' ? farm.rating : 0, // Ensure rating is number
+          rating: typeof farm.rating === 'number' ? farm.rating : 0, // Ensure rating is always a number
           specialty: farm.specialty || 'No specialty',
           description: farm.description,
-          image: farm.farm_image || farm.image
+          image: farm.farm_image || farm.image || '' // Ensure image is always a string
         }));
 
         setFarms(transformedFarms);
@@ -39,8 +39,8 @@ const FarmsPage: React.FC = () => {
   }, []);
 
   // Function to format rating with 1 decimal place
-  const formatRating = (rating: number) => {
-    return rating.toFixed(1); // Shows 1 decimal place (e.g., 4.2)
+  const formatRating = (rating: number): string => {
+    return rating > 0 ? rating.toFixed(1) : 'Not rated';
   };
 
   // Display loading state
@@ -78,7 +78,7 @@ const FarmsPage: React.FC = () => {
                 <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition duration-300">
                   <div className="relative h-48">
                     <img
-                      src={farm.image}
+                      src={farm.image || '/placeholder-farm.jpg'}
                       alt={farm.name}
                       className="w-full h-full object-cover"
                     />
@@ -87,11 +87,11 @@ const FarmsPage: React.FC = () => {
                     <div className="flex items-center justify-between mb-2">
                       <h2 className="text-xl font-semibold text-gray-900">{farm.name}</h2>
                       <div className="flex items-center">
-                        <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                        <span className="text-sm text-gray-600">
-                          {farm.rating ? formatRating(farm.rating) : 'Not rated'}
-                        </span>
-                      </div>
+                      <Star className="w-4 h-4 text-yellow-400 fill-yellow-400 mr-1" />
+                      <span className="text-sm text-gray-600">
+                        {formatRating(farm.rating || 0)}
+                      </span>
+                    </div>
                     </div>
                     <div className="flex items-center text-gray-600 mb-3">
                       <MapPin className="w-4 h-4 mr-1" />
