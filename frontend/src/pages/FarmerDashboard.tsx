@@ -164,27 +164,17 @@ const FarmerDashboard: React.FC = () => {
           sidebarCollapsed ? 'w-20' : 'w-64'
         } flex flex-col`}
       >
-        {/* Farm Profile Section */}
-        <div className="p-5 border-b flex items-center">
-          <div className={`${sidebarCollapsed ? 'mx-auto' : 'mr-3'}`}>
-            <div className="w-12 h-12 rounded-full overflow-hidden">
-              {farmProfile?.farm_image ? (
-                <img
-                  src={farmProfile.farm_image}
-                  alt="Farm"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                  <ShoppingBag className="w-6 h-6 text-gray-500" />
-                </div>
-              )}
-            </div>
-          </div>
+        {/* Farm Profile Section - Simplified without image */}
+        <div className="p-5 border-b">
           {!sidebarCollapsed && (
             <div>
               <h2 className="font-bold">{farmProfile?.farm_name || 'My Farm'}</h2>
               <p className="text-xs text-gray-500">{farmProfile?.location}</p>
+            </div>
+          )}
+          {sidebarCollapsed && (
+            <div className="flex justify-center">
+              <ShoppingBag className="w-6 h-6 text-gray-500" />
             </div>
           )}
         </div>
@@ -383,7 +373,7 @@ const FarmerDashboard: React.FC = () => {
 // Data Section Component
 const DataSection = ({ 
   title, 
-  icon, // Now properly used in the component
+  icon, 
   data, 
   emptyMessage, 
   renderItem, 

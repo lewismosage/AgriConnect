@@ -24,6 +24,8 @@ class MyFarmView(APIView):
                     'location': farm.location,
                     'description': farm.description,
                     'image': farm.image.url if farm.image else None,
+                    'about': farm.about,
+                    'sustainability': farm.sustainability,
                 })
             else:
                 return Response({'detail': 'No farm associated with this user.'}, status=status.HTTP_404_NOT_FOUND)

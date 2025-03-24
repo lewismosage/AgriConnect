@@ -8,7 +8,11 @@ class FarmSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Farm
-        fields = ['id', 'name', 'location', 'description', 'image', 'farmer', 'specialty', 'farm_image', 'rating']
+        fields = [
+            'id', 'name', 'location', 'description', 'image', 
+            'farmer', 'specialty', 'farm_image', 'rating',
+            'about', 'sustainability'
+        ]
 
     def get_rating(self, obj):
         return obj.rating if hasattr(obj, 'rating') else 0

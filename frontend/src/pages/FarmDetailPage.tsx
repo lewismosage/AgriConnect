@@ -142,15 +142,19 @@ const FarmDetailPage: React.FC = () => {
         {activeTab === 'about' && (
           <div>
             <h2 className="text-2xl font-semibold mb-4">About {farm.name}</h2>
-            <p className="text-gray-700 mb-4">{farm.description}</p>
-            <p className="text-gray-700">
-              At {farm.name}, we believe in sustainable farming practices that honor the land and provide
-              the healthiest, most delicious produce to our community. Our family has been farming in {farm.location}
-              for generations, focusing on {farm.specialty ? farm.specialty.toLowerCase() : 'a variety of crops'} and building a transparent relationship
-              with our customers.
-            </p>
+            {farm.about ? (
+              <p className="text-gray-700 whitespace-pre-line">{farm.about}</p>
+            ) : (
+              <p className="text-gray-700">
+                At {farm.name}, we believe in sustainable farming practices that honor the land and provide
+                the healthiest, most delicious produce to our community. Our family has been farming in {farm.location}
+                for generations, focusing on {farm.specialty ? farm.specialty.toLowerCase() : 'a variety of crops'} and building a transparent relationship
+                with our customers.
+              </p>
+            )}
           </div>
         )}
+
 
         {/* Products Tab Content */}
         {activeTab === 'products' && (
@@ -195,24 +199,30 @@ const FarmDetailPage: React.FC = () => {
         {activeTab === 'sustainability' && (
           <div>
             <h2 className="text-2xl font-semibold mb-4">Our Sustainability Practices</h2>
-            <p className="text-gray-700 mb-4">
-              At {farm.name}, sustainability is at the core of everything we do. We implement regenerative
-              farming practices that improve soil health, conserve water, and promote biodiversity.
-            </p>
-            <div className="mt-6 space-y-4">
-              <div className="bg-green-50 p-4 rounded-lg">
-                <h3 className="font-medium text-green-800 mb-2">Organic Certification</h3>
-                <p className="text-green-700">We maintain USDA Organic certification, avoiding synthetic pesticides and fertilizers.</p>
-              </div>
-              <div className="bg-green-50 p-4 rounded-lg">
-                <h3 className="font-medium text-green-800 mb-2">Water Conservation</h3>
-                <p className="text-green-700">Our drip irrigation systems and water recycling practices reduce water usage by 60%.</p>
-              </div>
-              <div className="bg-green-50 p-4 rounded-lg">
-                <h3 className="font-medium text-green-800 mb-2">Renewable Energy</h3>
-                <p className="text-green-700">Solar panels provide 75% of our energy needs, minimizing our carbon footprint.</p>
-              </div>
-            </div>
+            {farm.sustainability ? (
+              <p className="text-gray-700 whitespace-pre-line">{farm.sustainability}</p>
+            ) : (
+              <>
+                <p className="text-gray-700 mb-4">
+                  At {farm.name}, sustainability is at the core of everything we do. We implement regenerative
+                  farming practices that improve soil health, conserve water, and promote biodiversity.
+                </p>
+                <div className="mt-6 space-y-4">
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <h3 className="font-medium text-green-800 mb-2">Organic Certification</h3>
+                    <p className="text-green-700">We maintain USDA Organic certification, avoiding synthetic pesticides and fertilizers.</p>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <h3 className="font-medium text-green-800 mb-2">Water Conservation</h3>
+                    <p className="text-green-700">Our drip irrigation systems and water recycling practices reduce water usage by 60%.</p>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <h3 className="font-medium text-green-800 mb-2">Renewable Energy</h3>
+                    <p className="text-green-700">Solar panels provide 75% of our energy needs, minimizing our carbon footprint.</p>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>

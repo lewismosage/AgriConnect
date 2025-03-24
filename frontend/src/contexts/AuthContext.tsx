@@ -50,12 +50,16 @@ axios.interceptors.response.use(
 );
 
 // Define the FarmerProfile interface
-interface FarmerProfile {
+export interface FarmerProfile {
+  id: string;
   farm_name: string;
   location: string;
   specialty: string;
   description: string;
-  farm_image?: string | null;
+  farm_image?: string;
+  about?: string;
+  sustainability?: string;
+  // ... any other existing fields
 }
 
 //Farm Type
@@ -67,6 +71,8 @@ export interface Farm {
   specialty?: string;
   description: string;
   image: string;
+  about?: string;
+  sustainability?: string;
 }
 
 export interface Product {
@@ -182,29 +188,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const checkAuthStatus = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
-      setLoading(false); // No token, stop loading
+      setLoading(false);
       return;
     }
   
     try {
       const response = await axios.get("/api/accounts/user/");
+      
+      // Process the user data with full farm image URL
+      const processedUser = {
+        ...response.data,
+        farmer_profile: response.data.farmer_profile 
+          ? {
+              ...response.data.farmer_profile,
+              farm_image: response.data.farmer_profile.farm_image 
+                ? (response.data.farmer_profile.farm_image.startsWith('http') 
+                    ? response.data.farmer_profile.farm_image 
+                    : `${import.meta.env.VITE_BACKEND_URL}${response.data.farmer_profile.farm_image}`)
+                : null
+            }
+          : null
+      };
   
-      // Ensure the farm_image URL is complete
-      if (response.data.farmer_profile?.farm_image) {
-        if (!response.data.farmer_profile.farm_image.startsWith('http')) {
-          response.data.farmer_profile.farm_image = `${import.meta.env.VITE_BACKEND_URL}${response.data.farmer_profile.farm_image}`;
-        }
-      }
-  
-      setUser(response.data);
-      localStorage.setItem("user", JSON.stringify(response.data)); // Save user to localStorage
+      setUser(processedUser);
+      localStorage.setItem("user", JSON.stringify(processedUser));
     } catch (error) {
       console.error("Auth status check failed:", error);
       localStorage.removeItem("token");
-      localStorage.removeItem("user"); // Clear user data on error
+      localStorage.removeItem("user");
       setUser(null);
     } finally {
-      setLoading(false); // Stop loading after auth check
+      setLoading(false);
     }
   };
 
@@ -215,19 +229,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         password,
       });
   
-      const { access, user, user_type } = response.data;
+      const { access, user, user_type, farmer_profile } = response.data;
   
       // Ensure the farm_image URL is complete
-      if (user.farmer_profile?.farm_image) {
-        if (!user.farmer_profile.farm_image.startsWith('http')) {
-          user.farmer_profile.farm_image = `${import.meta.env.VITE_BACKEND_URL}${user.farmer_profile.farm_image}`;
-        }
-      }
+      const processedUser = {
+        ...user,
+        farmer_profile: farmer_profile ? {
+          ...farmer_profile,
+          farm_image: farmer_profile.farm_image 
+            ? (farmer_profile.farm_image.startsWith('http') 
+                ? farmer_profile.farm_image 
+                : `${import.meta.env.VITE_BACKEND_URL}${farmer_profile.farm_image}`)
+            : null
+        } : null
+      };
   
       localStorage.setItem("token", access);
-      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("user", JSON.stringify(processedUser));
   
-      setUser(user);
+      setUser(processedUser);
   
       toast.success("Login successful!");
   

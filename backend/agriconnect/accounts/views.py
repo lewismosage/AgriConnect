@@ -56,22 +56,32 @@ class LoginView(APIView):
             refresh = RefreshToken.for_user(user)
             serializer = UserSerializer(user)  # Use UserSerializer to serialize the user
 
+            # Include farmer_profile data with full image URL if the user is a farmer
+            farmer_profile_data = None
+            if user.user_type == 'farmer' and hasattr(user, 'farmer_profile'):
+                farmer_profile = user.farmer_profile
+                farmer_profile_data = {
+                    'farm_name': farmer_profile.farm_name,
+                    'location': farmer_profile.location,
+                    'specialty': farmer_profile.specialty,
+                    'description': farmer_profile.description,
+                    'farm_image': (
+                        f"{request.scheme}://{request.get_host()}{farmer_profile.farm_image.url}" 
+                        if farmer_profile.farm_image else None
+                    )
+                }
+
             # Prepare the response data
             response_data = {
-                'user': serializer.data,  # Include serialized user data
+                'user': serializer.data,
+                'farmer_profile': farmer_profile_data,
+                'user_type': user.user_type,
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
             }
 
-            # If the user is a farmer, include the farmer_profile data
-            if user.user_type == 'farmer' and hasattr(user, 'farmer_profile'):
-                farmer_profile_serializer = FarmerProfileSerializer(user.farmer_profile)
-                response_data['farmer_profile'] = farmer_profile_serializer.data
-
             return Response(response_data, status=status.HTTP_200_OK)
         else:
-            # Debugging: Print authentication failure
-            print("Authentication failed")
             return Response({'detail': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
 class LogoutView(APIView):
@@ -156,9 +166,6 @@ class FarmerProfileUpdateView(APIView):
                 {'detail': 'Farmer profile not found.'},
                 status=status.HTTP_404_NOT_FOUND
             )
-
-        # Log the incoming data
-        print("Incoming data:", request.data)
 
         # Update the farmer profile
         serializer = FarmerProfileSerializer(
