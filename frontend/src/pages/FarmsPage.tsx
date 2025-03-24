@@ -20,7 +20,7 @@ const FarmsPage: React.FC = () => {
           id: farm.id,
           name: farm.name,
           location: farm.location,
-          rating: farm.rating || 0,
+          rating: typeof farm.rating === 'number' ? farm.rating : 0, // Ensure rating is number
           specialty: farm.specialty || 'No specialty',
           description: farm.description,
           image: farm.farm_image || farm.image
@@ -38,11 +38,16 @@ const FarmsPage: React.FC = () => {
     fetchFarms();
   }, []);
 
+  // Function to format rating with 1 decimal place
+  const formatRating = (rating: number) => {
+    return rating.toFixed(1); // Shows 1 decimal place (e.g., 4.2)
+  };
+
   // Display loading state
   if (loading) {
     return (
       <div className="bg-gray-50 min-h-screen flex items-center justify-center">
-        <div className="spinner"></div> {/* Circular spinner */}
+        <div className="spinner"></div>
       </div>
     );
   }
@@ -67,7 +72,7 @@ const FarmsPage: React.FC = () => {
               <Link
                 key={farm.id}
                 to={`/farms/${farm.id}`}
-                state={{ farm }} // Pass the farm data as state
+                state={{ farm }}
                 className="block"
               >
                 <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition duration-300">
@@ -83,7 +88,9 @@ const FarmsPage: React.FC = () => {
                       <h2 className="text-xl font-semibold text-gray-900">{farm.name}</h2>
                       <div className="flex items-center">
                         <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                        <span className="text-sm text-gray-600">{farm.rating || 'N/A'}</span>
+                        <span className="text-sm text-gray-600">
+                          {farm.rating ? formatRating(farm.rating) : 'Not rated'}
+                        </span>
                       </div>
                     </div>
                     <div className="flex items-center text-gray-600 mb-3">

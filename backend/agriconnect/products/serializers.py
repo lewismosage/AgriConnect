@@ -4,9 +4,14 @@ from .models import Product
 from farms.models import Farm
 
 class FarmSerializer(serializers.ModelSerializer):
+    rating = serializers.SerializerMethodField()
+    
     class Meta:
         model = Farm
-        fields = ['id', 'name', 'location']
+        fields = ['id', 'name', 'location', 'rating']
+    
+    def get_rating(self, obj):
+        return obj.rating if hasattr(obj, 'rating') else 0
 
 class ProductSerializer(serializers.ModelSerializer):
     farm = FarmSerializer(read_only=True)  # Include farm details

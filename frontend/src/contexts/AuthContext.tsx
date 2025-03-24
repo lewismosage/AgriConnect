@@ -73,6 +73,7 @@ export interface Product {
   id: string;
   name: string;
   farm: Farm;
+  ratingCount?: number;
   price: number;
   rating: number;
   image?: string;

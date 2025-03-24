@@ -58,9 +58,9 @@ const FarmDetailPage: React.FC = () => {
     }
   }, [farmId, location.state?.farm]);
 
-  const handleRatingSubmit = (newRating: number) => {
+  const handleRatingSubmit = (newRating: number, newTotalRatings: number) => {
     setRating(newRating);
-    setTotalRatings((prev) => prev + 1);
+    setTotalRatings(newTotalRatings);
   };
 
   if (loading) {
@@ -103,7 +103,7 @@ const FarmDetailPage: React.FC = () => {
             <StarRating
               farmId={farmId!}
               initialRating={rating}
-              totalRatings={totalRatings}
+              initialTotalRatings={totalRatings}
               onRatingSubmit={handleRatingSubmit}
             />
           </div>

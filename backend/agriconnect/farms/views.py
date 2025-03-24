@@ -1,4 +1,5 @@
 from rest_framework import generics, permissions
+from rest_framework.permissions import IsAuthenticated
 from .models import Farm
 from .serializers import FarmSerializer
 from rest_framework.views import APIView
@@ -7,6 +8,9 @@ from products.models import Product
 from products.serializers import ProductSerializer
 from rest_framework import status
 from django.shortcuts import get_object_or_404
+from django.contrib.sessions.models import Session
+from django.utils import timezone
+from rest_framework.permissions import AllowAny
 
 class MyFarmView(APIView):
     def get(self, request):
@@ -59,30 +63,152 @@ class FarmProductsView(generics.ListAPIView):
 class SubmitRatingView(APIView):
     def post(self, request, farm_id):
         farm = get_object_or_404(Farm, id=farm_id)
-        user = request.user
         rating = request.data.get('rating')
 
-        if not (1 <= rating <= 5):
-            return Response({'error': 'Rating must be between 1 and 5'}, status=status.HTTP_400_BAD_REQUEST)
+        # Validate rating
+        if not (0 <= rating <= 5):
+            return Response(
+                {'error': 'Rating must be between 1 and 5'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        # Check if the user has already rated this farm
-        user_rating = next((r for r in farm.ratings if r['user_id'] == user.id), None)
-
-        if user_rating:
-            # If the user has already rated, update their rating
-            user_rating['rating'] = rating
+        # Get user identifier
+        if request.user.is_authenticated:
+            user_identifier = f"user_{request.user.id}"
         else:
-            # If the user hasn't rated, add their rating
-            farm.ratings.append({'user_id': user.id, 'rating': rating})
+            if not request.session.session_key:
+                request.session.create()
+            user_identifier = f"anon_{request.session.session_key}"
 
-        # Recalculate the average rating
-        total_ratings = sum(r['rating'] for r in farm.ratings)
-        farm.rating = total_ratings / len(farm.ratings)
+        # Initialize ratings if None
+        if farm.ratings is None:
+            farm.ratings = []
+
+        # Find existing rating
+        existing_rating_index = next(
+            (i for i, r in enumerate(farm.ratings) 
+             if isinstance(r, dict) and r.get('user_identifier') == user_identifier),
+            None
+        )
+
+        # Handle rating submission/removal
+        if existing_rating_index is not None:
+            # User already rated - remove their rating
+            removed_rating = farm.ratings.pop(existing_rating_index)
+            action = 'removed'
+        elif rating > 0:
+            # New rating - add it
+            farm.ratings.append({
+                'user_identifier': user_identifier,
+                'rating': rating,
+                'timestamp': timezone.now().isoformat()
+            })
+            action = 'added'
+
+        # Recalculate average
+        if farm.ratings:
+            valid_ratings = [r['rating'] for r in farm.ratings if isinstance(r, dict) and r.get('rating', 0) > 0]
+            farm.rating = sum(valid_ratings) / len(valid_ratings) if valid_ratings else 0
+            total_ratings = len(valid_ratings)
+        else:
+            farm.rating = 0
+            total_ratings = 0
+
         farm.save()
 
-        return Response({'rating': farm.rating, 'total_ratings': len(farm.ratings)}, status=status.HTTP_200_OK)
+        return Response({
+            'rating': farm.rating,
+            'total_ratings': total_ratings,
+            'action': action
+        }, status=status.HTTP_200_OK)
+
+class UserRatingView(APIView):
+    def get(self, request, farm_id):
+        farm = get_object_or_404(Farm, id=farm_id)
+        
+        if request.user.is_authenticated:
+            user_identifier = f"user_{request.user.id}"
+        else:
+            if not request.session.session_key:
+                return Response({'userRating': None})
+            user_identifier = f"anon_{request.session.session_key}"
+
+        user_rating = next(
+            (r for r in farm.ratings 
+             if r['user_identifier'] == user_identifier),
+            None
+        )
+        
+        return Response({
+            'userRating': user_rating['rating'] if user_rating else None
+        }, status=status.HTTP_200_OK)
 
 class GetRatingView(APIView):
     def get(self, request, farm_id):
         farm = get_object_or_404(Farm, id=farm_id)
         return Response({'rating': farm.rating, 'total_ratings': len(farm.ratings)}, status=status.HTTP_200_OK)
+    
+class RatingInfoView(APIView):
+    permission_classes = [AllowAny]
+    
+    def get(self, request, farm_id):
+        farm = get_object_or_404(Farm, id=farm_id)
+        user_rating = None
+        
+        if request.user.is_authenticated:
+            user_rating = next(
+                (r['rating'] for r in farm.ratings if r.get('user_id') == request.user.id),
+                None
+            )
+        
+        return Response({
+            'averageRating': farm.rating,
+            'totalRatings': len(farm.ratings),
+            'userRating': user_rating
+        })
+
+class RateView(APIView):
+    
+    
+    def post(self, request, farm_id):
+        farm = get_object_or_404(Farm, id=farm_id)
+        rating = request.data.get('rating')
+        
+        if not (0 <= rating <= 5):
+            return Response(
+                {'error': 'Rating must be between 1 and 5'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Find existing user rating
+        user_rating_index = next(
+            (i for i, r in enumerate(farm.ratings) if r.get('user_id') == request.user.id),
+            None
+        )
+        
+        if rating == 0:  # Remove rating
+            if user_rating_index is not None:
+                farm.ratings.pop(user_rating_index)
+        else:  # Add/update rating
+            rating_data = {
+                'user_id': request.user.id,
+                'rating': rating
+            }
+            
+            if user_rating_index is not None:
+                farm.ratings[user_rating_index] = rating_data
+            else:
+                farm.ratings.append(rating_data)
+        
+        # Recalculate average
+        if farm.ratings:
+            farm.rating = sum(r['rating'] for r in farm.ratings) / len(farm.ratings)
+        else:
+            farm.rating = 0
+        
+        farm.save()
+        
+        return Response({
+            'averageRating': farm.rating,
+            'totalRatings': len(farm.ratings)
+        })
