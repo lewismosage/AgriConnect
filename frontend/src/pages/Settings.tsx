@@ -5,6 +5,7 @@ import axios from 'axios';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import SuccessModal from '../components/SuccessModal';
 
 // Validation schemas
 const farmDetailsSchema = z.object({
@@ -32,6 +33,8 @@ const Settings: React.FC = () => {
   const { user, updateFarmerProfile } = useAuth();
   const [farmImage, setFarmImage] = useState<File | null>(null);
   const [activeSection, setActiveSection] = useState<'profile' | 'account' | 'security'>('profile');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
 
   // Farm Details Form
   const { register: registerFarmDetails, handleSubmit: handleFarmDetailsSubmit, formState: { errors: farmDetailsErrors } } = useForm({
@@ -65,6 +68,16 @@ const Settings: React.FC = () => {
     }
   };
 
+  const showSuccess = (message: string) => {
+    setModalMessage(message);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
+
   const onSubmitFarmDetails = async (data: any) => {
     try {
       let farmImageUrl = user?.farmer_profile?.farm_image || null;
@@ -90,6 +103,7 @@ const Settings: React.FC = () => {
         description: data.description,
         farm_image: farmImageUrl || undefined,
       });
+      showSuccess('Farm details updated successfully!');
     } catch (error) {
       console.error('Error updating farm details:', error);
     }
@@ -97,14 +111,22 @@ const Settings: React.FC = () => {
 
   const onSubmitFarmAbout = async (data: any) => {
     try {
-      await updateFarmerProfile({
-        about: data.about,
-        sustainability: data.sustainability,
-      });
-      alert('Farm information updated successfully!');
+      const response = await axios.patch(
+        '/api/accounts/farmer/profile/update/',
+        {
+          about: data.about,
+          sustainability: data.sustainability
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      showSuccess('Farm information updated successfully!');
     } catch (error) {
       console.error('Error updating farm information:', error);
-      alert('Failed to update farm information. Please try again.');
     }
   };
 
@@ -119,15 +141,23 @@ const Settings: React.FC = () => {
         }
       });
       resetPassword();
-      alert('Password changed successfully!');
+      showSuccess('Password changed successfully!');
     } catch (error) {
       console.error('Error changing password:', error);
-      alert('Failed to change password. Please try again.');
     }
   };
 
   return (
     <div className="bg-gray-50 min-h-screen p-8">
+    
+      {/* Success Modal */}
+      <SuccessModal 
+        isOpen={isModalOpen} 
+        message={modalMessage} 
+        onClose={closeModal} 
+      />
+
+
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Settings</h1>
         

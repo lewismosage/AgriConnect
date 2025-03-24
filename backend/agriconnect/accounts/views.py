@@ -12,7 +12,7 @@ from .serializers import UserSerializer, FarmerRegistrationSerializer, FarmerPro
 from rest_framework.permissions import IsAuthenticated
 from .models import FarmerProfile
 from .serializers import FarmerProfileSerializer
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 
 
 logger = logging.getLogger(__name__)
@@ -157,6 +157,7 @@ class FarmerRegistrationView(APIView):
         
 class FarmerProfileUpdateView(APIView):
     permission_classes = [IsAuthenticated]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
 
     def patch(self, request):
         try:
@@ -167,20 +168,21 @@ class FarmerProfileUpdateView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Update the farmer profile
+        # Add request user to data to ensure we're updating the correct profile
+        data = request.data.copy()
+        data['user'] = request.user.id
+
         serializer = FarmerProfileSerializer(
             farmer_profile,
-            data=request.data,
-            partial=True  # Allow partial updates for PATCH
+            data=data,
+            partial=True,
+            context={'request': request}  # Pass request context for image URLs
         )
 
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
-            # Log validation errors
-            print("Validation errors:", serializer.errors)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
 class FarmImageUploadView(APIView):
     parser_classes = [MultiPartParser, FormParser]

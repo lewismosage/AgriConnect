@@ -42,14 +42,27 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 class FarmerProfileSerializer(serializers.ModelSerializer):
+    about = serializers.CharField(required=False, allow_blank=True)
+    sustainability = serializers.CharField(required=False, allow_blank=True)
+    
     class Meta:
         model = FarmerProfile
-        fields = ['farm_name', 'location', 'specialty', 'description', 'farm_image', 'farm']
+        fields = [
+            'farm_name', 'location', 'specialty', 'description', 
+            'farm_image', 'farm', 'about', 'sustainability'
+        ]
         extra_kwargs = {
             'farm_name': {'required': False},
             'farm_image': {'required': False},
             'farm': {'required': False},
         }
+
+    def update(self, instance, validated_data):
+        # Handle each field explicitly
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
 
 class FarmerRegistrationSerializer(serializers.Serializer):
     user = UserSerializer()

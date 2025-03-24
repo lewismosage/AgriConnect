@@ -26,6 +26,8 @@ class FarmerProfile(models.Model):
     description = models.TextField()
     farm_image = models.ImageField(upload_to='farm_images/', blank=True, null=True)
     farm = models.OneToOneField(Farm, on_delete=models.CASCADE, related_name='farmer_profile', null=True, blank=True)
+    about = models.TextField(blank=True, null=True)
+    sustainability = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.user.username
