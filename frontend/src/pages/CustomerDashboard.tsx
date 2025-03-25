@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { CreditCard, Truck, Settings, LogOut, Heart, ShoppingCart, User } from 'lucide-react';
-import Wishlist from './Wishlist'; // Import the Wishlist component
+import Wishlist from './Wishlist';
+import ShippingInformation from './ShippingInformation'; // Import the ShippingInformation component
 
 const CustomerDashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -18,11 +19,6 @@ const CustomerDashboard: React.FC = () => {
   const paymentMethods = [
     { id: 1, type: 'Visa', last4: '1234', expiry: '12/25' },
     { id: 2, type: 'MasterCard', last4: '5678', expiry: '06/26' },
-  ];
-
-  const shippingAddresses = [
-    { id: 1, name: 'John Doe', address: '123 Main St, City, Country', isDefault: true },
-    { id: 2, name: 'John Doe', address: '456 Elm St, City, Country', isDefault: false },
   ];
 
   return (
@@ -150,29 +146,9 @@ const CustomerDashboard: React.FC = () => {
               </div>
             )}
 
-            {/* Shipping Information */}
+            {/* Shipping Information - Now using the imported component */}
             {activeTab === 'shipping' && (
-              <div className="bg-white p-6 rounded-lg shadow-sm">
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">Shipping Information</h2>
-                <div className="space-y-4">
-                  {shippingAddresses.map((address) => (
-                    <div key={address.id} className="p-4 border border-gray-200 rounded-lg">
-                      <p className="font-medium">{address.name}</p>
-                      <p className="text-sm text-gray-500">{address.address}</p>
-                      {address.isDefault && (
-                        <span className="text-sm text-green-600">Default Address</span>
-                      )}
-                      <div className="mt-2 flex space-x-4">
-                        <button className="text-green-600 hover:text-green-700">Edit</button>
-                        <button className="text-red-600 hover:text-red-700">Remove</button>
-                      </div>
-                    </div>
-                  ))}
-                  <button className="w-full flex items-center justify-center p-4 border border-dashed border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
-                    <span>Add New Address</span>
-                  </button>
-                </div>
-              </div>
+              <ShippingInformation />
             )}
 
             {/* Wishlist */}
