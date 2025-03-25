@@ -82,7 +82,7 @@ const CartPage: React.FC = () => {
                                 <select
                                   value={item.quantity}
                                   onChange={(e) => updateQuantity(item.product.id, parseInt(e.target.value))}
-                                  className="block w-20 rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+                                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                                 >
                                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
                                     <option key={num} value={num}>

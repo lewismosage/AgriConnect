@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Product } from '../contexts/AuthContext';
 import ProductCard from '../pages/ProductCard';
+import { useCart } from '../contexts/CartContext'; // Import useCart
 
 const ProductsPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [addedProductIds, setAddedProductIds] = useState<string[]>([]);
+  const { addToCart, cartItems } = useCart(); // Get cart functions from context
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -32,13 +33,12 @@ const ProductsPage: React.FC = () => {
   }, []);
 
   const handleAddToCart = (product: Product) => {
-    console.log('Added to cart:', product);
-    // Add to cart logic here
-    setAddedProductIds(prev => [...prev, product.id]); // Persist the added state
+    
+    addToCart(product); // Use the cart context's addToCart function
   };
 
   const handleToggleWishlist = (product: Product) => {
-    console.log('Wishlist toggled:', product);
+    
     // Implement wishlist logic
   };
 
@@ -62,7 +62,7 @@ const ProductsPage: React.FC = () => {
               product={product}
               onAddToCart={handleAddToCart}
               onToggleWishlist={handleToggleWishlist}
-              isAddedToCart={addedProductIds.includes(product.id)}
+              isAddedToCart={cartItems.some(item => item.product.id === product.id)}
             />
           ))}
         </div>

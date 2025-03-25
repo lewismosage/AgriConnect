@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+// pages/ProductCard.tsx
+import React from 'react';
 import { Heart, Check, Star } from 'lucide-react';
 import { Product } from '../contexts/AuthContext';
+import { useCart } from '../contexts/CartContext';
 
 interface ProductCardProps {
   product: Product;
@@ -15,13 +17,19 @@ const ProductCard: React.FC<ProductCardProps> = ({
   onToggleWishlist = () => {},
   isAddedToCart = false
 }) => {
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const { wishlistItems, toggleWishlist } = useCart();
+  const isWishlisted = wishlistItems.some(item => item.id === product.id);
+
+  const handleToggleWishlist = () => {
+    toggleWishlist(product);
+    onToggleWishlist(product);
+  };
 
   const renderRatingStars = () => {
-    if (!product.farm.rating) return null;
+    if (!product.farm?.rating) return null;
     
     const stars = [];
-    const roundedRating = Math.round(product.farm.rating * 2) / 2; // Round to nearest 0.5
+    const roundedRating = Math.round(product.farm.rating * 2) / 2;
 
     for (let i = 1; i <= 5; i++) {
       stars.push(
@@ -48,11 +56,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
     if (!isAddedToCart) {
       onAddToCart(product);
     }
-  };
-
-  const handleToggleWishlist = () => {
-    setIsWishlisted(!isWishlisted);
-    onToggleWishlist(product);
   };
 
   return (
