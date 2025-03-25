@@ -91,7 +91,7 @@ export interface Product {
 }
 
 // Update the User interface to include farmer_profile
-interface User {
+export interface User {
   id: number;
   email: string;
   username: string;

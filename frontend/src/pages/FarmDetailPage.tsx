@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Star, MapPin, Calendar, ArrowLeft } from 'lucide-react';
+import { Star, MapPin, Calendar, ArrowLeft, ShoppingCart } from 'lucide-react';
 import axios from 'axios';
 import { Farm } from '../contexts/AuthContext';
 import StarRating from '../components/StarRating';
 
-interface Product {
+export interface Product {
   id: string;
   name: string;
   season: string;
@@ -61,6 +61,16 @@ const FarmDetailPage: React.FC = () => {
   const handleRatingSubmit = (newRating: number, newTotalRatings: number) => {
     setRating(newRating);
     setTotalRatings(newTotalRatings);
+  };
+
+  const handleShopFromFarm = () => {
+    // Navigate to a new page or open a modal for farm-specific shopping
+    navigate(`/farm/${farmId}/shop`, { 
+      state: { 
+        farmName: farm?.name, 
+        products: products 
+      } 
+    });
   };
 
   if (loading) {
@@ -155,7 +165,6 @@ const FarmDetailPage: React.FC = () => {
           </div>
         )}
 
-
         {/* Products Tab Content */}
         {activeTab === 'products' && (
           <div>
@@ -165,15 +174,24 @@ const FarmDetailPage: React.FC = () => {
               {products.length > 0 ? (
                 products.map((product) => (
                   <div key={product.id} className="bg-white rounded-lg shadow p-6 flex justify-between items-start">
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">{product.name}</h3>
-                      <div className="flex items-center text-gray-600 mb-1">
-                        <Calendar className="w-4 h-4 mr-2" />
-                        <span className="text-sm">{product.season || 'Available year-round'}</span>
-                      </div>
-                      {product.description && (
-                        <p className="text-gray-500 text-sm mt-2">{product.description}</p>
+                    <div className="flex items-center space-x-4">
+                      {product.image && (
+                        <img 
+                          src={product.image} 
+                          alt={product.name} 
+                          className="w-16 h-16 rounded-full object-cover"
+                        />
                       )}
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">{product.name}</h3>
+                        <div className="flex items-center text-gray-600 mb-1">
+                          <Calendar className="w-4 h-4 mr-2" />
+                          <span className="text-sm">{product.season || 'Available year-round'}</span>
+                        </div>
+                        {product.description && (
+                          <p className="text-gray-500 text-sm mt-2">{product.description}</p>
+                        )}
+                      </div>
                     </div>
                     <div className="text-right">
                       <div className="text-green-600 font-semibold">${product.price} / {product.unit}</div>
@@ -188,7 +206,11 @@ const FarmDetailPage: React.FC = () => {
             </div>
 
             <div className="mt-8">
-              <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition">
+              <button 
+                onClick={handleShopFromFarm}
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition flex items-center justify-center"
+              >
+                <ShoppingCart className="mr-2" />
                 Shop from Farm
               </button>
             </div>

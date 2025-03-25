@@ -26,7 +26,7 @@ interface Product {
 
 const FarmerDashboard: React.FC = () => {
   const { user, logout } = useAuth();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [dashboardStats, setDashboardStats] = useState({
     totalSales: 0,
@@ -210,15 +210,7 @@ const FarmerDashboard: React.FC = () => {
               <span className="ml-3 text-sm">Logout</span>
             )}
           </button>
-        </div>
-
-        {/* Sidebar Toggle */}
-        <button 
-          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className="absolute top-20 -right-4 bg-white border rounded-full shadow-md p-1 z-10"
-        >
-          {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-        </button>
+        </div>      
       </div>
 
       {/* Main Content */}

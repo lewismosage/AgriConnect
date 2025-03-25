@@ -24,102 +24,107 @@ import FarmProducts from "./pages/FarmProducts";
 import Messages from './pages/Messages';
 import Notifications from './pages/Notifications';
 import FarmDetailPage from './pages/FarmDetailPage';
+import FarmShopPage from './pages/FarmShopPage';
+import { CartProvider } from './contexts/CartContext';
 
 function App() {
   return (
     <Router>
       <AuthProvider>
-        <div className="min-h-screen flex flex-col">
-          {/* Navbar appears on all pages */}
-          <Navbar />
+        <CartProvider> {/* Wrap the entire app with CartProvider */}
+          <div className="min-h-screen flex flex-col">
+            {/* Navbar appears on all pages */}
+            <Navbar />
 
-          {/* Main content */}
-          <div className="flex-grow">
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/about" element={<AboutPage />} />
-              <Route path="/products" element={<ProductsPage />} />
-              <Route path="/farms" element={<FarmsPage />} />
-              <Route path="/farms/:farmId" element={<FarmDetailPage />} />
-              <Route path="/cart" element={<CartPage />} />
-              <Route path="/farm-registration" element={<FarmRegistration />} />
-              <Route path="/farm-products" element={<FarmProducts />} />
-              <Route path="/messages" element={<Messages />} />
-              <Route path="/notifications" element={<Notifications />} />
-              <Route path="/settings" element={<Settings />} />
+            {/* Main content */}
+            <div className="flex-grow">
+              <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="/products" element={<ProductsPage />} />
+                <Route path="/farms" element={<FarmsPage />} />
+                <Route path="/farms/:farmId" element={<FarmDetailPage />} />
+                <Route path="/cart" element={<CartPage />} />
+                <Route path="/farm-registration" element={<FarmRegistration />} />
+                <Route path="/farm-products" element={<FarmProducts />} />
+                <Route path="/messages" element={<Messages />} />
+                <Route path="/notifications" element={<Notifications />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/farm/:farmId/shop" element={<FarmShopPage />} />
 
-              <Route
-                path="/inventory"
-                element={
-                  <ProtectedRoute>
-                    <Inventory />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/orders"
-                element={
-                  <ProtectedRoute>
-                    <Orders />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/subscriptions"
-                element={
-                  <ProtectedRoute>
-                    <Subscriptions />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/deliveries"
-                element={
-                  <ProtectedRoute>
-                    <Deliveries />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/analytics"
-                element={
-                  <ProtectedRoute>
-                    <Analytics />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/settings"
-                element={
-                  <ProtectedRoute>
-                    <Settings />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/customer-dashboard"
-                element={
-                  <ProtectedRoute>
-                    <CustomerDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/farmer-dashboard"
-                element={
-                  <ProtectedRoute>
-                    <FarmerDashboard />
-                  </ProtectedRoute>
-                }
-              />
-            </Routes>
+                <Route
+                  path="/inventory"
+                  element={
+                    <ProtectedRoute>
+                      <Inventory />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/orders"
+                  element={
+                    <ProtectedRoute>
+                      <Orders />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/subscriptions"
+                  element={
+                    <ProtectedRoute>
+                      <Subscriptions />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/deliveries"
+                  element={
+                    <ProtectedRoute>
+                      <Deliveries />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/analytics"
+                  element={
+                    <ProtectedRoute>
+                      <Analytics />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings"
+                  element={
+                    <ProtectedRoute>
+                      <Settings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/customer-dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <CustomerDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/farmer-dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <FarmerDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+              </Routes>
+            </div>
+
+            {/* Footer appears on all pages */}
+            <Footer />
           </div>
-
-          {/* Footer appears on all pages */}
-          <Footer />
-        </div>
+        </CartProvider>
       </AuthProvider>
     </Router>
   );
