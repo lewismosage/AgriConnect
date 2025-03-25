@@ -164,8 +164,7 @@ const ShippingInformation: React.FC = () => {
                   onChange={(e) => setCurrentAddress(prev => 
                     prev ? {...prev, name: e.target.value} : null
                   )}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-                  required
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                 />
               </div>
               <div>
@@ -179,8 +178,7 @@ const ShippingInformation: React.FC = () => {
                   onChange={(e) => setCurrentAddress(prev => 
                     prev ? {...prev, address: e.target.value} : null
                   )}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-                  required
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -195,8 +193,7 @@ const ShippingInformation: React.FC = () => {
                     onChange={(e) => setCurrentAddress(prev => 
                       prev ? {...prev, city: e.target.value} : null
                     )}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-                    required
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                   />
                 </div>
                 <div>
@@ -210,8 +207,7 @@ const ShippingInformation: React.FC = () => {
                     onChange={(e) => setCurrentAddress(prev => 
                       prev ? {...prev, state: e.target.value} : null
                     )}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-                    required
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                   />
                 </div>
               </div>
@@ -227,8 +223,7 @@ const ShippingInformation: React.FC = () => {
                     onChange={(e) => setCurrentAddress(prev => 
                       prev ? {...prev, zipCode: e.target.value} : null
                     )}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-                    required
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                   />
                 </div>
                 <div>
@@ -237,15 +232,15 @@ const ShippingInformation: React.FC = () => {
                   </label>
                   <select
                     id="country"
-                    value={currentAddress?.country || 'United States'}
+                    value={currentAddress?.country || 'KENYA'}
                     onChange={(e) => setCurrentAddress(prev => 
                       prev ? {...prev, country: e.target.value} : null
                     )}
                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
                   >
-                    <option value="United States">United States</option>
-                    <option value="Canada">Canada</option>
-                    <option value="United Kingdom">United Kingdom</option>
+                    <option value="KENYA">KENYA</option>
+                    <option value="UGANDA">UGANDA</option>
+                    <option value="TANZANIA">TANZANIA</option>
                   </select>
                 </div>
               </div>

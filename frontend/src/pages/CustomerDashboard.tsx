@@ -3,22 +3,18 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { CreditCard, Truck, Settings, LogOut, Heart, ShoppingCart, User } from 'lucide-react';
 import Wishlist from './Wishlist';
-import ShippingInformation from './ShippingInformation'; // Import the ShippingInformation component
+import ShippingInformation from './ShippingInformation';
+import PaymentInformation from './PaymentInformation'; // Import the PaymentInformation component
 
 const CustomerDashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('orders'); // Default tab
 
-  // Dummy data for demonstration (keeping other sections' mock data)
+  // Dummy data for demonstration (only orders remain as mock data)
   const orders = [
     { id: 1, date: '2025-03-01', status: 'Delivered', total: 120.0 },
     { id: 2, date: '2025-03-05', status: 'Shipped', total: 75.5 },
     { id: 3, date: '2025-03-10', status: 'Processing', total: 200.0 },
-  ];
-
-  const paymentMethods = [
-    { id: 1, type: 'Visa', last4: '1234', expiry: '12/25' },
-    { id: 2, type: 'MasterCard', last4: '5678', expiry: '06/26' },
   ];
 
   return (
@@ -38,7 +34,7 @@ const CustomerDashboard: React.FC = () => {
                   <p className="font-medium text-gray-900">
                     {user?.first_name && user?.last_name
                       ? `${user.first_name} ${user.last_name}`
-                      : user?.username || user?.email} {/* Fallback to username or email */}
+                      : user?.username || user?.email}
                   </p>
                   <p className="text-sm text-gray-500">{user?.email}</p>
                 </div>
@@ -125,28 +121,12 @@ const CustomerDashboard: React.FC = () => {
               </div>
             )}
 
-            {/* Payment Methods */}
+            {/* Payment Methods - Now using the imported component */}
             {activeTab === 'payments' && (
-              <div className="bg-white p-6 rounded-lg shadow-sm">
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">Payment Methods</h2>
-                <div className="space-y-4">
-                  {paymentMethods.map((method) => (
-                    <div key={method.id} className="flex justify-between items-center p-4 border border-gray-200 rounded-lg">
-                      <div>
-                        <p className="font-medium">{method.type} ending in {method.last4}</p>
-                        <p className="text-sm text-gray-500">Expires {method.expiry}</p>
-                      </div>
-                      <button className="text-red-600 hover:text-red-700">Remove</button>
-                    </div>
-                  ))}
-                  <button className="w-full flex items-center justify-center p-4 border border-dashed border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
-                    <span>Add New Payment Method</span>
-                  </button>
-                </div>
-              </div>
+              <PaymentInformation />
             )}
 
-            {/* Shipping Information - Now using the imported component */}
+            {/* Shipping Information */}
             {activeTab === 'shipping' && (
               <ShippingInformation />
             )}
