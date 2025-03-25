@@ -26,6 +26,7 @@ import Notifications from './pages/Notifications';
 import FarmDetailPage from './pages/FarmDetailPage';
 import FarmShopPage from './pages/FarmShopPage';
 import { CartProvider } from './contexts/CartContext';
+import Wishlist from './pages/Wishlist';
 
 function App() {
   return (
@@ -53,6 +54,7 @@ function App() {
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/farm/:farmId/shop" element={<FarmShopPage />} />
+                <Route path="/wishlist" element={<Wishlist />} />
 
                 <Route
                   path="/inventory"

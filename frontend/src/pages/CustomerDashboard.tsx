@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { CreditCard, Truck, Settings, LogOut, Heart, ShoppingCart, User } from 'lucide-react';
+import Wishlist from './Wishlist'; // Import the Wishlist component
 
 const CustomerDashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('orders'); // Default tab
 
-  // Dummy data for demonstration
+  // Dummy data for demonstration (keeping other sections' mock data)
   const orders = [
     { id: 1, date: '2025-03-01', status: 'Delivered', total: 120.0 },
     { id: 2, date: '2025-03-05', status: 'Shipped', total: 75.5 },
@@ -24,11 +25,6 @@ const CustomerDashboard: React.FC = () => {
     { id: 2, name: 'John Doe', address: '456 Elm St, City, Country', isDefault: false },
   ];
 
-  const wishlistItems = [
-    { id: 1, name: 'Organic Tomatoes', price: 5.99, image: 'https://via.placeholder.com/100' },
-    { id: 2, name: 'Fresh Eggs', price: 3.99, image: 'https://via.placeholder.com/100' },
-  ];
-
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -38,7 +34,7 @@ const CustomerDashboard: React.FC = () => {
           {/* Sidebar Navigation */}
           <div className="md:col-span-1">
             <div className="bg-white p-6 rounded-lg shadow-sm">
-            <div className="flex items-center space-x-4 mb-6">
+              <div className="flex items-center space-x-4 mb-6">
                 <div className="bg-green-100 p-3 rounded-full">
                   <User className="w-6 h-6 text-green-600" />
                 </div>
@@ -181,23 +177,7 @@ const CustomerDashboard: React.FC = () => {
 
             {/* Wishlist */}
             {activeTab === 'wishlist' && (
-              <div className="bg-white p-6 rounded-lg shadow-sm">
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">Wishlist</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {wishlistItems.map((item) => (
-                    <div key={item.id} className="border border-gray-200 rounded-lg overflow-hidden">
-                      <img src={item.image} alt={item.name} className="w-full h-32 object-cover" />
-                      <div className="p-4">
-                        <p className="font-medium">{item.name}</p>
-                        <p className="text-sm text-gray-500">${item.price.toFixed(2)}</p>
-                        <button className="mt-2 w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">
-                          Add to Cart
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <Wishlist />
             )}
 
             {/* Account Settings */}
