@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { CreditCard, Plus, Edit, Trash2 } from 'lucide-react';
 
-// Interface for Payment Method
 interface PaymentMethod {
   id: number;
   cardType: string;
@@ -12,7 +11,11 @@ interface PaymentMethod {
   isDefault: boolean;
 }
 
-const PaymentInformation: React.FC = () => {
+interface PaymentInformationProps {
+  onSelectMethod: (methodId: number) => void;
+}
+
+const PaymentInformation: React.FC<PaymentInformationProps> = ({ onSelectMethod }) => {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([
     {
       id: 1,
@@ -44,40 +47,39 @@ const PaymentInformation: React.FC = () => {
   const handleSavePaymentMethod = () => {
     if (!currentMethod) return;
 
-    // Validate required fields
     if (!currentMethod.cardHolder || !currentMethod.cardNumber || 
         !currentMethod.expiryMonth || !currentMethod.expiryYear) {
       alert('Please fill in all required fields');
       return;
     }
 
-    // If setting as default, unset other defaults
     if (currentMethod.isDefault) {
       setPaymentMethods(prevMethods => 
         prevMethods.map(method => ({...method, isDefault: false}))
       );
     }
 
-    // Update or add payment method
     setPaymentMethods(prevMethods => {
       const existingIndex = prevMethods.findIndex(method => method.id === currentMethod.id);
       
       if (existingIndex > -1) {
-        // Update existing method
         const updatedMethods = [...prevMethods];
         updatedMethods[existingIndex] = currentMethod;
         return updatedMethods;
       } else {
-        // Add new method
         return [...prevMethods, currentMethod];
       }
     });
+
+    // Notify parent component about the selected/default method
+    if (currentMethod.isDefault) {
+      onSelectMethod(currentMethod.id);
+    }
 
     setIsModalOpen(false);
   };
 
   const handleDeletePaymentMethod = (id: number) => {
-    // Prevent deletion of the only or default method
     if (paymentMethods.length === 1 || paymentMethods.find(method => method.id === id)?.isDefault) {
       alert('Cannot delete the only or default payment method');
       return;
@@ -88,14 +90,17 @@ const PaymentInformation: React.FC = () => {
     );
   };
 
-  // Format card number display (show only last 4 digits)
   const formatCardNumber = (cardNumber: string) => {
     if (cardNumber.length <= 4) return cardNumber;
     return `•••• •••• •••• ${cardNumber.slice(-4)}`;
   };
 
+  const handleSelectMethod = (methodId: number) => {
+    onSelectMethod(methodId);
+  };
+
   return (
-    <div className="bg-white p-6 rounded-lg shadow-sm">
+    <div className="bg-white p-6 rounded-lg shadow-sm mt-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-gray-900 flex items-center">
           <CreditCard className="mr-2 w-6 h-6 text-green-600" />
@@ -114,7 +119,10 @@ const PaymentInformation: React.FC = () => {
         {paymentMethods.map((method) => (
           <div 
             key={method.id} 
-            className="p-4 border border-gray-200 rounded-lg relative"
+            className={`p-4 border rounded-lg relative cursor-pointer ${
+              method.isDefault ? 'border-green-500 bg-green-50' : 'border-gray-200'
+            }`}
+            onClick={() => handleSelectMethod(method.id)}
           >
             <div className="flex justify-between items-start">
               <div>
@@ -130,13 +138,19 @@ const PaymentInformation: React.FC = () => {
               </div>
               <div className="flex space-x-2">
                 <button 
-                  onClick={() => openPaymentModal(method)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openPaymentModal(method);
+                  }}
                   className="text-green-600 hover:text-green-700"
                 >
                   <Edit className="w-5 h-5" />
                 </button>
                 <button 
-                  onClick={() => handleDeletePaymentMethod(method.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeletePaymentMethod(method.id);
+                  }}
                   className="text-red-600 hover:text-red-700"
                 >
                   <Trash2 className="w-5 h-5" />

@@ -1,18 +1,9 @@
 import React, { useState } from 'react';
-import { CreditCard, MapPin, Package, Truck } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useLocation, useNavigate } from 'react-router-dom';
-
-interface ShippingDetails {
-  firstName: string;
-  lastName: string;
-  email: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  phone: string;
-}
+import ShippingInformation from './ShippingInformation';
+import PaymentInformation from './PaymentInformation';
+import { Truck } from 'lucide-react';
 
 interface CartItem {
   product: {
@@ -32,19 +23,13 @@ const CheckoutPage = () => {
   // Use cartItems from location state if available, otherwise from context
   const items = location.state?.cartItems || cartItems;
 
-  const [shippingDetails, setShippingDetails] = useState<ShippingDetails>({
-    firstName: '',
-    lastName: '',
-    email: '',
-    address: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    phone: '',
+  const [shippingDetails, setShippingDetails] = useState({
+    selectedAddressId: 0
   });
 
-  const [paymentMethod, setPaymentMethod] = useState<'credit' | 'paypal'>('credit');
-  const [formErrors, setFormErrors] = useState<Partial<ShippingDetails>>({});
+  const [paymentDetails, setPaymentDetails] = useState({
+    selectedMethodId: 0
+  });
 
   const subtotal = items.reduce(
     (sum: number, item: CartItem) => sum + item.product.price * item.quantity,
@@ -54,95 +39,63 @@ const CheckoutPage = () => {
   const tax = subtotal * 0.08; // 8% tax rate
   const total = subtotal + shipping + tax;
 
-  const validateForm = () => {
-    const errors: Partial<ShippingDetails> = {};
-    
-    if (!shippingDetails.firstName) errors.firstName = 'First name is required';
-    if (!shippingDetails.lastName) errors.lastName = 'Last name is required';
-    if (!shippingDetails.email || !/\S+@\S+\.\S+/.test(shippingDetails.email)) {
-      errors.email = 'Valid email is required';
-    }
-    if (!shippingDetails.address) errors.address = 'Address is required';
-    if (!shippingDetails.city) errors.city = 'City is required';
-    if (!shippingDetails.state) errors.state = 'State is required';
-    if (!shippingDetails.zipCode) errors.zipCode = 'Zip code is required';
-    if (!shippingDetails.phone) errors.phone = 'Phone number is required';
-
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (validateForm()) {
-      // Simulate order processing
-      console.log('Order submitted:', { shippingDetails, items });
-      
-      // Show order confirmation (you'd typically redirect to an order confirmation page)
-      alert('Order placed successfully!');
-      
-      // Clear cart and redirect to home or order confirmation
-      clearCart();
-      navigate('/order-confirmation');
+    // Validate that an address and payment method are selected
+    if (!shippingDetails.selectedAddressId) {
+      alert('Please select a shipping address');
+      return;
     }
-  };
+    
+    if (!paymentDetails.selectedMethodId) {
+      alert('Please select a payment method');
+      return;
+    }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setShippingDetails(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    // Simulate order processing
+    console.log('Order submitted:', { 
+      shippingDetails, 
+      paymentDetails, 
+      items 
+    });
+    
+    // Show order confirmation
+    alert('Order placed successfully!');
+    
+    // Clear cart and redirect to order confirmation
+    clearCart();
+    navigate('/order-confirmation');
   };
 
   return (
     <div className="bg-gray-50 min-h-screen py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Shipping Details */}
-          <div className="lg:col-span-2 bg-white rounded-lg shadow-md p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-              <MapPin className="mr-3 text-green-600" size={24} />
-              Shipping Details
-            </h2>
+          {/* Left Column - Shipping and Payment */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Shipping Information */}
+            <ShippingInformation 
+              onSelectAddress={(addressId) => 
+                setShippingDetails(prev => ({
+                  ...prev,
+                  selectedAddressId: addressId
+                }))
+              }
+            />
             
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Form fields remain the same */}
-              {/* ... */}
-            </form>
-
-            <div className="mt-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                <CreditCard className="mr-3 text-green-600" size={24} />
-                Payment Method
-              </h2>
-              <div className="flex space-x-4">
-                <button
-                  onClick={() => setPaymentMethod('credit')}
-                  className={`px-4 py-2 rounded-lg flex items-center ${
-                    paymentMethod === 'credit' 
-                      ? 'bg-green-600 text-white' 
-                      : 'bg-gray-100 text-gray-700'
-                  }`}
-                >
-                  <CreditCard className="mr-2" size={20} /> Credit Card
-                </button>
-                <button
-                  onClick={() => setPaymentMethod('paypal')}
-                  className={`px-4 py-2 rounded-lg flex items-center ${
-                    paymentMethod === 'paypal' 
-                      ? 'bg-green-600 text-white' 
-                      : 'bg-gray-100 text-gray-700'
-                  }`}
-                >
-                  <Package className="mr-2" size={20} /> PayPal
-                </button>
-              </div>
-            </div>
+            {/* Payment Information */}
+            <PaymentInformation 
+              onSelectMethod={(methodId) => 
+                setPaymentDetails(prev => ({
+                  ...prev,
+                  selectedMethodId: methodId
+                }))
+              }
+            />
           </div>
 
-          {/* Order Summary */}
+          {/* Right Column - Order Summary */}
           <div className="bg-white rounded-lg shadow-md p-6 h-fit sticky top-4">
             <h2 className="text-xl font-semibold mb-6 flex items-center">
               <Truck className="mr-3 text-green-600" size={24} />

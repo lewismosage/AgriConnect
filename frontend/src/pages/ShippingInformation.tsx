@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Truck, Plus, Edit, Trash2 } from 'lucide-react';
 
-// Interface for Shipping Address
 interface ShippingAddress {
   id: number;
   name: string;
@@ -13,7 +12,11 @@ interface ShippingAddress {
   isDefault: boolean;
 }
 
-const ShippingInformation: React.FC = () => {
+interface ShippingInformationProps {
+  onSelectAddress: (addressId: number) => void;
+}
+
+const ShippingInformation: React.FC<ShippingInformationProps> = ({ onSelectAddress }) => {
   const [addresses, setAddresses] = useState<ShippingAddress[]>([
     {
       id: 1,
@@ -47,40 +50,39 @@ const ShippingInformation: React.FC = () => {
   const handleSaveAddress = () => {
     if (!currentAddress) return;
 
-    // Validate required fields
     if (!currentAddress.name || !currentAddress.address || !currentAddress.city || 
         !currentAddress.state || !currentAddress.zipCode) {
       alert('Please fill in all required fields');
       return;
     }
 
-    // If setting as default, unset other defaults
     if (currentAddress.isDefault) {
       setAddresses(prevAddresses => 
         prevAddresses.map(addr => ({...addr, isDefault: false}))
       );
     }
 
-    // Update or add address
     setAddresses(prevAddresses => {
       const existingIndex = prevAddresses.findIndex(addr => addr.id === currentAddress.id);
       
       if (existingIndex > -1) {
-        // Update existing address
         const updatedAddresses = [...prevAddresses];
         updatedAddresses[existingIndex] = currentAddress;
         return updatedAddresses;
       } else {
-        // Add new address
         return [...prevAddresses, currentAddress];
       }
     });
+
+    // Notify parent component about the selected/default address
+    if (currentAddress.isDefault) {
+      onSelectAddress(currentAddress.id);
+    }
 
     setIsModalOpen(false);
   };
 
   const handleDeleteAddress = (id: number) => {
-    // Prevent deletion of the only or default address
     if (addresses.length === 1 || addresses.find(addr => addr.id === id)?.isDefault) {
       alert('Cannot delete the only or default address');
       return;
@@ -90,6 +92,10 @@ const ShippingInformation: React.FC = () => {
       prevAddresses.filter(addr => addr.id !== id)
     );
   };
+
+  const handleSelectAddress = (addressId: number) => {
+    onSelectAddress(addressId);
+  };;
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm">
@@ -111,7 +117,10 @@ const ShippingInformation: React.FC = () => {
         {addresses.map((address) => (
           <div 
             key={address.id} 
-            className="p-4 border border-gray-200 rounded-lg relative"
+            className={`p-4 border rounded-lg relative cursor-pointer ${
+              address.isDefault ? 'border-green-500 bg-green-50' : 'border-gray-200'
+            }`}
+            onClick={() => handleSelectAddress(address.id)}
           >
             <div className="flex justify-between items-start">
               <div>
@@ -128,13 +137,19 @@ const ShippingInformation: React.FC = () => {
               </div>
               <div className="flex space-x-2">
                 <button 
-                  onClick={() => openAddressModal(address)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openAddressModal(address);
+                  }}
                   className="text-green-600 hover:text-green-700"
                 >
                   <Edit className="w-5 h-5" />
                 </button>
                 <button 
-                  onClick={() => handleDeleteAddress(address.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteAddress(address.id);
+                  }}
                   className="text-red-600 hover:text-red-700"
                 >
                   <Trash2 className="w-5 h-5" />
