@@ -5,7 +5,6 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Inventory from "./pages/Inventory";
-import Orders from "./pages/Orders";
 import Subscriptions from "./pages/Subscriptions";
 import Deliveries from "./pages/Deliveries";
 import Analytics from "./pages/Analytics";
@@ -28,6 +27,7 @@ import FarmShopPage from './pages/FarmShopPage';
 import { CartProvider } from './contexts/CartContext';
 import Wishlist from './pages/Wishlist';
 import CheckoutPage from './pages/CheckoutPage';
+import OrderDetails from './pages/OrderDetails';
 
 function App() {
   return (
@@ -57,20 +57,13 @@ function App() {
                 <Route path="/farm/:farmId/shop" element={<FarmShopPage />} />
                 <Route path="/wishlist" element={<Wishlist />} />
                 <Route path="/checkout" element={<CheckoutPage />} />
+                <Route path="/orders/:id" element={<OrderDetails />} />
 
                 <Route
                   path="/inventory"
                   element={
                     <ProtectedRoute>
                       <Inventory />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/orders"
-                  element={
-                    <ProtectedRoute>
-                      <Orders />
                     </ProtectedRoute>
                   }
                 />

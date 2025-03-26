@@ -3,7 +3,9 @@ from .views import (
     OrderListCreateView,
     OrderDetailView,
     FarmOrdersView,
-    UpdateOrderStatusView
+    UpdateOrderStatusView,
+    OrderDetailView,
+    OrderDeleteView
 )
 
 urlpatterns = [
@@ -11,4 +13,5 @@ urlpatterns = [
     path('<int:pk>/', OrderDetailView.as_view(), name='order-detail'),
     path('farm/<int:farm_id>/', FarmOrdersView.as_view(), name='farm-orders'),
     path('<int:order_id>/status/', UpdateOrderStatusView.as_view(), name='update-order-status'),
+    path('orders/<int:pk>/delete/', OrderDeleteView.as_view(), name='order-delete'),
 ]

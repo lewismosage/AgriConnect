@@ -83,3 +83,18 @@ class UpdateOrderStatusView(APIView):
             {'detail': f'Order status updated to {new_status}.'},
             status=status.HTTP_200_OK
         )
+    
+# Add this to your existing views.py
+class OrderDeleteView(generics.DestroyAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        user = self.request.user
+        if user.user_type == 'farmer':
+            return Order.objects.filter(farm__farmer=user)
+        return Order.objects.filter(customer=user)
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
