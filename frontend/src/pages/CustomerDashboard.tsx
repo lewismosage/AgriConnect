@@ -4,18 +4,12 @@ import { useAuth } from '../contexts/AuthContext';
 import { CreditCard, Truck, Settings, LogOut, Heart, ShoppingCart, User } from 'lucide-react';
 import Wishlist from './Wishlist';
 import ShippingInformation from './ShippingInformation';
-import PaymentInformation from './PaymentInformation'; // Import the PaymentInformation component
+import PaymentInformation from './PaymentInformation';
+import OrderHistory from './OrderHistory';
 
 const CustomerDashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('orders'); // Default tab
-
-  // Dummy data for demonstration (only orders remain as mock data)
-  const orders = [
-    { id: 1, date: '2025-03-01', status: 'Delivered', total: 120.0 },
-    { id: 2, date: '2025-03-05', status: 'Shipped', total: 75.5 },
-    { id: 3, date: '2025-03-10', status: 'Processing', total: 200.0 },
-  ];
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -99,36 +93,17 @@ const CustomerDashboard: React.FC = () => {
 
           {/* Main Content */}
           <div className="md:col-span-3">
-            {/* Order History */}
-            {activeTab === 'orders' && (
-              <div className="bg-white p-6 rounded-lg shadow-sm">
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">Order History</h2>
-                <div className="space-y-4">
-                  {orders.map((order) => (
-                    <div key={order.id} className="flex justify-between items-center p-4 border border-gray-200 rounded-lg">
-                      <div>
-                        <p className="font-medium">Order #{order.id}</p>
-                        <p className="text-sm text-gray-500">{order.date}</p>
-                      </div>
-                      <p className="text-sm text-gray-700">{order.status}</p>
-                      <p className="font-medium">${order.total.toFixed(2)}</p>
-                      <Link to={`/orders/${order.id}`} className="text-green-600 hover:text-green-700">
-                        View Details
-                      </Link>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Order History - Now using the imported OrderHistory component */}
+            {activeTab === 'orders' && <OrderHistory />}
 
-            {/* Payment Methods - Now using the imported component */}
+            {/* Payment Methods */}
             {activeTab === 'payments' && (
-              <PaymentInformation />
+              <PaymentInformation onSelectMethod={() => {}} />
             )}
 
             {/* Shipping Information */}
             {activeTab === 'shipping' && (
-              <ShippingInformation />
+              <ShippingInformation onSelectAddress={() => {}} />
             )}
 
             {/* Wishlist */}

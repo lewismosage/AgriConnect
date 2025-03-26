@@ -3,7 +3,7 @@ import { useCart } from '../contexts/CartContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ShippingInformation from './ShippingInformation';
 import PaymentInformation from './PaymentInformation';
-import { Truck } from 'lucide-react';
+import { Truck, Check, X } from 'lucide-react';
 
 interface CartItem {
   product: {
@@ -14,6 +14,39 @@ interface CartItem {
   };
   quantity: number;
 }
+
+interface AlertModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  message: string;
+}
+
+const AlertModal: React.FC<AlertModalProps> = ({ isOpen, onClose, title, message }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+        <div className="flex justify-between items-start">
+          <h3 className="text-lg font-semibold">{title}</h3>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            <X size={20} />
+          </button>
+        </div>
+        <p className="mt-2 text-gray-600">{message}</p>
+        <div className="mt-4 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const CheckoutPage = () => {
   const location = useLocation();
@@ -31,6 +64,14 @@ const CheckoutPage = () => {
     selectedMethodId: 0
   });
 
+  const [orderPlaced, setOrderPlaced] = useState(false);
+  const [orderNumber, setOrderNumber] = useState('');
+
+  // Modal state
+  const [showAlertModal, setShowAlertModal] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
+
   const subtotal = items.reduce(
     (sum: number, item: CartItem) => sum + item.product.price * item.quantity,
     0
@@ -39,34 +80,104 @@ const CheckoutPage = () => {
   const tax = subtotal * 0.08; // 8% tax rate
   const total = subtotal + shipping + tax;
 
+  const generateOrderNumber = () => {
+    // Generate a random 8-digit order number
+    return 'ORD-' + Math.floor(10000000 + Math.random() * 90000000).toString();
+  };
+
+  const showAlert = (title: string, message: string) => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setShowAlertModal(true);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate that an address and payment method are selected
     if (!shippingDetails.selectedAddressId) {
-      alert('Please select a shipping address');
+      showAlert('Missing Information', 'Please select a shipping address');
       return;
     }
     
     if (!paymentDetails.selectedMethodId) {
-      alert('Please select a payment method');
+      showAlert('Missing Information', 'Please select a payment method');
       return;
     }
 
+    // Generate order number
+    const newOrderNumber = generateOrderNumber();
+    setOrderNumber(newOrderNumber);
+
     // Simulate order processing
     console.log('Order submitted:', { 
+      orderNumber: newOrderNumber,
       shippingDetails, 
       paymentDetails, 
       items 
     });
     
-    // Show order confirmation
-    alert('Order placed successfully!');
+    // Set order as placed
+    setOrderPlaced(true);
     
-    // Clear cart and redirect to order confirmation
+    // Clear cart
     clearCart();
-    navigate('/order-confirmation');
+
+    // After generating the order number
+    const newOrder = {
+      id: Date.now().toString(),
+      orderNumber: newOrderNumber,
+      date: new Date().toISOString(),
+      items,
+      shippingAddress: 'Your selected address', // Replace with actual address
+      paymentMethod: 'Your selected method',   // Replace with actual method
+      subtotal,
+      shipping,
+      tax,
+      total,
+      status: 'Processing'
+    };
+
+    // Save to localStorage
+    const existingOrders = JSON.parse(localStorage.getItem('agriConnectOrders') || '[]');
+    localStorage.setItem('agriConnectOrders', JSON.stringify([newOrder, ...existingOrders]));
   };
+
+  const renderSuccessScreen = () => (
+    <div className="text-center py-12">
+      <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100">
+        <Check className="h-8 w-8 text-green-600" />
+      </div>
+      <h2 className="mt-6 text-2xl font-bold text-gray-900">Order Placed Successfully!</h2>
+      <p className="mt-2 text-lg text-gray-500">
+        Thank you for your order with AgriConnect.
+      </p>
+      <p className="mt-1 text-sm text-gray-500">
+        Your order number is: <span className="font-semibold">{orderNumber}</span>
+      </p>
+      <p className="mt-2 text-gray-500">
+        We've sent a confirmation email with your order details.
+      </p>
+      <div className="mt-8">
+        <button
+          onClick={() => navigate('/products')}
+          className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
+        >
+          Continue Shopping
+        </button>
+      </div>
+    </div>
+  );
+
+  if (orderPlaced) {
+    return (
+      <div className="bg-gray-50 min-h-screen py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {renderSuccessScreen()}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gray-50 min-h-screen py-12">
@@ -150,6 +261,14 @@ const CheckoutPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Alert Modal */}
+      <AlertModal
+        isOpen={showAlertModal}
+        onClose={() => setShowAlertModal(false)}
+        title={alertTitle}
+        message={alertMessage}
+      />
     </div>
   );
 };
