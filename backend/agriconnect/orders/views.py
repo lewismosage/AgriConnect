@@ -4,7 +4,8 @@ from rest_framework.views import APIView
 from .models import Order
 from .serializers import OrderSerializer, CreateOrderSerializer
 from django.shortcuts import get_object_or_404
-from farms.models import Farm  # Ensure this import exists
+from farms.models import Farm
+from accounts.models import User
 
 class OrderListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -20,8 +21,18 @@ class OrderListCreateView(generics.ListCreateAPIView):
             return Order.objects.filter(farm__farmer=user)
         return Order.objects.filter(customer=user)
     
-    def perform_create(self, serializer):
-        serializer.save(customer=self.request.user)
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        order = serializer.save()
+        
+        headers = self.get_success_headers(serializer.data)
+        return Response({
+            'id': order.id,
+            'order_number': order.order_number,
+            'status': order.status,
+            'total': str(order.total)
+        }, status=status.HTTP_201_CREATED, headers=headers)
 
 class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]

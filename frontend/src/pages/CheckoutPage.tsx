@@ -4,6 +4,22 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import ShippingInformation from './ShippingInformation';
 import PaymentInformation from './PaymentInformation';
 import { Truck, Check, X } from 'lucide-react';
+import axios from '../contexts/axioConfig';
+
+interface AddressDetails {
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+}
+
+interface PaymentMethodDetails {
+  cardNumber: string;
+  expiryDate: string;
+  cvv: string;
+  nameOnCard: string;
+}
 
 interface CartItem {
   product: {
@@ -11,6 +27,9 @@ interface CartItem {
     name: string;
     price: number;
     image?: string;
+    farm?: {
+      id: string;
+    };
   };
   quantity: number;
 }
@@ -53,21 +72,33 @@ const CheckoutPage = () => {
   const navigate = useNavigate();
   const { cartItems = [] as CartItem[], clearCart } = useCart();
   
-  // Use cartItems from location state if available, otherwise from context
   const items = location.state?.cartItems || cartItems;
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [shippingDetails, setShippingDetails] = useState({
-    selectedAddressId: 0
+    selectedAddressId: 0,
+    addressDetails: {
+      street: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      country: ''
+    } as AddressDetails
   });
 
   const [paymentDetails, setPaymentDetails] = useState({
-    selectedMethodId: 0
+    selectedMethodId: 0,
+    methodDetails: {
+      cardNumber: '',
+      expiryDate: '',
+      cvv: '',
+      nameOnCard: ''
+    } as PaymentMethodDetails
   });
 
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
 
-  // Modal state
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertTitle, setAlertTitle] = useState('');
   const [alertMessage, setAlertMessage] = useState('');
@@ -77,13 +108,8 @@ const CheckoutPage = () => {
     0
   );
   const shipping = 5.99;
-  const tax = subtotal * 0.08; // 8% tax rate
+  const tax = subtotal * 0.08;
   const total = subtotal + shipping + tax;
-
-  const generateOrderNumber = () => {
-    // Generate a random 8-digit order number
-    return 'ORD-' + Math.floor(10000000 + Math.random() * 90000000).toString();
-  };
 
   const showAlert = (title: string, message: string) => {
     setAlertTitle(title);
@@ -93,90 +119,118 @@ const CheckoutPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     
-    // Validate that an address and payment method are selected
     if (!shippingDetails.selectedAddressId) {
       showAlert('Missing Information', 'Please select a shipping address');
+      setIsSubmitting(false);
       return;
     }
     
     if (!paymentDetails.selectedMethodId) {
       showAlert('Missing Information', 'Please select a payment method');
+      setIsSubmitting(false);
+      return;
+    }
+  
+    if (!items.length) {
+      showAlert('Empty Cart', 'Your cart is empty');
+      setIsSubmitting(false);
+      return;
+    }
+  
+    if (!items[0].product.farm?.id) {
+      showAlert('Error', 'Products must belong to a farm');
+      setIsSubmitting(false);
       return;
     }
   
     try {
-      // Prepare order data
       const orderData = {
-        farm: items[0].product.farm.id, // Assuming all items are from the same farm
-        shipping_address: shippingDetails.selectedAddressId, // Corrected to use selectedAddressId
-        payment_method: paymentDetails.selectedMethodId,   // Corrected to use selectedMethodId
+        farm_id: items[0].product.farm.id,
+        shipping_address: JSON.stringify({
+          street: shippingDetails.addressDetails.street,
+          city: shippingDetails.addressDetails.city,
+          state: shippingDetails.addressDetails.state,
+          zipCode: shippingDetails.addressDetails.zipCode,
+          country: shippingDetails.addressDetails.country
+        }),
+        payment_method: paymentDetails.selectedMethodId.toString(),
         items: items.map((item: CartItem) => ({
           product_id: item.product.id,
           quantity: item.quantity
         }))
       };
   
-      // Send to backend
-      const response = await fetch('/api/orders/', {
-        method: 'POST',
+      const response = await axios.post('/api/orders/', orderData, {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-        },
-        body: JSON.stringify(orderData)
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
       });
-  
-      if (!response.ok) {
-        throw new Error('Failed to place order');
+
+      if (response.data && response.data.order_number) {
+        setOrderNumber(response.data.order_number);
+        setOrderPlaced(true);
+        clearCart();
+
+        const newOrder = {
+          id: response.data.id,
+          orderNumber: response.data.order_number,
+          date: new Date().toISOString(),
+          items: items.map((item: CartItem) => ({
+            product: {
+              id: item.product.id,
+              name: item.product.name,
+              price: item.product.price,
+              image: item.product.image
+            },
+            quantity: item.quantity
+          })),
+          shippingAddress: shippingDetails.addressDetails,
+          paymentMethod: paymentDetails.selectedMethodId,
+          subtotal: subtotal,
+          shipping: shipping,
+          tax: tax,
+          total: total,
+          status: 'pending'
+        };
+
+        try {
+          const existingOrders = JSON.parse(localStorage.getItem('agriConnectOrders') || '[]');
+          localStorage.setItem('agriConnectOrders', JSON.stringify([newOrder, ...existingOrders]));
+        } catch (storageError) {
+          console.error('Error saving to localStorage:', storageError);
+        }
+      } else {
+        throw new Error('Invalid response from server');
       }
   
-      const order = await response.json();
-      setOrderNumber(order.order_number);
-      setOrderPlaced(true);
-      clearCart();
+    } catch (error: any) {
+      console.error('Order submission error:', error);
       
-    } catch (error) {
-      showAlert('Error', 'Failed to place order. Please try again.');
-      console.error(error);
+      let errorMessage = 'Failed to place order. Please try again.';
+      
+      if (error.response) {
+        if (error.response.data) {
+          if (typeof error.response.data === 'string') {
+            errorMessage = error.response.data;
+          } else if (error.response.data.detail) {
+            errorMessage = error.response.data.detail;
+          } else if (error.response.data.non_field_errors) {
+            errorMessage = error.response.data.non_field_errors.join(', ');
+          } else {
+            errorMessage = JSON.stringify(error.response.data);
+          }
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+  
+      showAlert('Order Error', errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    // Generate order number
-    const newOrderNumber = generateOrderNumber();
-    setOrderNumber(newOrderNumber);
-
-    // Simulate order processing
-    console.log('Order submitted:', { 
-      orderNumber: newOrderNumber,
-      shippingDetails, 
-      paymentDetails, 
-      items 
-    });
-    
-    // Set order as placed
-    setOrderPlaced(true);
-    
-    // Clear cart
-    clearCart();
-
-    // After generating the order number
-    const newOrder = {
-      id: Date.now().toString(),
-      orderNumber: newOrderNumber,
-      date: new Date().toISOString(),
-      items,
-      shippingAddress: 'Your selected address', // Replace with actual address
-      paymentMethod: 'Your selected method',   // Replace with actual method
-      subtotal,
-      shipping,
-      tax,
-      total,
-      status: 'Processing'
-    };
-
-    // Save to localStorage
-    const existingOrders = JSON.parse(localStorage.getItem('agriConnectOrders') || '[]');
-    localStorage.setItem('agriConnectOrders', JSON.stringify([newOrder, ...existingOrders]));
   };
 
   const renderSuccessScreen = () => (
@@ -219,30 +273,26 @@ const CheckoutPage = () => {
     <div className="bg-gray-50 min-h-screen py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Shipping and Payment */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Shipping Information */}
             <ShippingInformation 
-              onSelectAddress={(addressId) => 
+              onSelectAddress={(addressId: number) => {
                 setShippingDetails(prev => ({
                   ...prev,
                   selectedAddressId: addressId
-                }))
-              }
+                }));
+              }}
             />
             
-            {/* Payment Information */}
             <PaymentInformation 
-              onSelectMethod={(methodId) => 
+              onSelectMethod={(methodId: number) => {
                 setPaymentDetails(prev => ({
                   ...prev,
                   selectedMethodId: methodId
-                }))
-              }
+                }));
+              }}
             />
           </div>
 
-          {/* Right Column - Order Summary */}
           <div className="bg-white rounded-lg shadow-md p-6 h-fit sticky top-4">
             <h2 className="text-xl font-semibold mb-6 flex items-center">
               <Truck className="mr-3 text-green-600" size={24} />
@@ -289,16 +339,18 @@ const CheckoutPage = () => {
               </div>
               <button
                 onClick={handleSubmit}
-                className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition duration-300 mt-4"
+                disabled={isSubmitting}
+                className={`w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition duration-300 mt-4 ${
+                  isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+                }`}
               >
-                Place Order
+                {isSubmitting ? 'Processing...' : 'Place Order'}
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Alert Modal */}
       <AlertModal
         isOpen={showAlertModal}
         onClose={() => setShowAlertModal(false)}

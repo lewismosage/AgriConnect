@@ -4,7 +4,8 @@ from products.models import Product
 from .models import Order, OrderItem
 from products.serializers import ProductSerializer
 from farms.serializers import FarmSerializer
-from farms.models import Farm  # Added this import
+from farms.models import Farm
+from decimal import Decimal
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product = ProductSerializer(read_only=True)
@@ -46,7 +47,12 @@ class OrderSerializer(serializers.ModelSerializer):
         ]
 
 class CreateOrderSerializer(serializers.ModelSerializer):
-    items = OrderItemSerializer(many=True, source='items', required=True)
+    items = OrderItemSerializer(many=True, required=True)
+    farm_id = serializers.PrimaryKeyRelatedField(
+        queryset=Farm.objects.all(),
+        source='farm',
+        write_only=True
+    )
     
     class Meta:
         model = Order
@@ -55,10 +61,16 @@ class CreateOrderSerializer(serializers.ModelSerializer):
         ]
     
     def validate(self, data):
-        farm = data['farm']
-        items = data['items']
+        farm = data.get('farm')
+        items = data.get('items', [])
         
-        product_ids = [item['product'].id for item in items]
+        if not farm:
+            raise serializers.ValidationError("Farm is required")
+        
+        if not items:
+            raise serializers.ValidationError("At least one item is required")
+        
+        product_ids = [item.get('product').id for item in items if item.get('product')]
         products = Product.objects.filter(id__in=product_ids)
         
         if products.count() != len(product_ids):
@@ -76,24 +88,24 @@ class CreateOrderSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         items_data = validated_data.pop('items')
         
-        # Calculate order totals
         subtotal = sum(
-            item['quantity'] * item['product'].price
+            Decimal(str(item['quantity'])) * Decimal(str(item['product'].price))
             for item in items_data
         )
-        shipping_cost = 5.99  # Could be dynamic based on farm
-        tax = subtotal * 0.08  # Example tax calculation
+        shipping_cost = Decimal('5.99')
+        tax_rate = Decimal('0.08')
+        tax = subtotal * tax_rate
+        total = subtotal + shipping_cost + tax
         
         order = Order.objects.create(
             customer=request.user,
             subtotal=subtotal,
             shipping_cost=shipping_cost,
             tax=tax,
-            total=subtotal + shipping_cost + tax,
+            total=total,
             **validated_data
         )
         
-        # Create order items
         for item_data in items_data:
             OrderItem.objects.create(
                 order=order,

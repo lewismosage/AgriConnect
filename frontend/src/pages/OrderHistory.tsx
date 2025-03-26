@@ -7,7 +7,7 @@ import axios from '../contexts/axioConfig';
 interface Product {
   id: string;
   name: string;
-  price: number;
+  price: number | string; // Updated to accept both number and string
   image?: string;
   farm: {
     id: string;
@@ -18,7 +18,7 @@ interface Product {
 interface OrderItem {
   product: Product;
   quantity: number;
-  price: number;
+  price: number | string; // Updated to accept both number and string
 }
 
 interface Order {
@@ -28,10 +28,10 @@ interface Order {
   items: OrderItem[];
   shipping_address: string;
   payment_method: string;
-  subtotal: number;
-  shipping_cost: number;
-  tax: number;
-  total: number;
+  subtotal: number | string;
+  shipping_cost: number | string;
+  tax: number | string;
+  total: number | string;
   status: string;
 }
 
@@ -41,6 +41,7 @@ interface TransformedOrder extends Omit<Order, 'order_number' | 'created_at' | '
   shipping: number;
   shippingAddress: string;
   paymentMethod: string;
+  status: string;
 }
 
 const OrderHistory = () => {
@@ -56,15 +57,34 @@ const OrderHistory = () => {
         setLoading(true);
         const response = await axios.get<Order[]>('/api/orders/');
         
-        const transformedOrders = response.data.map((order): TransformedOrder => ({
-          ...order,
-          orderNumber: order.order_number,
-          date: order.created_at,
-          shipping: order.shipping_cost,
-          shippingAddress: order.shipping_address,
-          paymentMethod: order.payment_method,
-          status: order.status.charAt(0).toUpperCase() + order.status.slice(1)
-        }));
+        const transformedOrders = response.data.map((order): TransformedOrder => {
+          // Convert all numeric fields to numbers
+          const subtotal = typeof order.subtotal === 'string' ? parseFloat(order.subtotal) : order.subtotal;
+          const shippingCost = typeof order.shipping_cost === 'string' ? parseFloat(order.shipping_cost) : order.shipping_cost;
+          const tax = typeof order.tax === 'string' ? parseFloat(order.tax) : order.tax;
+          const total = typeof order.total === 'string' ? parseFloat(order.total) : order.total;
+
+          return {
+            ...order,
+            orderNumber: order.order_number,
+            date: order.created_at,
+            shipping: shippingCost,
+            shippingAddress: order.shipping_address,
+            paymentMethod: order.payment_method,
+            subtotal,
+            tax,
+            total,
+            status: order.status.charAt(0).toUpperCase() + order.status.slice(1),
+            items: order.items.map(item => ({
+              ...item,
+              product: {
+                ...item.product,
+                price: typeof item.product.price === 'string' ? parseFloat(item.product.price) : item.product.price
+              },
+              price: typeof item.price === 'string' ? parseFloat(item.price) : item.price
+            }))
+          };
+        });
         
         setOrders(transformedOrders);
       } catch (err) {
@@ -93,13 +113,24 @@ const OrderHistory = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
+      case 'completed':
       case 'delivered':
         return <Check className="h-5 w-5 text-green-500" />;
       case 'shipped':
+      case 'processing':
         return <Truck className="h-5 w-5 text-blue-500" />;
+      case 'pending':
+        return <div className="h-5 w-5 rounded-full bg-yellow-500 animate-pulse" />;
+      case 'cancelled':
+        return <div className="h-5 w-5 rounded-full bg-red-500" />;
       default:
         return <div className="h-5 w-5 rounded-full bg-gray-300 animate-pulse" />;
     }
+  };
+
+  const formatPrice = (price: number | string) => {
+    const num = typeof price === 'string' ? parseFloat(price) : price;
+    return num.toFixed(2);
   };
 
   if (loading) {
@@ -190,7 +221,7 @@ const OrderHistory = () => {
                   <h4 className="text-sm font-medium text-gray-500 mb-2">Items</h4>
                   <ul className="divide-y divide-gray-200">
                     {order.items.map((item) => (
-                      <li key={item.product.id} className="py-4 flex">
+                      <li key={`${order.id}-${item.product.id}`} className="py-4 flex">
                         <img
                           src={item.product.image || 'https://via.placeholder.com/50'}
                           alt={item.product.name}
@@ -201,7 +232,7 @@ const OrderHistory = () => {
                             <p className="text-sm font-medium text-gray-900">{item.product.name}</p>
                             <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
                           </div>
-                          <p className="text-sm text-gray-500">${item.product.price.toFixed(2)} each</p>
+                          <p className="text-sm text-gray-500">${formatPrice(item.product.price)} each</p>
                           <p className="text-xs text-gray-400">From: {item.product.farm.name}</p>
                         </div>
                       </li>
@@ -212,19 +243,19 @@ const OrderHistory = () => {
                 <div className="border-t border-gray-200 pt-4 mt-4">
                   <div className="flex justify-between text-sm text-gray-500">
                     <span>Subtotal</span>
-                    <span>${order.subtotal.toFixed(2)}</span>
+                    <span>${formatPrice(order.subtotal)}</span>
                   </div>
                   <div className="flex justify-between text-sm text-gray-500 mt-1">
                     <span>Shipping</span>
-                    <span>${order.shipping.toFixed(2)}</span>
+                    <span>${formatPrice(order.shipping)}</span>
                   </div>
                   <div className="flex justify-between text-sm text-gray-500 mt-1">
                     <span>Tax</span>
-                    <span>${order.tax.toFixed(2)}</span>
+                    <span>${formatPrice(order.tax)}</span>
                   </div>
                   <div className="flex justify-between text-lg font-medium text-gray-900 mt-2 pt-2 border-t border-gray-200">
                     <span>Total</span>
-                    <span>${order.total.toFixed(2)}</span>
+                    <span>${formatPrice(order.total)}</span>
                   </div>
                 </div>
 
