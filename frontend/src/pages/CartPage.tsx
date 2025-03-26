@@ -1,6 +1,6 @@
 import React from 'react';
 import { Trash2, ShoppingBag } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import { CartItem } from '../contexts/types';
 
@@ -27,10 +27,11 @@ const CartPage: React.FC = () => {
   const shipping = 5.99;
   const total = subtotal + shipping;
 
+  const navigate = useNavigate();
+
   const handleCheckout = () => {
-    // Implement your checkout logic here
-    console.log('Proceeding to checkout with:', cartItems);
-    // clearCart(); // Uncomment if you want to clear cart after checkout
+    navigate('/checkout', { state: { cartItems } });
+    
   };
 
   return (
