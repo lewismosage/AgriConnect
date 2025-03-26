@@ -91,7 +91,7 @@ const CheckoutPage = () => {
     setShowAlertModal(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate that an address and payment method are selected
@@ -103,6 +103,42 @@ const CheckoutPage = () => {
     if (!paymentDetails.selectedMethodId) {
       showAlert('Missing Information', 'Please select a payment method');
       return;
+    }
+  
+    try {
+      // Prepare order data
+      const orderData = {
+        farm: items[0].product.farm.id, // Assuming all items are from the same farm
+        shipping_address: shippingDetails.selectedAddressId, // Corrected to use selectedAddressId
+        payment_method: paymentDetails.selectedMethodId,   // Corrected to use selectedMethodId
+        items: items.map((item: CartItem) => ({
+          product_id: item.product.id,
+          quantity: item.quantity
+        }))
+      };
+  
+      // Send to backend
+      const response = await fetch('/api/orders/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        },
+        body: JSON.stringify(orderData)
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to place order');
+      }
+  
+      const order = await response.json();
+      setOrderNumber(order.order_number);
+      setOrderPlaced(true);
+      clearCart();
+      
+    } catch (error) {
+      showAlert('Error', 'Failed to place order. Please try again.');
+      console.error(error);
     }
 
     // Generate order number

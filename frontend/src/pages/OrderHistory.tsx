@@ -1,122 +1,86 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, ChevronRight, Truck, CreditCard, Calendar, Hash } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import axios from '../contexts/axioConfig';
 
-interface OrderItem {
-  product: {
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  image?: string;
+  farm: {
     id: string;
     name: string;
-    price: number;
-    image?: string;
   };
+}
+
+interface OrderItem {
+  product: Product;
   quantity: number;
+  price: number;
 }
 
 interface Order {
   id: string;
-  orderNumber: string;
-  date: string;
+  order_number: string;
+  created_at: string;
   items: OrderItem[];
-  shippingAddress: string;
-  paymentMethod: string;
+  shipping_address: string;
+  payment_method: string;
   subtotal: number;
-  shipping: number;
+  shipping_cost: number;
   tax: number;
   total: number;
-  status: 'Processing' | 'Shipped' | 'Delivered';
+  status: string;
+}
+
+interface TransformedOrder extends Omit<Order, 'order_number' | 'created_at' | 'shipping_cost' | 'shipping_address' | 'payment_method'> {
+  orderNumber: string;
+  date: string;
+  shipping: number;
+  shippingAddress: string;
+  paymentMethod: string;
 }
 
 const OrderHistory = () => {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<TransformedOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
-  // Simulate fetching orders from an API or localStorage
   useEffect(() => {
-    const fetchOrders = () => {
+    const fetchOrders = async () => {
       try {
-        // In a real app, you would fetch from an API:
-        // const response = await fetch('/api/orders');
-        // const data = await response.json();
-        // setOrders(data);
-
-        // For demo purposes, we'll use localStorage
-        const savedOrders = localStorage.getItem('agriConnectOrders');
-        if (savedOrders) {
-          setOrders(JSON.parse(savedOrders));
-        } else {
-          // Sample data for demonstration
-          const sampleOrders: Order[] = [
-            {
-              id: '1',
-              orderNumber: 'ORD-12345678',
-              date: new Date(Date.now() - 86400000).toISOString(),
-              items: [
-                {
-                  product: {
-                    id: '101',
-                    name: 'Organic Tomatoes',
-                    price: 3.99,
-                    image: 'https://via.placeholder.com/50'
-                  },
-                  quantity: 2
-                },
-                {
-                  product: {
-                    id: '102',
-                    name: 'Fresh Basil',
-                    price: 2.49,
-                    image: 'https://via.placeholder.com/50'
-                  },
-                  quantity: 1
-                }
-              ],
-              shippingAddress: '123 Farm Rd, Agricultural City, AC 12345',
-              paymentMethod: 'Credit Card ending in 4242',
-              subtotal: 10.47,
-              shipping: 5.99,
-              tax: 0.84,
-              total: 17.30,
-              status: 'Delivered'
-            },
-            {
-              id: '2',
-              orderNumber: 'ORD-87654321',
-              date: new Date(Date.now() - 172800000).toISOString(),
-              items: [
-                {
-                  product: {
-                    id: '103',
-                    name: 'Organic Potatoes',
-                    price: 4.99,
-                    image: 'https://via.placeholder.com/50'
-                  },
-                  quantity: 5
-                }
-              ],
-              shippingAddress: '123 Farm Rd, Agricultural City, AC 12345',
-              paymentMethod: 'PayPal',
-              subtotal: 24.95,
-              shipping: 5.99,
-              tax: 2.00,
-              total: 32.94,
-              status: 'Shipped'
-            }
-          ];
-          setOrders(sampleOrders);
-          localStorage.setItem('agriConnectOrders', JSON.stringify(sampleOrders));
-        }
+        setLoading(true);
+        const response = await axios.get<Order[]>('/api/orders/');
+        
+        const transformedOrders = response.data.map((order): TransformedOrder => ({
+          ...order,
+          orderNumber: order.order_number,
+          date: order.created_at,
+          shipping: order.shipping_cost,
+          shippingAddress: order.shipping_address,
+          paymentMethod: order.payment_method,
+          status: order.status.charAt(0).toUpperCase() + order.status.slice(1)
+        }));
+        
+        setOrders(transformedOrders);
       } catch (err) {
-        setError('Failed to load order history');
-        console.error(err);
+        console.error('Error fetching orders:', err);
+        setError('Failed to load order history. Please try again later.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchOrders();
-  }, []);
+    if (user) {
+      fetchOrders();
+    } else {
+      navigate('/login');
+    }
+  }, [user, navigate]);
 
   const formatDate = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = { 
@@ -127,11 +91,11 @@ const OrderHistory = () => {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
-  const getStatusIcon = (status: Order['status']) => {
-    switch (status) {
-      case 'Delivered':
+  const getStatusIcon = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'delivered':
         return <Check className="h-5 w-5 text-green-500" />;
-      case 'Shipped':
+      case 'shipped':
         return <Truck className="h-5 w-5 text-blue-500" />;
       default:
         return <div className="h-5 w-5 rounded-full bg-gray-300 animate-pulse" />;
@@ -238,6 +202,7 @@ const OrderHistory = () => {
                             <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
                           </div>
                           <p className="text-sm text-gray-500">${item.product.price.toFixed(2)} each</p>
+                          <p className="text-xs text-gray-400">From: {item.product.farm.name}</p>
                         </div>
                       </li>
                     ))}
