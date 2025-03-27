@@ -1,15 +1,23 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { CreditCard, Truck, Settings, LogOut, Heart, ShoppingCart, User } from 'lucide-react';
-import Wishlist from './Wishlist';
-import ShippingInformation from './ShippingInformation';
-import PaymentInformation from './PaymentInformation';
-import OrderHistory from './OrderHistory';
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import {
+  CreditCard,
+  Truck,
+  Settings,
+  LogOut,
+  Heart,
+  ShoppingCart,
+  User,
+} from "lucide-react";
+import Wishlist from "./Wishlist";
+import ShippingInformation from "./ShippingInformation";
+import PaymentInformation from "./PaymentInformation";
+import OrderHistoryView from "./OrderHistoryView";
 
 const CustomerDashboard: React.FC = () => {
   const { user, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState('orders'); // Default tab
+  const [activeTab, setActiveTab] = useState("orders"); // Default tab
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -36,45 +44,55 @@ const CustomerDashboard: React.FC = () => {
 
               <nav className="space-y-2">
                 <button
-                  onClick={() => setActiveTab('orders')}
+                  onClick={() => setActiveTab("orders")}
                   className={`w-full flex items-center space-x-3 p-2 rounded-lg ${
-                    activeTab === 'orders' ? 'bg-green-50 text-green-600' : 'text-gray-700 hover:bg-gray-50'
+                    activeTab === "orders"
+                      ? "bg-green-50 text-green-600"
+                      : "text-gray-700 hover:bg-gray-50"
                   }`}
                 >
                   <ShoppingCart className="w-5 h-5" />
                   <span>Order History</span>
                 </button>
                 <button
-                  onClick={() => setActiveTab('payments')}
+                  onClick={() => setActiveTab("payments")}
                   className={`w-full flex items-center space-x-3 p-2 rounded-lg ${
-                    activeTab === 'payments' ? 'bg-green-50 text-green-600' : 'text-gray-700 hover:bg-gray-50'
+                    activeTab === "payments"
+                      ? "bg-green-50 text-green-600"
+                      : "text-gray-700 hover:bg-gray-50"
                   }`}
                 >
                   <CreditCard className="w-5 h-5" />
                   <span>Payment Methods</span>
                 </button>
                 <button
-                  onClick={() => setActiveTab('shipping')}
+                  onClick={() => setActiveTab("shipping")}
                   className={`w-full flex items-center space-x-3 p-2 rounded-lg ${
-                    activeTab === 'shipping' ? 'bg-green-50 text-green-600' : 'text-gray-700 hover:bg-gray-50'
+                    activeTab === "shipping"
+                      ? "bg-green-50 text-green-600"
+                      : "text-gray-700 hover:bg-gray-50"
                   }`}
                 >
                   <Truck className="w-5 h-5" />
                   <span>Shipping Information</span>
                 </button>
                 <button
-                  onClick={() => setActiveTab('wishlist')}
+                  onClick={() => setActiveTab("wishlist")}
                   className={`w-full flex items-center space-x-3 p-2 rounded-lg ${
-                    activeTab === 'wishlist' ? 'bg-green-50 text-green-600' : 'text-gray-700 hover:bg-gray-50'
+                    activeTab === "wishlist"
+                      ? "bg-green-50 text-green-600"
+                      : "text-gray-700 hover:bg-gray-50"
                   }`}
                 >
                   <Heart className="w-5 h-5" />
                   <span>Wishlist</span>
                 </button>
                 <button
-                  onClick={() => setActiveTab('settings')}
+                  onClick={() => setActiveTab("settings")}
                   className={`w-full flex items-center space-x-3 p-2 rounded-lg ${
-                    activeTab === 'settings' ? 'bg-green-50 text-green-600' : 'text-gray-700 hover:bg-gray-50'
+                    activeTab === "settings"
+                      ? "bg-green-50 text-green-600"
+                      : "text-gray-700 hover:bg-gray-50"
                   }`}
                 >
                   <Settings className="w-5 h-5" />
@@ -93,31 +111,34 @@ const CustomerDashboard: React.FC = () => {
 
           {/* Main Content */}
           <div className="md:col-span-3">
-            {/* Order History - Now using the imported OrderHistory component */}
-            {activeTab === 'orders' && <OrderHistory />}
+            {/* Order History - Now using the new OrderHistoryView */}
+            {activeTab === "orders" && <OrderHistoryView />}
 
             {/* Payment Methods */}
-            {activeTab === 'payments' && (
+            {activeTab === "payments" && (
               <PaymentInformation onSelectMethod={() => {}} />
             )}
 
             {/* Shipping Information */}
-            {activeTab === 'shipping' && (
+            {activeTab === "shipping" && (
               <ShippingInformation onSelectAddress={() => {}} />
             )}
 
             {/* Wishlist */}
-            {activeTab === 'wishlist' && (
-              <Wishlist />
-            )}
+            {activeTab === "wishlist" && <Wishlist />}
 
             {/* Account Settings */}
-            {activeTab === 'settings' && (
+            {activeTab === "settings" && (
               <div className="bg-white p-6 rounded-lg shadow-sm">
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">Account Settings</h2>
+                <h2 className="text-xl font-semibold text-gray-900 mb-6">
+                  Account Settings
+                </h2>
                 <form className="space-y-6">
                   <div>
-                    <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
+                    <label
+                      htmlFor="fullName"
+                      className="block text-sm font-medium text-gray-700"
+                    >
                       Full Name
                     </label>
                     <input
@@ -128,7 +149,10 @@ const CustomerDashboard: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                    <label
+                      htmlFor="email"
+                      className="block text-sm font-medium text-gray-700"
+                    >
                       Email Address
                     </label>
                     <input
@@ -139,7 +163,10 @@ const CustomerDashboard: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                    <label
+                      htmlFor="password"
+                      className="block text-sm font-medium text-gray-700"
+                    >
                       New Password
                     </label>
                     <input
