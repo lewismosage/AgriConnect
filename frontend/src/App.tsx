@@ -28,6 +28,7 @@ import { CartProvider } from './contexts/CartContext';
 import Wishlist from './pages/Wishlist';
 import CheckoutPage from './pages/CheckoutPage';
 import OrderDetails from './pages/OrderDetails';
+import OrdersPage from './pages/OrdersPage';
 
 function App() {
   return (
@@ -57,6 +58,7 @@ function App() {
                 <Route path="/farm/:farmId/shop" element={<FarmShopPage />} />
                 <Route path="/wishlist" element={<Wishlist />} />
                 <Route path="/checkout" element={<CheckoutPage />} />
+                <Route path="/orders" element={<OrdersPage />} />
                 <Route path="/orders/:id" element={<OrderDetails />} />
 
                 <Route

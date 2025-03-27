@@ -49,13 +49,12 @@ class FarmOrdersView(generics.ListAPIView):
     serializer_class = OrderSerializer
     
     def get_queryset(self):
-        farm_id = self.kwargs['farm_id']
-        farm = get_object_or_404(Farm, id=farm_id)
-        
-        if self.request.user != farm.farmer:
+        # Get the farmer's farm
+        farmer_profile = self.request.user.farmer_profile
+        if not farmer_profile or not hasattr(farmer_profile, 'farm'):
             return Order.objects.none()
         
-        return Order.objects.filter(farm=farm)
+        return Order.objects.filter(farm=farmer_profile.farm).order_by('-created_at')
 
 class UpdateOrderStatusView(APIView):
     permission_classes = [permissions.IsAuthenticated]
