@@ -16,6 +16,7 @@ import {
   MoreVertical,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import NotificationButton from "../components/NotificationButton";
 
 interface Order {
   id: string;
@@ -114,7 +115,16 @@ const OrdersPage: React.FC = () => {
       );
       setOrders(
         orders.map((order) =>
-          order.id === orderId ? { ...order, status: newStatus as "pending" | "processing" | "completed" | "cancelled" } : order
+          order.id === orderId
+            ? {
+                ...order,
+                status: newStatus as
+                  | "pending"
+                  | "processing"
+                  | "completed"
+                  | "cancelled",
+              }
+            : order
         )
       );
     } catch (err) {
@@ -354,6 +364,7 @@ const OrdersPage: React.FC = () => {
                           >
                             <option value="pending">Pending</option>
                             <option value="processing">Processing</option>
+                            <option value="shipped">Shipped</option>
                             <option value="completed">Completed</option>
                             <option value="cancelled">Cancelled</option>
                           </select>
@@ -372,6 +383,22 @@ const OrdersPage: React.FC = () => {
                           <span className="font-medium">Shipping:</span>{" "}
                           {order.shipping_address}
                         </p>
+                      </div>
+
+                      {/* Notification Button */}
+                      <div className="mt-2">
+                        <NotificationButton
+                          orderId={order.id}
+                          customerEmail={order.customer.email}
+                          currentStatus={order.status}
+                          onNotify={(success) => {
+                            if (success) {
+                              // Show success message
+                            } else {
+                              // Show error message
+                            }
+                          }}
+                        />
                       </div>
                     </div>
                   </div>

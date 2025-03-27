@@ -9,6 +9,7 @@ class Order(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('processing', 'Processing'),
+        ('shipped', 'Shipped'),
         ('completed', 'Completed'),
         ('cancelled', 'Cancelled'),
     ]
@@ -53,3 +54,22 @@ class OrderItem(models.Model):
     
     def __str__(self):
         return f"{self.quantity} x {self.product.name} (Order #{self.order.order_number})"
+    
+class TrackingUpdate(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='tracking_updates')
+    status = models.CharField(max_length=20, choices=Order.STATUS_CHOICES)
+    location = models.CharField(max_length=255, blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='tracking_updates'
+    )
+
+    class Meta:
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        return f"Tracking update for {self.order} at {self.timestamp}"

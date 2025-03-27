@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from accounts.serializers import UserSerializer 
 from products.models import Product 
-from .models import Order, OrderItem
+from .models import Order, OrderItem, TrackingUpdate
 from products.serializers import ProductSerializer
 from farms.serializers import FarmSerializer
 from farms.models import Farm
@@ -115,3 +115,14 @@ class CreateOrderSerializer(serializers.ModelSerializer):
             )
         
         return order
+    
+class TrackingUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TrackingUpdate
+        fields = ['id', 'status', 'location', 'notes', 'timestamp', 'updated_by']
+        read_only_fields = ['id', 'timestamp', 'updated_by']
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['updated_by'] = instance.updated_by.get_full_name() if instance.updated_by else 'System'
+        return representation

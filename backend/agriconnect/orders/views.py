@@ -1,8 +1,8 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
-from rest_framework.views import APIView
-from .models import Order
-from .serializers import OrderSerializer, CreateOrderSerializer
+from rest_framework.views import APIView, PermissionDenied
+from .models import Order, TrackingUpdate
+from .serializers import OrderSerializer, CreateOrderSerializer, TrackingUpdateSerializer
 from django.shortcuts import get_object_or_404
 from farms.models import Farm
 from accounts.models import User
@@ -97,3 +97,56 @@ class OrderDeleteView(generics.DestroyAPIView):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+class VerifyPaymentView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request, order_id):
+        order = get_object_or_404(Order, id=order_id)
+        
+        if request.user != order.farm.farmer:
+            return Response(
+                {'detail': 'You do not have permission to verify this payment.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Implement your payment verification logic here
+        # This is a mock implementation
+        is_verified = True  # Replace with actual verification
+        
+        return Response({
+            'verified': is_verified,
+            'order_id': order_id,
+            'amount': str(order.total)
+        })
+    
+class TrackingUpdateView(generics.CreateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = TrackingUpdateSerializer
+    
+    def perform_create(self, serializer):
+        order = get_object_or_404(Order, id=self.kwargs['order_id'])
+        
+        # Verify permissions
+        if self.request.user not in [order.customer, order.farm.farmer]:
+            raise PermissionDenied("You don't have permission to update tracking for this order")
+            
+        serializer.save(
+            order=order,
+            updated_by=self.request.user,
+            status=order.status  # Track the current order status
+        )
+
+class TrackingListView(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = TrackingUpdateSerializer
+    
+    def get_queryset(self):
+        order_id = self.kwargs['order_id']
+        order = get_object_or_404(Order, id=order_id)
+        
+        # Verify permissions - customer or farmer can view
+        if self.request.user not in [order.customer, order.farm.farmer]:
+            raise PermissionDenied("You don't have permission to view tracking for this order")
+            
+        return TrackingUpdate.objects.filter(order=order).order_by('timestamp')

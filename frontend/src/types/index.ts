@@ -45,7 +45,7 @@ export interface Order {
   id: string;
   buyerId: string;
   farmId: string;
-  status: 'pending' | 'confirmed' | 'processing' | 'delivering' | 'completed' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'processing' | 'delivering' | 'completed' | 'cancelled' | 'shipped';
   items: OrderItem[];
   totalAmount: number;
   deliveryAddress: string;
