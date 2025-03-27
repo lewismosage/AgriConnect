@@ -14,6 +14,7 @@ import {
   ChevronDown,
   ChevronUp,
   MoreVertical,
+  MapPin,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import NotificationButton from "../components/NotificationButton";
@@ -21,7 +22,7 @@ import NotificationButton from "../components/NotificationButton";
 interface Order {
   id: string;
   order_number: string;
-  status: "pending" | "processing" | "completed" | "cancelled";
+  status: "pending" | "processing" | "shipped" | "completed" | "cancelled";
   created_at: string;
   updated_at: string;
   total: string;
@@ -45,8 +46,19 @@ interface Order {
 // Type guard for order status
 const isOrderStatus = (
   status: string
-): status is "pending" | "processing" | "completed" | "cancelled" => {
-  return ["pending", "processing", "completed", "cancelled"].includes(status);
+): status is
+  | "pending"
+  | "processing"
+  | "shipped"
+  | "completed"
+  | "cancelled" => {
+  return [
+    "pending",
+    "processing",
+    "shipped",
+    "completed",
+    "cancelled",
+  ].includes(status);
 };
 
 const OrdersPage: React.FC = () => {
@@ -121,6 +133,7 @@ const OrdersPage: React.FC = () => {
                 status: newStatus as
                   | "pending"
                   | "processing"
+                  | "shipped"
                   | "completed"
                   | "cancelled",
               }
@@ -139,6 +152,8 @@ const OrdersPage: React.FC = () => {
         return "bg-yellow-100 text-yellow-800";
       case "processing":
         return "bg-blue-100 text-blue-800";
+      case "shipped":
+        return "bg-purple-100 text-purple-800";
       case "completed":
         return "bg-green-100 text-green-800";
       case "cancelled":
@@ -153,6 +168,8 @@ const OrdersPage: React.FC = () => {
       case "pending":
         return <RefreshCw className="w-4 h-4" />;
       case "processing":
+        return <Truck className="w-4 h-4" />;
+      case "shipped":
         return <Truck className="w-4 h-4" />;
       case "completed":
         return <Check className="w-4 h-4" />;
@@ -244,24 +261,28 @@ const OrdersPage: React.FC = () => {
                 <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg z-10 p-4 border border-gray-200">
                   <h3 className="font-medium mb-2">Order Status</h3>
                   <div className="space-y-2">
-                    {["pending", "processing", "completed", "cancelled"].map(
-                      (status) => (
-                        <label key={status} className="flex items-center">
-                          <input
-                            type="radio"
-                            name="status"
-                            checked={statusFilter === status}
-                            onChange={() =>
-                              setStatusFilter(
-                                statusFilter === status ? null : status
-                              )
-                            }
-                            className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                          />
-                          <span className="ml-2 capitalize">{status}</span>
-                        </label>
-                      )
-                    )}
+                    {[
+                      "pending",
+                      "processing",
+                      "shipped",
+                      "completed",
+                      "cancelled",
+                    ].map((status) => (
+                      <label key={status} className="flex items-center">
+                        <input
+                          type="radio"
+                          name="status"
+                          checked={statusFilter === status}
+                          onChange={() =>
+                            setStatusFilter(
+                              statusFilter === status ? null : status
+                            )
+                          }
+                          className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                        />
+                        <span className="ml-2 capitalize">{status}</span>
+                      </label>
+                    ))}
                     <label className="flex items-center">
                       <input
                         type="radio"
@@ -373,6 +394,19 @@ const OrdersPage: React.FC = () => {
                           </div>
                         </div>
                       </div>
+
+                      {/* Add this Track Order button */}
+                      {["processing", "shipped"].includes(order.status) && (
+                        <button
+                          onClick={() =>
+                            navigate(`/orders/${order.id}/tracking`)
+                          }
+                          className="flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700"
+                        >
+                          <MapPin className="w-3 h-3 mr-1" />
+                          Track Order
+                        </button>
+                      )}
 
                       <div className="text-right">
                         <p className="text-sm text-gray-600">

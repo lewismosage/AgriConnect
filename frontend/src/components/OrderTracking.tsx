@@ -1,4 +1,3 @@
-// src/components/OrderTrackingFarmer.tsx
 import React, { useState, useEffect } from 'react';
 import { MapPin, Truck, Check, Clock, Package } from 'lucide-react';
 import axios from 'axios';
@@ -25,16 +24,20 @@ const OrderTrackingFarmer: React.FC<OrderTrackingFarmerProps> = ({
   const [location, setLocation] = useState('');
   const [notes, setNotes] = useState('');
   const [trackingHistory, setTrackingHistory] = useState<TrackingUpdate[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchTrackingHistory = async () => {
       try {
+        setLoading(true);
         const response = await axios.get(`/api/orders/${orderId}/tracking/`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         setTrackingHistory(response.data);
       } catch (error) {
         console.error('Failed to fetch tracking history:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -42,10 +45,12 @@ const OrderTrackingFarmer: React.FC<OrderTrackingFarmerProps> = ({
   }, [orderId]);
 
   const addTrackingUpdate = async () => {
+    if (!location.trim()) return;
+
     const update = {
       status: currentStatus,
-      location,
-      notes
+      location: location.trim(),
+      notes: notes.trim()
     };
 
     try {
@@ -56,13 +61,33 @@ const OrderTrackingFarmer: React.FC<OrderTrackingFarmerProps> = ({
       );
       
       onTrackingUpdate(response.data);
-      setTrackingHistory([...trackingHistory, response.data]);
+      setTrackingHistory(prevHistory => [...prevHistory, response.data]);
       setLocation('');
       setNotes('');
     } catch (error) {
       console.error('Tracking update failed:', error);
+      alert('Failed to update tracking. Please try again.');
     }
   };
+
+  const getStatusIcon = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return <Clock className="w-4 h-4" />;
+      case 'processing':
+        return <Truck className="w-4 h-4" />;
+      case 'shipped':
+        return <Truck className="w-4 h-4" />;
+      case 'completed':
+        return <Check className="w-4 h-4" />;
+      default:
+        return <Package className="w-4 h-4" />;
+    }
+  };
+
+  if (loading) {
+    return <div className="text-center py-4">Loading tracking history...</div>;
+  }
 
   return (
     <div className="mt-6">
@@ -72,44 +97,49 @@ const OrderTrackingFarmer: React.FC<OrderTrackingFarmerProps> = ({
       
       {/* Tracking History */}
       <div className="space-y-4 mb-6">
-        {trackingHistory.map((update, index) => (
-          <div key={update.id} className="flex">
-            <div className="mr-4 flex flex-col items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                index === trackingHistory.length - 1 
-                  ? 'bg-green-100 text-green-600' 
-                  : 'bg-gray-100 text-gray-600'
-              }`}>
-                {currentStatus === 'pending' ? <Clock className="w-4 h-4" /> :
-                 currentStatus === 'processing' ? <Truck className="w-4 h-4" /> :
-                 currentStatus === 'completed' ? <Check className="w-4 h-4" /> :
-                 <Package className="w-4 h-4" />}
-              </div>
-              {index < trackingHistory.length - 1 && (
-                <div className="w-px h-8 bg-gray-300 my-1"></div>
-              )}
-            </div>
-            <div className="flex-1 pb-4">
-              <div className="flex justify-between">
-                <h4 className="font-medium capitalize">{update.status}</h4>
-                <span className="text-sm text-gray-500">
-                  {new Date(update.timestamp).toLocaleString()}
-                </span>
-              </div>
-              <p className="text-sm text-gray-600 mt-1">{update.notes}</p>
-              {update.location && (
-                <div className="flex items-center mt-2 text-sm text-gray-600">
-                  <MapPin className="w-4 h-4 mr-1" />
-                  <span>{update.location}</span>
+        {trackingHistory.length > 0 ? (
+          trackingHistory.map((update, index) => (
+            <div key={update.id} className="flex">
+              <div className="mr-4 flex flex-col items-center">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  index === trackingHistory.length - 1 
+                    ? 'bg-purple-100 text-purple-600' 
+                    : 'bg-gray-100 text-gray-600'
+                }`}>
+                  {getStatusIcon(update.status)}
                 </div>
-              )}
+                {index < trackingHistory.length - 1 && (
+                  <div className="w-px h-8 bg-gray-300 my-1"></div>
+                )}
+              </div>
+              <div className="flex-1 pb-4">
+                <div className="flex justify-between">
+                  <h4 className="font-medium capitalize">{update.status}</h4>
+                  <span className="text-sm text-gray-500">
+                    {new Date(update.timestamp).toLocaleString()}
+                  </span>
+                </div>
+                {update.notes && (
+                  <p className="text-sm text-gray-600 mt-1">{update.notes}</p>
+                )}
+                {update.location && (
+                  <div className="flex items-center mt-2 text-sm text-gray-600">
+                    <MapPin className="w-4 h-4 mr-1" />
+                    <span>{update.location}</span>
+                  </div>
+                )}
+              </div>
             </div>
+          ))
+        ) : (
+          <div className="text-center text-gray-500 py-4">
+            No tracking updates available yet
           </div>
-        ))}
+        )}
       </div>
 
-      {/* Update Form (only for processing status) */}
-      {currentStatus === 'processing' && (
+      {/* Update Form (for processing or shipped status) */}
+      {["processing", "shipped"].includes(currentStatus.toLowerCase()) && (
         <div className="bg-gray-50 p-4 rounded-lg">
           <h4 className="font-medium mb-3">Add Tracking Update</h4>
           <div className="space-y-3">
