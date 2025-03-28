@@ -119,7 +119,7 @@ class CreateOrderSerializer(serializers.ModelSerializer):
 class TrackingUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = TrackingUpdate
-        fields = ['id', 'status', 'location', 'notes', 'timestamp', 'updated_by']
+        fields = ['id', 'status', 'location', 'latitude', 'longitude', 'notes', 'timestamp', 'updated_by']
         read_only_fields = ['id', 'timestamp', 'updated_by']
 
     def to_representation(self, instance):

@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MapPin, Truck, Check, Clock, ArrowLeft, Loader2 } from "lucide-react";
 import axios from "../contexts/axioConfig";
+import MapboxView from "../components/MapboxView";
 
 interface TrackingUpdate {
   id: string;
   status: string;
   location?: string;
+  latitude?: number;
+  longitude?: number;
   notes?: string;
   timestamp: string;
   updated_by: string;
@@ -24,7 +27,14 @@ const OrderTracking = () => {
       try {
         setLoading(true);
         const response = await axios.get(`/api/orders/${id}/tracking/`);
-        setTrackingUpdates(response.data);
+
+        // Sort tracking updates by timestamp
+        const sortedUpdates = response.data.sort(
+          (a: TrackingUpdate, b: TrackingUpdate) =>
+            new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+        );
+
+        setTrackingUpdates(sortedUpdates);
       } catch (err) {
         console.error("Error fetching tracking updates:", err);
         setError(
@@ -47,6 +57,11 @@ const OrderTracking = () => {
     };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
+
+  // Extract coordinates for mapping
+  const trackingCoordinates = trackingUpdates
+    .filter((update) => update.latitude && update.longitude)
+    .map((update) => [update.longitude, update.latitude] as [number, number]);
 
   if (loading) {
     return (
@@ -86,70 +101,91 @@ const OrderTracking = () => {
           <ArrowLeft className="h-4 w-4 mr-2" /> Back to Order
         </button>
 
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <div className="p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-              <Truck className="h-6 w-6 mr-2 text-purple-600" />
-              Order Tracking
-            </h2>
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Tracking Updates Column */}
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="p-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                <Truck className="h-6 w-6 mr-2 text-purple-600" />
+                Order Tracking Updates
+              </h2>
 
-            <div className="space-y-6">
-              {trackingUpdates.length > 0 ? (
-                trackingUpdates.map((update, index) => (
-                  <div key={update.id} className="flex">
-                    <div className="mr-4 flex flex-col items-center">
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                          index === trackingUpdates.length - 1
-                            ? "bg-purple-100 text-purple-600"
-                            : "bg-gray-100 text-gray-600"
-                        }`}
-                      >
-                        {update.status === "pending" ? (
-                          <Clock className="w-4 h-4" />
-                        ) : update.status === "processing" ? (
-                          <Truck className="w-4 h-4" />
-                        ) : update.status === "shipped" ? (
-                          <Truck className="w-4 h-4" />
-                        ) : update.status === "completed" ? (
-                          <Check className="w-4 h-4" />
-                        ) : (
-                          <Clock className="w-4 h-4" />
+              <div className="space-y-6">
+                {trackingUpdates.length > 0 ? (
+                  trackingUpdates.map((update, index) => (
+                    <div key={update.id} className="flex">
+                      <div className="mr-4 flex flex-col items-center">
+                        <div
+                          className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                            index === trackingUpdates.length - 1
+                              ? "bg-purple-100 text-purple-600"
+                              : "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {update.status === "pending" ? (
+                            <Clock className="w-4 h-4" />
+                          ) : update.status === "processing" ? (
+                            <Truck className="w-4 h-4" />
+                          ) : update.status === "shipped" ? (
+                            <Truck className="w-4 h-4" />
+                          ) : update.status === "completed" ? (
+                            <Check className="w-4 h-4" />
+                          ) : (
+                            <Clock className="w-4 h-4" />
+                          )}
+                        </div>
+                        {index < trackingUpdates.length - 1 && (
+                          <div className="w-px h-8 bg-gray-300 my-1"></div>
                         )}
                       </div>
-                      {index < trackingUpdates.length - 1 && (
-                        <div className="w-px h-8 bg-gray-300 my-1"></div>
-                      )}
-                    </div>
-                    <div className="flex-1 pb-4">
-                      <div className="flex justify-between">
-                        <h4 className="font-medium capitalize">
-                          {update.status}
-                        </h4>
-                        <span className="text-sm text-gray-500">
-                          {formatDate(update.timestamp)}
-                        </span>
-                      </div>
-                      {update.notes && (
-                        <p className="text-sm text-gray-600 mt-1">
-                          {update.notes}
-                        </p>
-                      )}
-                      {update.status === "shipped" && (
-                        <div className="flex items-center mt-2 text-sm text-gray-600">
-                          <MapPin className="w-4 h-4 mr-1" />
-                          <span>In transit: {update.location}</span>
+                      <div className="flex-1 pb-4">
+                        <div className="flex justify-between">
+                          <h4 className="font-medium capitalize">
+                            {update.status}
+                          </h4>
+                          <span className="text-sm text-gray-500">
+                            {formatDate(update.timestamp)}
+                          </span>
                         </div>
-                      )}
-                      <p className="text-xs text-gray-500 mt-1">
-                        Updated by: {update.updated_by}
-                      </p>
+                        {update.notes && (
+                          <p className="text-sm text-gray-600 mt-1">
+                            {update.notes}
+                          </p>
+                        )}
+                        {update.location && (
+                          <div className="flex items-center mt-2 text-sm text-gray-600">
+                            <MapPin className="w-4 h-4 mr-1" />
+                            <span>{update.location}</span>
+                          </div>
+                        )}
+                        <p className="text-xs text-gray-500 mt-1">
+                          Updated by: {update.updated_by}
+                        </p>
+                      </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="text-center text-gray-500 py-8">
+                    No tracking updates available yet
                   </div>
-                ))
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Map Column */}
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="p-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                <MapPin className="h-6 w-6 mr-2 text-green-600" />
+                Shipment Route
+              </h2>
+
+              {trackingCoordinates.length > 0 ? (
+                <MapboxView coordinates={trackingCoordinates} />
               ) : (
                 <div className="text-center text-gray-500 py-8">
-                  No tracking updates available yet
+                  No route information available
                 </div>
               )}
             </div>

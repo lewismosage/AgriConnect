@@ -67,6 +67,8 @@ class TrackingUpdate(models.Model):
         null=True,
         related_name='tracking_updates'
     )
+    latitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
 
     class Meta:
         ordering = ['-timestamp']
