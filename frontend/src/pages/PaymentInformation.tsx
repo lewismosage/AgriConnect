@@ -34,7 +34,7 @@ const PaymentInformation: React.FC<PaymentInformationProps> = ({
     const fetchPaymentMethods = async () => {
       try {
         const response = await axios.get<PaymentMethod[]>(
-          "/api/payment-methods/"
+          "/api/accounts/payment-methods/"
         );
         setPaymentMethods(response.data);
         const defaultMethod = response.data.find(
@@ -93,7 +93,7 @@ const PaymentInformation: React.FC<PaymentInformationProps> = ({
       let response: AxiosResponse<PaymentMethod>;
       if (currentMethod.id) {
         response = await axios.put<PaymentMethod>(
-          `/api/payment-methods/${currentMethod.id}/`,
+          `/api/accounts/payment-methods/${currentMethod.id}/`,
           payload
         );
         setPaymentMethods(
@@ -103,7 +103,7 @@ const PaymentInformation: React.FC<PaymentInformationProps> = ({
         );
       } else {
         response = await axios.post<PaymentMethod>(
-          "/api/payment-methods/",
+          "/api/accounts/payment-methods/",
           payload
         );
         setPaymentMethods([...paymentMethods, response.data]);
@@ -122,7 +122,7 @@ const PaymentInformation: React.FC<PaymentInformationProps> = ({
 
   const handleDeletePaymentMethod = async (id: number) => {
     try {
-      await axios.delete(`/api/payment-methods/${id}/`);
+      await axios.delete(`/api/accounts/payment-methods/${id}/`);
       setPaymentMethods(paymentMethods.filter((method) => method.id !== id));
     } catch (error) {
       console.error("Failed to delete payment method:", error);

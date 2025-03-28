@@ -33,7 +33,7 @@ const ShippingInformation: React.FC<ShippingInformationProps> = ({
     const fetchAddresses = async () => {
       try {
         const response = await axios.get<ShippingAddress[]>(
-          "/api/shipping-addresses/"
+          "/api/accounts/shipping-addresses/"
         );
         setAddresses(response.data);
         const defaultAddress = response.data.find(
@@ -77,7 +77,7 @@ const ShippingInformation: React.FC<ShippingInformationProps> = ({
       let response: AxiosResponse<ShippingAddress>;
       if (currentAddress.id) {
         response = await axios.put<ShippingAddress>(
-          `/api/shipping-addresses/${currentAddress.id}/`,
+          `/api/accounts/shipping-addresses/${currentAddress.id}/`,
           currentAddress
         );
         setAddresses(
@@ -87,7 +87,7 @@ const ShippingInformation: React.FC<ShippingInformationProps> = ({
         );
       } else {
         response = await axios.post<ShippingAddress>(
-          "/api/shipping-addresses/",
+          "/api/accounts/shipping-addresses/",
           currentAddress
         );
         setAddresses([...addresses, response.data]);
@@ -106,7 +106,7 @@ const ShippingInformation: React.FC<ShippingInformationProps> = ({
 
   const handleDeleteAddress = async (id: number) => {
     try {
-      await axios.delete(`/api/shipping-addresses/${id}/`);
+      await axios.delete(`/api/accounts/shipping-addresses/${id}/`);
       setAddresses(addresses.filter((addr) => addr.id !== id));
     } catch (error) {
       console.error("Failed to delete address:", error);

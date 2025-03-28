@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { useCart } from '../contexts/CartContext';
-import { useLocation, useNavigate } from 'react-router-dom';
-import ShippingInformation from './ShippingInformation';
-import PaymentInformation from './PaymentInformation';
-import { Truck, Check, X } from 'lucide-react';
-import axios from '../contexts/axioConfig';
+import React, { useState } from "react";
+import { useCart } from "../contexts/CartContext";
+import { useLocation, useNavigate } from "react-router-dom";
+import ShippingInformation from "./ShippingInformation";
+import PaymentInformation from "./PaymentInformation";
+import { Truck, Check, X } from "lucide-react";
+import axios from "../contexts/axioConfig";
 
 interface AddressDetails {
   street: string;
@@ -41,7 +41,12 @@ interface AlertModalProps {
   message: string;
 }
 
-const AlertModal: React.FC<AlertModalProps> = ({ isOpen, onClose, title, message }) => {
+const AlertModal: React.FC<AlertModalProps> = ({
+  isOpen,
+  onClose,
+  title,
+  message,
+}) => {
   if (!isOpen) return null;
 
   return (
@@ -49,7 +54,10 @@ const AlertModal: React.FC<AlertModalProps> = ({ isOpen, onClose, title, message
       <div className="bg-white rounded-lg p-6 max-w-sm w-full">
         <div className="flex justify-between items-start">
           <h3 className="text-lg font-semibold">{title}</h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
             <X size={20} />
           </button>
         </div>
@@ -71,37 +79,43 @@ const CheckoutPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { cartItems = [] as CartItem[], clearCart } = useCart();
-  
+
   const items = location.state?.cartItems || cartItems;
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(
+    null
+  );
+  const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState<
+    number | null
+  >(null);
 
   const [shippingDetails, setShippingDetails] = useState({
     selectedAddressId: 0,
     addressDetails: {
-      street: '',
-      city: '',
-      state: '',
-      zipCode: '',
-      country: ''
-    } as AddressDetails
+      street: "",
+      city: "",
+      state: "",
+      zipCode: "",
+      country: "",
+    } as AddressDetails,
   });
 
   const [paymentDetails, setPaymentDetails] = useState({
     selectedMethodId: 0,
     methodDetails: {
-      cardNumber: '',
-      expiryDate: '',
-      cvv: '',
-      nameOnCard: ''
-    } as PaymentMethodDetails
+      cardNumber: "",
+      expiryDate: "",
+      cvv: "",
+      nameOnCard: "",
+    } as PaymentMethodDetails,
   });
 
   const [orderPlaced, setOrderPlaced] = useState(false);
-  const [orderNumber, setOrderNumber] = useState('');
+  const [orderNumber, setOrderNumber] = useState("");
 
   const [showAlertModal, setShowAlertModal] = useState(false);
-  const [alertTitle, setAlertTitle] = useState('');
-  const [alertMessage, setAlertMessage] = useState('');
+  const [alertTitle, setAlertTitle] = useState("");
+  const [alertMessage, setAlertMessage] = useState("");
 
   const subtotal = items.reduce(
     (sum: number, item: CartItem) => sum + item.product.price * item.quantity,
@@ -117,34 +131,42 @@ const CheckoutPage = () => {
     setShowAlertModal(true);
   };
 
+  const handleAddressSelect = (addressId: number) => {
+    setSelectedAddressId(addressId);
+  };
+
+  const handlePaymentMethodSelect = (methodId: number) => {
+    setSelectedPaymentMethodId(methodId);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
-    if (!shippingDetails.selectedAddressId) {
-      showAlert('Missing Information', 'Please select a shipping address');
+
+    if (!selectedAddressId) {
+      showAlert("Missing Information", "Please select a shipping address");
       setIsSubmitting(false);
       return;
     }
-    
-    if (!paymentDetails.selectedMethodId) {
-      showAlert('Missing Information', 'Please select a payment method');
+
+    if (!selectedPaymentMethodId) {
+      showAlert("Missing Information", "Please select a payment method");
       setIsSubmitting(false);
       return;
     }
-  
+
     if (!items.length) {
-      showAlert('Empty Cart', 'Your cart is empty');
+      showAlert("Empty Cart", "Your cart is empty");
       setIsSubmitting(false);
       return;
     }
-  
+
     if (!items[0].product.farm?.id) {
-      showAlert('Error', 'Products must belong to a farm');
+      showAlert("Error", "Products must belong to a farm");
       setIsSubmitting(false);
       return;
     }
-  
+
     try {
       const orderData = {
         farm_id: items[0].product.farm.id,
@@ -153,20 +175,20 @@ const CheckoutPage = () => {
           city: shippingDetails.addressDetails.city,
           state: shippingDetails.addressDetails.state,
           zipCode: shippingDetails.addressDetails.zipCode,
-          country: shippingDetails.addressDetails.country
+          country: shippingDetails.addressDetails.country,
         }),
-        payment_method: paymentDetails.selectedMethodId.toString(),
+        payment_method: selectedPaymentMethodId.toString(),
         items: items.map((item: CartItem) => ({
           product_id: item.product.id,
-          quantity: item.quantity
-        }))
+          quantity: item.quantity,
+        })),
       };
-  
-      const response = await axios.post('/api/orders/', orderData, {
+
+      const response = await axios.post("/api/orders/", orderData, {
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       });
 
       if (response.data && response.data.order_number) {
@@ -183,42 +205,46 @@ const CheckoutPage = () => {
               id: item.product.id,
               name: item.product.name,
               price: item.product.price,
-              image: item.product.image
+              image: item.product.image,
             },
-            quantity: item.quantity
+            quantity: item.quantity,
           })),
           shippingAddress: shippingDetails.addressDetails,
-          paymentMethod: paymentDetails.selectedMethodId,
+          paymentMethod: selectedPaymentMethodId,
           subtotal: subtotal,
           shipping: shipping,
           tax: tax,
           total: total,
-          status: 'pending'
+          status: "pending",
         };
 
         try {
-          const existingOrders = JSON.parse(localStorage.getItem('agriConnectOrders') || '[]');
-          localStorage.setItem('agriConnectOrders', JSON.stringify([newOrder, ...existingOrders]));
+          const existingOrders = JSON.parse(
+            localStorage.getItem("agriConnectOrders") || "[]"
+          );
+          localStorage.setItem(
+            "agriConnectOrders",
+            JSON.stringify([newOrder, ...existingOrders])
+          );
         } catch (storageError) {
-          console.error('Error saving to localStorage:', storageError);
+          console.error("Error saving to localStorage:", storageError);
         }
       } else {
-        throw new Error('Invalid response from server');
+        throw new Error("Invalid response from server");
       }
-  
     } catch (error: any) {
-      console.error('Order submission error:', error);
-      
-      let errorMessage = 'Failed to place order. Please try again.';
-      
+      console.error("Order submission error:", error);
+
+      let errorMessage = "Failed to place order. Please try again.";
+
       if (error.response) {
         if (error.response.data) {
-          if (typeof error.response.data === 'string') {
+          if (typeof error.response.data === "string") {
             errorMessage = error.response.data;
           } else if (error.response.data.detail) {
             errorMessage = error.response.data.detail;
           } else if (error.response.data.non_field_errors) {
-            errorMessage = error.response.data.non_field_errors.join(', ');
+            errorMessage = error.response.data.non_field_errors.join(", ");
           } else {
             errorMessage = JSON.stringify(error.response.data);
           }
@@ -226,8 +252,8 @@ const CheckoutPage = () => {
       } else if (error.message) {
         errorMessage = error.message;
       }
-  
-      showAlert('Order Error', errorMessage);
+
+      showAlert("Order Error", errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -238,19 +264,22 @@ const CheckoutPage = () => {
       <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100">
         <Check className="h-8 w-8 text-green-600" />
       </div>
-      <h2 className="mt-6 text-2xl font-bold text-gray-900">Order Placed Successfully!</h2>
+      <h2 className="mt-6 text-2xl font-bold text-gray-900">
+        Order Placed Successfully!
+      </h2>
       <p className="mt-2 text-lg text-gray-500">
         Thank you for your order with AgriConnect.
       </p>
       <p className="mt-1 text-sm text-gray-500">
-        Your order number is: <span className="font-semibold">{orderNumber}</span>
+        Your order number is:{" "}
+        <span className="font-semibold">{orderNumber}</span>
       </p>
       <p className="mt-2 text-gray-500">
         We've sent a confirmation email with your order details.
       </p>
       <div className="mt-8">
         <button
-          onClick={() => navigate('/products')}
+          onClick={() => navigate("/products")}
           className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
         >
           Continue Shopping
@@ -274,23 +303,9 @@ const CheckoutPage = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
-            <ShippingInformation 
-              onSelectAddress={(addressId: number) => {
-                setShippingDetails(prev => ({
-                  ...prev,
-                  selectedAddressId: addressId
-                }));
-              }}
-            />
-            
-            <PaymentInformation 
-              onSelectMethod={(methodId: number) => {
-                setPaymentDetails(prev => ({
-                  ...prev,
-                  selectedMethodId: methodId
-                }));
-              }}
-            />
+            <ShippingInformation onSelectAddress={handleAddressSelect} />
+
+            <PaymentInformation onSelectMethod={handlePaymentMethodSelect} />
           </div>
 
           <div className="bg-white rounded-lg shadow-md p-6 h-fit sticky top-4">
@@ -300,10 +315,15 @@ const CheckoutPage = () => {
             </h2>
             <div className="space-y-4">
               {items.map((item: CartItem) => (
-                <div key={item.product.id} className="flex justify-between items-center">
+                <div
+                  key={item.product.id}
+                  className="flex justify-between items-center"
+                >
                   <div className="flex items-center">
-                    <img 
-                      src={item.product.image || 'https://via.placeholder.com/50'}
+                    <img
+                      src={
+                        item.product.image || "https://via.placeholder.com/50"
+                      }
                       alt={item.product.name}
                       className="w-12 h-12 object-cover rounded-md mr-4"
                     />
@@ -341,10 +361,10 @@ const CheckoutPage = () => {
                 onClick={handleSubmit}
                 disabled={isSubmitting}
                 className={`w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition duration-300 mt-4 ${
-                  isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+                  isSubmitting ? "opacity-70 cursor-not-allowed" : ""
                 }`}
               >
-                {isSubmitting ? 'Processing...' : 'Place Order'}
+                {isSubmitting ? "Processing..." : "Place Order"}
               </button>
             </div>
           </div>
