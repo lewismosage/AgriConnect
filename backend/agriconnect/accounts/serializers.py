@@ -1,6 +1,6 @@
 # accounts/serializers.py
 from rest_framework import serializers
-from .models import User, FarmerProfile
+from .models import User, FarmerProfile, ShippingAddress, PaymentMethod
 from farms.models import Farm
 from django.core.exceptions import ValidationError
 
@@ -109,3 +109,30 @@ class FarmerRegistrationSerializer(serializers.Serializer):
             'user': user,
             'farmer_profile': farmer_profile,
         }
+
+class ShippingAddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShippingAddress
+        fields = ['id', 'name', 'address', 'city', 'state', 'zip_code', 'country', 'is_default']
+        extra_kwargs = {
+            'user': {'read_only': True},
+        }
+
+    def validate(self, data):
+        if data.get('is_default'):
+            ShippingAddress.objects.filter(user=self.context['request'].user, is_default=True).update(is_default=False)
+        return data
+
+class PaymentMethodSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PaymentMethod
+        fields = ['id', 'card_type', 'last_four', 'expiry_month', 'expiry_year', 'is_default']
+        extra_kwargs = {
+            'user': {'read_only': True},
+            'last_four': {'read_only': True},
+        }
+
+    def validate(self, data):
+        if data.get('is_default'):
+            PaymentMethod.objects.filter(user=self.context['request'].user, is_default=True).update(is_default=False)
+        return data

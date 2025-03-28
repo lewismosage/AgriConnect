@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Truck, Plus, Edit, Trash2 } from "lucide-react";
+import axios, { AxiosResponse } from "axios";
+import { useAuth } from "../contexts/AuthContext";
 
 interface ShippingAddress {
   id: number;
@@ -7,9 +9,9 @@ interface ShippingAddress {
   address: string;
   city: string;
   state: string;
-  zipCode: string;
+  zip_code: string;
   country: string;
-  isDefault: boolean;
+  is_default: boolean;
 }
 
 interface ShippingInformationProps {
@@ -19,99 +21,106 @@ interface ShippingInformationProps {
 const ShippingInformation: React.FC<ShippingInformationProps> = ({
   onSelectAddress,
 }) => {
-  const [addresses, setAddresses] = useState<ShippingAddress[]>([
-    {
-      id: 1,
-      name: "John Doe",
-      address: "123 Main St",
-      city: "Springfield",
-      state: "IL",
-      zipCode: "62701",
-      country: "United States",
-      isDefault: true,
-    },
-  ]);
-
+  const { user } = useAuth();
+  const [addresses, setAddresses] = useState<ShippingAddress[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentAddress, setCurrentAddress] = useState<ShippingAddress | null>(
     null
   );
 
+  useEffect(() => {
+    const fetchAddresses = async () => {
+      try {
+        const response = await axios.get<ShippingAddress[]>(
+          "/api/shipping-addresses/"
+        );
+        setAddresses(response.data);
+        const defaultAddress = response.data.find(
+          (addr: ShippingAddress) => addr.is_default
+        );
+        if (defaultAddress) {
+          onSelectAddress(defaultAddress.id);
+        }
+      } catch (error) {
+        console.error("Failed to fetch addresses:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user) {
+      fetchAddresses();
+    }
+  }, [user, onSelectAddress]);
+
   const openAddressModal = (address?: ShippingAddress) => {
     setCurrentAddress(
       address || {
-        id: Date.now(),
+        id: 0,
         name: "",
         address: "",
         city: "",
         state: "",
-        zipCode: "",
-        country: "United States",
-        isDefault: false,
+        zip_code: "",
+        country: "KENYA",
+        is_default: false,
       }
     );
     setIsModalOpen(true);
   };
 
-  const handleSaveAddress = () => {
+  const handleSaveAddress = async () => {
     if (!currentAddress) return;
 
-    if (
-      !currentAddress.name ||
-      !currentAddress.address ||
-      !currentAddress.city ||
-      !currentAddress.state ||
-      !currentAddress.zipCode
-    ) {
-      alert("Please fill in all required fields");
-      return;
-    }
-
-    if (currentAddress.isDefault) {
-      setAddresses((prevAddresses) =>
-        prevAddresses.map((addr) => ({ ...addr, isDefault: false }))
-      );
-    }
-
-    setAddresses((prevAddresses) => {
-      const existingIndex = prevAddresses.findIndex(
-        (addr) => addr.id === currentAddress.id
-      );
-
-      if (existingIndex > -1) {
-        const updatedAddresses = [...prevAddresses];
-        updatedAddresses[existingIndex] = currentAddress;
-        return updatedAddresses;
+    try {
+      let response: AxiosResponse<ShippingAddress>;
+      if (currentAddress.id) {
+        response = await axios.put<ShippingAddress>(
+          `/api/shipping-addresses/${currentAddress.id}/`,
+          currentAddress
+        );
+        setAddresses(
+          addresses.map((addr) =>
+            addr.id === currentAddress.id ? response.data : addr
+          )
+        );
       } else {
-        return [...prevAddresses, currentAddress];
+        response = await axios.post<ShippingAddress>(
+          "/api/shipping-addresses/",
+          currentAddress
+        );
+        setAddresses([...addresses, response.data]);
       }
-    });
 
-    // Notify parent component about the selected/default address
-    if (currentAddress.isDefault) {
-      onSelectAddress(currentAddress.id);
+      if (response.data.is_default) {
+        onSelectAddress(response.data.id);
+      }
+
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error("Failed to save address:", error);
+      alert("Failed to save address. Please try again.");
     }
-
-    setIsModalOpen(false);
   };
 
-  const handleDeleteAddress = (id: number) => {
-    if (
-      addresses.length === 1 ||
-      addresses.find((addr) => addr.id === id)?.isDefault
-    ) {
-      alert("Cannot delete the only or default address");
-      return;
+  const handleDeleteAddress = async (id: number) => {
+    try {
+      await axios.delete(`/api/shipping-addresses/${id}/`);
+      setAddresses(addresses.filter((addr) => addr.id !== id));
+    } catch (error) {
+      console.error("Failed to delete address:", error);
+      alert("Failed to delete address. Please try again.");
     }
-
-    setAddresses((prevAddresses) =>
-      prevAddresses.filter((addr) => addr.id !== id)
-    );
   };
 
   const handleSelectAddress = (addressId: number) => {
     onSelectAddress(addressId);
   };
+
+  if (loading) {
+    return <div>Loading addresses...</div>;
+  }
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm">
@@ -134,7 +143,7 @@ const ShippingInformation: React.FC<ShippingInformationProps> = ({
           <div
             key={address.id}
             className={`p-4 border rounded-lg relative cursor-pointer ${
-              address.isDefault
+              address.is_default
                 ? "border-green-500 bg-green-50"
                 : "border-gray-200"
             }`}
@@ -145,10 +154,10 @@ const ShippingInformation: React.FC<ShippingInformationProps> = ({
                 <p className="font-medium">{address.name}</p>
                 <p className="text-sm text-gray-500">
                   {address.address}, {address.city}, {address.state}{" "}
-                  {address.zipCode}
+                  {address.zip_code}
                 </p>
                 <p className="text-sm text-gray-500">{address.country}</p>
-                {address.isDefault && (
+                {address.is_default && (
                   <span className="text-sm text-green-600 absolute top-4 right-20">
                     Default Address
                   </span>
@@ -268,18 +277,18 @@ const ShippingInformation: React.FC<ShippingInformationProps> = ({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label
-                    htmlFor="zipCode"
+                    htmlFor="zip_code"
                     className="block text-sm font-medium text-gray-700"
                   >
                     Zip Code
                   </label>
                   <input
                     type="text"
-                    id="zipCode"
-                    value={currentAddress?.zipCode || ""}
+                    id="zip_code"
+                    value={currentAddress?.zip_code || ""}
                     onChange={(e) =>
                       setCurrentAddress((prev) =>
-                        prev ? { ...prev, zipCode: e.target.value } : null
+                        prev ? { ...prev, zip_code: e.target.value } : null
                       )
                     }
                     className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
@@ -312,10 +321,10 @@ const ShippingInformation: React.FC<ShippingInformationProps> = ({
                 <input
                   type="checkbox"
                   id="defaultAddress"
-                  checked={currentAddress?.isDefault || false}
+                  checked={currentAddress?.is_default || false}
                   onChange={(e) =>
                     setCurrentAddress((prev) =>
-                      prev ? { ...prev, isDefault: e.target.checked } : null
+                      prev ? { ...prev, is_default: e.target.checked } : null
                     )
                   }
                   className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"

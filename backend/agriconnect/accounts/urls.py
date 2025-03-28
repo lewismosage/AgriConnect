@@ -1,7 +1,13 @@
-from django.urls import path
-from .views import UserList, UserDetail, FarmerRegistrationView, RegisterView, LoginView, LogoutView, UserDetailView, FarmImageUploadView, FarmerProfileUpdateView
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import UserList, UserDetail, FarmerRegistrationView, RegisterView, LoginView, LogoutView, UserDetailView, FarmImageUploadView, FarmerProfileUpdateView, ShippingAddressViewSet, PaymentMethodViewSet
+
+router = DefaultRouter()
+router.register(r'shipping-addresses', ShippingAddressViewSet, basename='shipping-address')
+router.register(r'payment-methods', PaymentMethodViewSet, basename='payment-method')
 
 urlpatterns = [
+    path('', include(router.urls)),
     path('users/', UserList.as_view()),
     path('users/<int:pk>/', UserDetail.as_view()),
     path('user/', UserDetailView.as_view(), name='user-detail'),

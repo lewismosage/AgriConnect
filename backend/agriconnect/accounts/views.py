@@ -1,7 +1,7 @@
-from rest_framework import generics, permissions, status
+from rest_framework import generics, permissions, status, viewsets
 from rest_framework.response import Response
-from .models import User
-from .serializers import UserSerializer, FarmerRegistrationSerializer
+from .models import User, ShippingAddress, PaymentMethod
+from .serializers import UserSerializer, FarmerRegistrationSerializer, FarmerProfileSerializer, ShippingAddressSerializer, PaymentMethodSerializer
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -218,3 +218,42 @@ class FarmImageUploadView(APIView):
                 {'detail': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+class ShippingAddressViewSet(viewsets.ModelViewSet):
+    serializer_class = ShippingAddressSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
+
+    def get_queryset(self):
+        return ShippingAddress.objects.filter(user=self.request.user).order_by('-is_default', '-created_at')
+
+    def perform_create(self, serializer):
+        if serializer.validated_data.get('is_default', False):
+            ShippingAddress.objects.filter(user=self.request.user, is_default=True).update(is_default=False)
+        serializer.save(user=self.request.user)
+
+    def perform_update(self, serializer):
+        if serializer.validated_data.get('is_default', False):
+            ShippingAddress.objects.filter(user=self.request.user, is_default=True).update(is_default=False)
+        serializer.save()
+
+class PaymentMethodViewSet(viewsets.ModelViewSet):
+    serializer_class = PaymentMethodSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
+
+    def get_queryset(self):
+        return PaymentMethod.objects.filter(user=self.request.user).order_by('-is_default', '-created_at')
+
+    def perform_create(self, serializer):
+        card_number = self.request.data.get('card_number', '')
+        last_four = card_number[-4:] if len(card_number) >= 4 else ''
+
+        if serializer.validated_data.get('is_default', False):
+            PaymentMethod.objects.filter(user=self.request.user, is_default=True).update(is_default=False)
+        serializer.save(user=self.request.user, last_four=last_four)
+
+    def perform_update(self, serializer):
+        if serializer.validated_data.get('is_default', False):
+            PaymentMethod.objects.filter(user=self.request.user, is_default=True).update(is_default=False)
+        serializer.save()

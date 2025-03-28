@@ -31,3 +31,31 @@ class FarmerProfile(models.Model):
 
     def __str__(self):
         return self.user.username
+
+class ShippingAddress(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='shipping_addresses')
+    name = models.CharField(max_length=255)
+    address = models.TextField()
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    zip_code = models.CharField(max_length=20)
+    country = models.CharField(max_length=100)
+    is_default = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name} - {self.city}, {self.state}"
+
+class PaymentMethod(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='payment_methods')
+    card_type = models.CharField(max_length=20)
+    last_four = models.CharField(max_length=4)
+    expiry_month = models.CharField(max_length=2)
+    expiry_year = models.CharField(max_length=4)
+    is_default = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.card_type} ending in {self.last_four}"
