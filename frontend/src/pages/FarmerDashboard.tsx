@@ -12,9 +12,11 @@ import {
   DollarSign,
   ChevronLeft,
   ChevronRight,
+  CreditCard,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import FarmOrdersPreview from "../pages/FarmOrdersPreview";
+import InventoryPreview from "../components/InventoryPreview";
 import axios from "axios";
 
 // Define types for our data
@@ -45,7 +47,6 @@ const FarmerDashboard: React.FC = () => {
     growth: 0,
   });
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
-  const [inventory, setInventory] = useState<Product[]>([]);
 
   const navigate = useNavigate();
 
@@ -72,10 +73,10 @@ const FarmerDashboard: React.FC = () => {
       onClick: () => navigate("/farm-products"),
     },
     {
-      id: "messages",
-      label: "Messages",
-      icon: <MessageSquare className="w-5 h-5" />,
-      onClick: () => navigate("/messages"),
+      id: "payment-verification",
+      label: "Payment Verification",
+      icon: <CreditCard className="w-5 h-5" />,
+      onClick: () => navigate("/payments-to-verify"),
     },
     {
       id: "notifications",
@@ -102,32 +103,6 @@ const FarmerDashboard: React.FC = () => {
           },
         });
         setDashboardStats(statsResponse.data);
-
-        // Mock data for inventory (replace with actual API call)
-        const mockInventory: Product[] = [
-          {
-            id: "PROD-001",
-            name: "Organic Tomatoes",
-            price: "$3.99/lb",
-            stock: 25,
-            status: "In Stock",
-          },
-          {
-            id: "PROD-002",
-            name: "Free Range Eggs",
-            price: "$5.99/dozen",
-            stock: 3,
-            status: "Low Stock",
-          },
-          {
-            id: "PROD-003",
-            name: "Fresh Basil",
-            price: "$2.50/bunch",
-            stock: 0,
-            status: "Out of Stock",
-          },
-        ];
-        setInventory(mockInventory);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       }
@@ -295,90 +270,10 @@ const FarmerDashboard: React.FC = () => {
 
           {/* Recent Orders and Inventory */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-           <FarmOrdersPreview />
-
-            <DataSection
-              title="Product Inventory"
-              icon={<ShoppingBag className="w-5 h-5 text-gray-500" />}
-              data={inventory}
-              emptyMessage="No products in inventory"
-              renderItem={(product) => (
-                <>
-                  <div className="flex items-center">
-                    <div className="mr-3 bg-gray-100 rounded-full p-2">
-                      <ShoppingBag className="w-5 h-5 text-gray-500" />
-                    </div>
-                    <div>
-                      <p className="font-medium">{product.name}</p>
-                      <p className="text-sm text-gray-600">
-                        {product.price} • {product.stock} units
-                      </p>
-                    </div>
-                  </div>
-                  <span
-                    className={`px-3 py-1 text-xs rounded-full ${
-                      product.status === "In Stock"
-                        ? "bg-green-100 text-green-800"
-                        : product.status === "Low Stock"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {product.status}
-                  </span>
-                </>
-              )}
-              onViewAll={() => navigate("/inventory")}
-            />
+            <FarmOrdersPreview />
+            <InventoryPreview />
           </div>
         </div>
-      </div>
-    </div>
-  );
-};
-
-// Data Section Component
-const DataSection = ({
-  title,
-  icon,
-  data,
-  emptyMessage,
-  renderItem,
-  onViewAll,
-}: {
-  title: string;
-  icon: React.ReactNode;
-  data: any[];
-  emptyMessage: string;
-  renderItem: (item: any) => React.ReactNode;
-  onViewAll: () => void;
-}) => {
-  return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-      <div className="p-6 border-b border-gray-100 flex items-center">
-        {icon}
-        <h2 className="text-lg font-semibold ml-2">{title}</h2>
-      </div>
-      <div className="divide-y divide-gray-100">
-        {data.length > 0 ? (
-          data.map((item, index) => (
-            <div key={index} className="p-4 hover:bg-gray-50 transition-colors">
-              <div className="flex items-center justify-between">
-                {renderItem(item)}
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="p-4 text-center text-gray-500">{emptyMessage}</div>
-        )}
-      </div>
-      <div className="p-4 border-t border-gray-100 bg-gray-50">
-        <button
-          onClick={onViewAll}
-          className="text-sm text-green-600 font-medium hover:text-green-700"
-        >
-          View all
-        </button>
       </div>
     </div>
   );

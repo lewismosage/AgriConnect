@@ -7,7 +7,9 @@ from .views import (
     OrderDetailView,
     OrderDeleteView,
     TrackingListView,
-    TrackingUpdateView
+    TrackingUpdateView,
+    PaymentVerificationListView,
+    VerifyPaymentView
 )
 
 urlpatterns = [
@@ -18,4 +20,6 @@ urlpatterns = [
     path('orders/<int:pk>/delete/', OrderDeleteView.as_view(), name='order-delete'),
     path('<int:order_id>/tracking/', TrackingListView.as_view(), name='order-tracking-list'),
     path('<int:order_id>/tracking/update/', TrackingUpdateView.as_view(), name='order-tracking-update'),
+    path('payments-to-verify/', PaymentVerificationListView.as_view(), name='payments-to-verify'),
+    path('<int:order_id>/verify-payment/', VerifyPaymentView.as_view(), name='verify-payment'),
 ]

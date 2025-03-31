@@ -6,11 +6,7 @@ import {
   CreditCard,
   Calendar,
   Hash,
-  Check,
-  X,
   ArrowLeft,
-  Trash2,
-  Loader2,
 } from "lucide-react";
 import axios from "../contexts/axioConfig";
 import { useAuth } from "../contexts/AuthContext";
@@ -53,8 +49,6 @@ const OrderDetails = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -137,28 +131,12 @@ const OrderDetails = () => {
     }
   };
 
-  const handleDeleteOrder = async () => {
-    if (!order) return;
-
-    try {
-      setIsDeleting(true);
-      await axios.delete(`/api/orders/${order.id}/`);
-      navigate("/orders", { state: { message: "Order deleted successfully" } });
-    } catch (err) {
-      console.error("Error deleting order:", err);
-      setError("Failed to delete order. Please try again.");
-    } finally {
-      setIsDeleting(false);
-      setShowDeleteConfirm(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-green-600" />
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-green-600 border-white"></div>
           </div>
         </div>
       </div>
@@ -200,22 +178,13 @@ const OrderDetails = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-6 flex justify-between items-center">
+        <div className="mb-6">
           <button
             onClick={() => navigate(-1)}
             className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
           >
             <ArrowLeft className="h-4 w-4 mr-2" /> Back to Orders
           </button>
-
-          <div className="flex space-x-4">
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700"
-            >
-              <Trash2 className="h-4 w-4 mr-2" /> Delete Order
-            </button>
-          </div>
         </div>
 
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -336,49 +305,6 @@ const OrderDetails = () => {
           </div>
         </div>
       </div>
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-            <div className="flex justify-between items-start">
-              <h3 className="text-lg font-semibold">Confirm Deletion</h3>
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <p className="mt-2 text-gray-600">
-              Are you sure you want to delete this order? This action cannot be
-              undone.
-            </p>
-            <div className="mt-6 flex justify-end space-x-3">
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                className="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteOrder}
-                disabled={isDeleting}
-                className="px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 disabled:opacity-70"
-              >
-                {isDeleting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin inline" />
-                    Deleting...
-                  </>
-                ) : (
-                  "Delete Order"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

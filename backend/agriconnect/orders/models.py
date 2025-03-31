@@ -9,6 +9,7 @@ class Order(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('processing', 'Processing'),
+        ('verified', 'Verified'),
         ('shipped', 'Shipped'),
         ('completed', 'Completed'),
         ('cancelled', 'Cancelled'),
@@ -34,6 +35,7 @@ class Order(models.Model):
     shipping_cost = models.DecimalField(max_digits=10, decimal_places=2)
     tax = models.DecimalField(max_digits=10, decimal_places=2)
     total = models.DecimalField(max_digits=10, decimal_places=2)
+    verified_at = models.DateTimeField(null=True, blank=True)
     
     def __str__(self):
         return f"Order #{self.order_number}"

@@ -20,7 +20,6 @@ import CustomerDashboard from "./pages/CustomerDashboard";
 import AboutPage from "./pages/AboutPage";
 import FarmRegistration from "./pages/FarmRegistration";
 import FarmProducts from "./pages/FarmProducts";
-import Messages from './pages/Messages';
 import Notifications from './pages/Notifications';
 import FarmDetailPage from './pages/FarmDetailPage';
 import FarmShopPage from './pages/FarmShopPage';
@@ -31,17 +30,17 @@ import OrderDetails from './pages/OrderDetails';
 import OrdersPage from './pages/OrdersPage';
 import OrderHistory from './pages/OrderHistory';
 import OrderTracking from './pages/OrderTracking';
+import PaymentVerificationPage from './pages/PaymentVerificationPage';
+import PaymentsToVerifyPage from './pages/PaymentsToVerifyPage';
 
 function App() {
   return (
     <Router>
       <AuthProvider>
-        <CartProvider> {/* Wrap the entire app with CartProvider */}
+        <CartProvider>
           <div className="min-h-screen flex flex-col">
-            {/* Navbar appears on all pages */}
             <Navbar />
 
-            {/* Main content */}
             <div className="flex-grow">
               <Routes>
                 <Route path="/" element={<LandingPage />} />
@@ -54,7 +53,6 @@ function App() {
                 <Route path="/cart" element={<CartPage />} />
                 <Route path="/farm-registration" element={<FarmRegistration />} />
                 <Route path="/farm-products" element={<FarmProducts />} />
-                <Route path="/messages" element={<Messages />} />
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/farm/:farmId/shop" element={<FarmShopPage />} />
@@ -64,15 +62,10 @@ function App() {
                 <Route path="/orders/:id" element={<OrderDetails />} />
                 <Route path="/orders/:id/tracking" element={<OrderTracking />} />
                 <Route path="/orders-history" element={<OrderHistory />} />
-
-                <Route
-                  path="/inventory"
-                  element={
-                    <ProtectedRoute>
-                      <Inventory />
-                    </ProtectedRoute>
-                  }
-                />
+                <Route path="/analytics" element={<Analytics />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/inventory" element={<Inventory />} />
+                
                 <Route
                   path="/subscriptions"
                   element={
@@ -86,22 +79,6 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <Deliveries />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/analytics"
-                  element={
-                    <ProtectedRoute>
-                      <Analytics />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/settings"
-                  element={
-                    <ProtectedRoute>
-                      <Settings />
                     </ProtectedRoute>
                   }
                 />
@@ -121,10 +98,25 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+                <Route 
+                  path="/payments-to-verify" 
+                  element={
+                    <ProtectedRoute>
+                      <PaymentsToVerifyPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/payment-verification/:orderId" 
+                  element={
+                    <ProtectedRoute>
+                      <PaymentVerificationPage />
+                    </ProtectedRoute>
+                  } 
+                />
               </Routes>
             </div>
 
-            {/* Footer appears on all pages */}
             <Footer />
           </div>
         </CartProvider>

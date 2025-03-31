@@ -6,6 +6,7 @@ from .serializers import OrderSerializer, CreateOrderSerializer, TrackingUpdateS
 from django.shortcuts import get_object_or_404
 from farms.models import Farm
 from accounts.models import User
+from django.utils import timezone
 
 class OrderListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -98,6 +99,21 @@ class OrderDeleteView(generics.DestroyAPIView):
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
     
+class PaymentVerificationListView(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = OrderSerializer
+    
+    def get_queryset(self):
+        farmer_profile = self.request.user.farmer_profile
+        if not farmer_profile or not hasattr(farmer_profile, 'farm'):
+            return Order.objects.none()
+        
+        status_filter = self.request.query_params.get('status', 'pending')
+        return Order.objects.filter(
+            farm=farmer_profile.farm,
+            status=status_filter
+        ).order_by('-created_at')
+    
 class VerifyPaymentView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     
@@ -110,14 +126,16 @@ class VerifyPaymentView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # Implement your payment verification logic here
-        # This is a mock implementation
-        is_verified = True  # Replace with actual verification
+        # Update order status and verified_at timestamp
+        order.status = 'verified'
+        order.verified_at = timezone.now()
+        order.save()
         
         return Response({
-            'verified': is_verified,
+            'verified': True,
             'order_id': order_id,
-            'amount': str(order.total)
+            'amount': str(order.total),
+            'status': order.status  # Return the new status
         })
     
 class TrackingUpdateView(generics.CreateAPIView):
