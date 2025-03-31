@@ -1,6 +1,6 @@
 // AuthContext.tsx
 import React, { createContext, useContext, useState, useEffect } from "react";
-import axios from './axioConfig';
+import axios from "./axioConfig";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
@@ -30,9 +30,12 @@ axios.interceptors.response.use(
         "An error occurred";
 
       // Skip redirect for login endpoint
-      if (error.response.status === 401 && !error.config.url?.includes("/api/accounts/login/")) {
+      if (
+        error.response.status === 401 &&
+        !error.config.url?.includes("/api/accounts/login/")
+      ) {
         localStorage.removeItem("token");
-        localStorage.removeItem("user"); 
+        localStorage.removeItem("user");
         window.location.href = "/login";
         return Promise.reject(error);
       }
@@ -62,17 +65,22 @@ export interface FarmerProfile {
   // ... any other existing fields
 }
 
-//Farm Type
 export interface Farm {
   id: string;
-  name: string; 
+  name: string;
   location: string;
+  description: string;
+  image?: string;
+  farm_image?: string;
   rating?: number;
   specialty?: string;
-  description: string;
-  image: string;
   about?: string;
   sustainability?: string;
+  farmer_profile?: {
+    about?: string;
+    sustainability?: string;
+    farm_image?: string;
+  };
 }
 
 export interface Product {
@@ -95,13 +103,13 @@ export interface User {
   id: number;
   email: string;
   username: string;
-  first_name: string; 
-  last_name: string;  
+  first_name: string;
+  last_name: string;
   phone_number?: string;
   profile_picture?: string;
-  user_type: string; 
+  user_type: string;
   date_joined?: string;
-  is_farmer?: boolean;  
+  is_farmer?: boolean;
   is_consumer?: boolean;
   farmer_profile?: FarmerProfile;
 }
@@ -114,7 +122,9 @@ interface AuthContextType {
   registerFarmer: (farmerData: FarmerRegisterData) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (userData: Partial<User>) => Promise<void>;
-  updateFarmerProfile: (farmerProfile: Partial<FarmerProfile>) => Promise<void>; // Add this function
+  updateFarmerProfile: (
+    farmerProfile: Partial<FarmerProfile> | FormData
+  ) => Promise<void>;
   setUser: (user: User | null) => void;
 }
 
@@ -123,9 +133,9 @@ interface RegisterData {
   password: string;
   full_name: string;
   phone_number: string;
-  is_farmer?: boolean;  
-  is_consumer?: boolean; 
-  profile_picture?: File; 
+  is_farmer?: boolean;
+  is_consumer?: boolean;
+  profile_picture?: File;
 }
 
 export interface FarmerRegisterData {
@@ -142,12 +152,14 @@ export interface FarmerRegisterData {
     location: string;
     specialty: string;
     description: string;
-    farm_image?: File | null; 
+    farm_image?: File | null;
   };
 }
 
 // Create and export AuthContext
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(
+  undefined
+);
 
 // Export useAuth hook
 export const useAuth = () => {
@@ -191,25 +203,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setLoading(false);
       return;
     }
-  
+
     try {
       const response = await axios.get("/api/accounts/user/");
-      
+
       // Process the user data with full farm image URL
       const processedUser = {
         ...response.data,
-        farmer_profile: response.data.farmer_profile 
+        farmer_profile: response.data.farmer_profile
           ? {
               ...response.data.farmer_profile,
-              farm_image: response.data.farmer_profile.farm_image 
-                ? (response.data.farmer_profile.farm_image.startsWith('http') 
-                    ? response.data.farmer_profile.farm_image 
-                    : `${import.meta.env.VITE_BACKEND_URL}${response.data.farmer_profile.farm_image}`)
-                : null
+              farm_image: response.data.farmer_profile.farm_image
+                ? response.data.farmer_profile.farm_image.startsWith("http")
+                  ? response.data.farmer_profile.farm_image
+                  : `${import.meta.env.VITE_BACKEND_URL}${
+                      response.data.farmer_profile.farm_image
+                    }`
+                : null,
             }
-          : null
+          : null,
       };
-  
+
       setUser(processedUser);
       localStorage.setItem("user", JSON.stringify(processedUser));
     } catch (error) {
@@ -228,44 +242,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         email,
         password,
       });
-  
+
       const { access, user, user_type, farmer_profile } = response.data;
-  
+
       // Ensure the farm_image URL is complete
       const processedUser = {
         ...user,
-        farmer_profile: farmer_profile ? {
-          ...farmer_profile,
-          farm_image: farmer_profile.farm_image 
-            ? (farmer_profile.farm_image.startsWith('http') 
-                ? farmer_profile.farm_image 
-                : `${import.meta.env.VITE_BACKEND_URL}${farmer_profile.farm_image}`)
-            : null
-        } : null
+        farmer_profile: farmer_profile
+          ? {
+              ...farmer_profile,
+              farm_image: farmer_profile.farm_image
+                ? farmer_profile.farm_image.startsWith("http")
+                  ? farmer_profile.farm_image
+                  : `${import.meta.env.VITE_BACKEND_URL}${
+                      farmer_profile.farm_image
+                    }`
+                : null,
+            }
+          : null,
       };
-  
+
       localStorage.setItem("token", access);
       localStorage.setItem("user", JSON.stringify(processedUser));
-  
+
       setUser(processedUser);
-  
+
       toast.success("Login successful!");
-  
-      if (user_type === 'farmer') {
+
+      if (user_type === "farmer") {
         navigate("/farmer-dashboard");
       } else {
         navigate("/customer-dashboard");
       }
     } catch (error) {
       console.error("Login failed:", error);
-  
+
       if (axios.isAxiosError(error) && error.response?.data) {
         const message = error.response.data.detail || "Invalid credentials";
         toast.error(message);
       } else {
         toast.error("Login failed. Please check your credentials.");
       }
-  
+
       throw error;
     }
   };
@@ -281,7 +299,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       navigate("/customer-dashboard");
     } catch (error) {
       console.error("Registration failed:", error);
-  
+
       if (axios.isAxiosError(error) && error.response?.data) {
         // Check for the specific email error
         if (error.response.data.email) {
@@ -299,53 +317,72 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     }
   };
-  
+
   const registerFarmer = async (farmerData: FarmerRegisterData) => {
     try {
       // Create a FormData object
       const formData = new FormData();
-  
+
       // Append user data as nested fields
-      formData.append('user[email]', farmerData.user.email);
-      formData.append('user[password]', farmerData.user.password);
-      formData.append('user[first_name]', farmerData.user.first_name);
-      formData.append('user[last_name]', farmerData.user.last_name);
-      formData.append('user[phone_number]', farmerData.user.phone_number);
-      formData.append('user[user_type]', farmerData.user.user_type);
-  
+      formData.append("user[email]", farmerData.user.email);
+      formData.append("user[password]", farmerData.user.password);
+      formData.append("user[first_name]", farmerData.user.first_name);
+      formData.append("user[last_name]", farmerData.user.last_name);
+      formData.append("user[phone_number]", farmerData.user.phone_number);
+      formData.append("user[user_type]", farmerData.user.user_type);
+
       // Append farmer profile data as nested fields
-      formData.append('farmer_profile[farm_name]', farmerData.farmer_profile.farm_name);
-      formData.append('farmer_profile[location]', farmerData.farmer_profile.location);
-      formData.append('farmer_profile[specialty]', farmerData.farmer_profile.specialty);
-      formData.append('farmer_profile[description]', farmerData.farmer_profile.description);
-  
+      formData.append(
+        "farmer_profile[farm_name]",
+        farmerData.farmer_profile.farm_name
+      );
+      formData.append(
+        "farmer_profile[location]",
+        farmerData.farmer_profile.location
+      );
+      formData.append(
+        "farmer_profile[specialty]",
+        farmerData.farmer_profile.specialty
+      );
+      formData.append(
+        "farmer_profile[description]",
+        farmerData.farmer_profile.description
+      );
+
       // Append the farm image file if it exists
       if (farmerData.farmer_profile.farm_image) {
-        formData.append('farmer_profile[farm_image]', farmerData.farmer_profile.farm_image);
+        formData.append(
+          "farmer_profile[farm_image]",
+          farmerData.farmer_profile.farm_image
+        );
       }
-  
+
       // Send the request with multipart/form-data
-      const response = await axios.post('/api/accounts/register/farmer/', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data', // Set the content type
-        },
-      });
-  
+      const response = await axios.post(
+        "/api/accounts/register/farmer/",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data", // Set the content type
+          },
+        }
+      );
+
       const { access, user, farmer_profile } = response.data;
-      localStorage.setItem('token', access);
-      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem("token", access);
+      localStorage.setItem("user", JSON.stringify(user));
       setUser(user);
-      toast.success('Farmer registration successful!');
+      toast.success("Farmer registration successful!");
       return response.data; // Return the response data
     } catch (error) {
-      console.error('Farmer registration failed:', error);
+      console.error("Farmer registration failed:", error);
       if (axios.isAxiosError(error) && error.response?.data) {
         const errorMessage = Object.entries(error.response.data)
           .map(([key, value]) => `${key}: ${value}`)
-          .join('\n');
+          .join("\n");
         toast.error(errorMessage);
       } else {
-        toast.error('Farmer registration failed. Please try again.');
+        toast.error("Farmer registration failed. Please try again.");
       }
       throw error;
     }
@@ -355,7 +392,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       await axios.post("/api/accounts/logout/");
       localStorage.removeItem("token");
-      localStorage.removeItem("user"); 
+      localStorage.removeItem("user");
       setUser(null);
       toast.success("Logged out successfully");
       navigate("/");
@@ -367,7 +404,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const updateUser = async (userData: Partial<User>) => {
     try {
-      const response = await axios.patch(`/api/auth/user/${user?.id}/`, userData);
+      const response = await axios.patch(
+        `/api/auth/user/${user?.id}/`,
+        userData
+      );
       setUser(response.data);
       localStorage.setItem("user", JSON.stringify(response.data)); // Save updated user data
       toast.success("Profile updated successfully!");
@@ -378,43 +418,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const updateFarmerProfile = async (farmerProfile: Partial<FarmerProfile>) => {
+  const updateFarmerProfile = async (farmerProfile: Partial<FarmerProfile> | FormData) => {
     try {
-      const formData = new FormData();
-      if (farmerProfile.farm_name) formData.append('farm_name', farmerProfile.farm_name);
-      if (farmerProfile.location) formData.append('location', farmerProfile.location);
-      if (farmerProfile.specialty) formData.append('specialty', farmerProfile.specialty);
-      if (farmerProfile.description) formData.append('description', farmerProfile.description);
-  
-      // Append farm_image only if it's a File
-      if (farmerProfile.farm_image && typeof farmerProfile.farm_image !== 'string') {
-        formData.append('farm_image', farmerProfile.farm_image);
-      }
-  
-      const response = await axios.patch(`/api/accounts/farmer/profile/update/`, formData, {
+      const isFormData = farmerProfile instanceof FormData;
+      const config = {
         headers: {
-          'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
+          'Content-Type': isFormData ? 'multipart/form-data' : 'application/json'
+        }
+      };
   
-      // Update the user context with the new farmer profile data
+      // For FormData, let axios handle the content type automatically
+      const data = isFormData ? farmerProfile : farmerProfile;
+  
+      const response = await axios.patch(
+        '/api/accounts/farmer/profile/update/',
+        data,
+        config
+      );
+  
+      // Update user context
       if (user) {
         const updatedUser = {
           ...user,
           farmer_profile: {
             ...user.farmer_profile,
-            ...response.data, // Update with the new farm details
+            ...response.data.farmer_profile,
           },
         };
         setUser(updatedUser);
-        localStorage.setItem("user", JSON.stringify(updatedUser)); // Save updated user data
+        localStorage.setItem("user", JSON.stringify(updatedUser));
       }
   
-      toast.success("Farm details updated successfully!");
+      return response.data;
     } catch (error) {
       console.error("Failed to update farm details:", error);
-      toast.error("Failed to update farm details. Please try again.");
       throw error;
     }
   };
@@ -424,10 +462,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     loading,
     login,
     register,
-    registerFarmer, 
+    registerFarmer,
     logout,
     updateUser,
-    updateFarmerProfile, // Add the new function to the context value
+    updateFarmerProfile,
     setUser,
   };
 

@@ -46,7 +46,12 @@ const PaymentVerificationPage = () => {
     });
   };
 
-  if (loading) return <div className="p-6">Loading order details...</div>;
+  if (loading) 
+    return (
+      <div className="p-6 flex justify-center items-center">
+        <div className="spinner"></div>
+      </div>
+    );  
   if (!order) return <div className="p-6">Order not found</div>;
 
   return (

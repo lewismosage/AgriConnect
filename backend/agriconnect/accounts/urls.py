@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import UserList, UserDetail, FarmerRegistrationView, RegisterView, LoginView, LogoutView, UserDetailView, FarmImageUploadView, FarmerProfileUpdateView, ShippingAddressViewSet, PaymentMethodViewSet
+from .views import UserList, UserDetail, FarmerRegistrationView, RegisterView, LoginView, LogoutView, UserDetailView, FarmImageUploadView, FarmerProfileUpdateView, ShippingAddressViewSet, PaymentMethodViewSet, ChangePasswordView
 
 router = DefaultRouter()
 router.register(r'shipping-addresses', ShippingAddressViewSet, basename='shipping-address')
@@ -17,4 +17,5 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), name='logout'),
     path('farmer/profile/update/', FarmerProfileUpdateView.as_view(), name='farmer-profile-update'),
     path('upload-farm-image/', FarmImageUploadView.as_view(), name='upload-farm-image'),
+    path('change-password/', ChangePasswordView.as_view(), name='change-password'),
 ]

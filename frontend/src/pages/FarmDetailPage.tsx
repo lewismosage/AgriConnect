@@ -34,15 +34,23 @@ const FarmDetailPage: React.FC = () => {
     const fetchFarmDetails = async () => {
       setLoading(true);
       try {
-        // Fetch farm data if not passed via state
         if (!location.state?.farm) {
           const farmResponse = await axios.get(`/api/farms/${farmId}/`);
-          setFarm(farmResponse.data);
-          setRating(farmResponse.data.rating);
-          setTotalRatings(farmResponse.data.ratings.length);
+          const farmData = farmResponse.data;
+          
+          console.log("Fetched farm data:", farmData); // Debug log
+          
+          setFarm({
+            ...farmData,
+            about: farmData.about,
+            sustainability: farmData.sustainability,
+            farm_image: farmData.farm_image
+          });
+          
+          setRating(farmData.rating);
+          setTotalRatings(farmData.ratings?.length || 0);
         }
-
-        // Always fetch products for the farm
+  
         const productsResponse = await axios.get(`/api/farms/${farmId}/products/`);
         setProducts(productsResponse.data);
       } catch (err) {
@@ -52,7 +60,7 @@ const FarmDetailPage: React.FC = () => {
         setLoading(false);
       }
     };
-
+  
     if (farmId) {
       fetchFarmDetails();
     }
@@ -94,10 +102,13 @@ const FarmDetailPage: React.FC = () => {
       {/* Farm Hero Section with Banner Image */}
       <div className="relative">
         <div className="h-64 w-full relative">
-          <img
-            src={farm.image}
+        <img
+            src={farm.farm_image || farm.image}
             alt={farm.name}
             className="w-full h-full object-cover"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = '/default-farm-image.jpg';
+            }}
           />
           <div className="absolute inset-0 bg-black bg-opacity-40"></div>
         </div>
@@ -148,20 +159,12 @@ const FarmDetailPage: React.FC = () => {
 
       {/* Tab Content */}
       <div className="max-w-5xl mx-auto px-6 py-8">
-        {/* About Tab Content */}
-        {activeTab === 'about' && (
+      {activeTab === 'about' && (
           <div>
             <h2 className="text-2xl font-semibold mb-4">About {farm.name}</h2>
-            {farm.about ? (
-              <p className="text-gray-700 whitespace-pre-line">{farm.about}</p>
-            ) : (
-              <p className="text-gray-700">
-                At {farm.name}, we believe in sustainable farming practices that honor the land and provide
-                the healthiest, most delicious produce to our community. Our family has been farming in {farm.location}
-                for generations, focusing on {farm.specialty ? farm.specialty.toLowerCase() : 'a variety of crops'} and building a transparent relationship
-                with our customers.
-              </p>
-            )}
+            <div className="text-gray-700 whitespace-pre-line">
+              {farm.about}
+            </div>
           </div>
         )}
 
@@ -221,30 +224,9 @@ const FarmDetailPage: React.FC = () => {
         {activeTab === 'sustainability' && (
           <div>
             <h2 className="text-2xl font-semibold mb-4">Our Sustainability Practices</h2>
-            {farm.sustainability ? (
-              <p className="text-gray-700 whitespace-pre-line">{farm.sustainability}</p>
-            ) : (
-              <>
-                <p className="text-gray-700 mb-4">
-                  At {farm.name}, sustainability is at the core of everything we do. We implement regenerative
-                  farming practices that improve soil health, conserve water, and promote biodiversity.
-                </p>
-                <div className="mt-6 space-y-4">
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <h3 className="font-medium text-green-800 mb-2">Organic Certification</h3>
-                    <p className="text-green-700">We maintain USDA Organic certification, avoiding synthetic pesticides and fertilizers.</p>
-                  </div>
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <h3 className="font-medium text-green-800 mb-2">Water Conservation</h3>
-                    <p className="text-green-700">Our drip irrigation systems and water recycling practices reduce water usage by 60%.</p>
-                  </div>
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <h3 className="font-medium text-green-800 mb-2">Renewable Energy</h3>
-                    <p className="text-green-700">Solar panels provide 75% of our energy needs, minimizing our carbon footprint.</p>
-                  </div>
-                </div>
-              </>
-            )}
+            <div className="text-gray-700 whitespace-pre-line">
+              {farm.sustainability}
+            </div>
           </div>
         )}
       </div>

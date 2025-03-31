@@ -157,31 +157,72 @@ class FarmerRegistrationView(APIView):
         
 class FarmerProfileUpdateView(APIView):
     permission_classes = [IsAuthenticated]
-    parser_classes = [JSONParser, MultiPartParser, FormParser]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def patch(self, request):
+        if request.user.user_type != 'farmer':
+            return Response(
+                {'detail': 'Only farmers can update farm profiles.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         try:
             farmer_profile = request.user.farmer_profile
-        except FarmerProfile.DoesNotExist:
+            farm = farmer_profile.farm
+        except (FarmerProfile.DoesNotExist, AttributeError):
             return Response(
                 {'detail': 'Farmer profile not found.'},
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Add request user to data to ensure we're updating the correct profile
-        data = request.data.copy()
-        data['user'] = request.user.id
+        # Get data from request based on content type
+        if request.content_type == 'application/json':
+            request_data = request.data
+        else:
+            request_data = request.data.dict()  # Convert QueryDict to regular dict
 
+        # List of fields that should update both profile and farm
+        shared_fields = ['farm_name', 'location', 'specialty', 'description', 'about', 'sustainability']
+        
+        profile_updates = {}
+        farm_updates = {}
+
+        for field in shared_fields:
+            if field in request_data:
+                profile_updates[field] = request_data[field]
+                if farm:  # Only try to update farm if it exists
+                    farm_updates[field] = request_data[field]
+
+        # Handle file upload separately
+        if 'farm_image' in request_data:
+            profile_updates['farm_image'] = request_data['farm_image']
+
+        # Update the farm model if there are changes
+        if farm and farm_updates:
+            for field, value in farm_updates.items():
+                setattr(farm, field, value)
+            farm.save()
+
+        # Update the farmer profile
         serializer = FarmerProfileSerializer(
             farmer_profile,
-            data=data,
+            data=profile_updates,
             partial=True,
-            context={'request': request}  # Pass request context for image URLs
+            context={'request': request}
         )
 
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            
+            # Return complete updated profile data
+            return Response({
+                'farmer_profile': FarmerProfileSerializer(
+                    farmer_profile, 
+                    context={'request': request}
+                ).data,
+                'detail': 'Profile updated successfully'
+            }, status=status.HTTP_200_OK)
+            
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
 class FarmImageUploadView(APIView):
@@ -257,3 +298,28 @@ class PaymentMethodViewSet(viewsets.ModelViewSet):
         if serializer.validated_data.get('is_default', False):
             PaymentMethod.objects.filter(user=self.request.user, is_default=True).update(is_default=False)
         serializer.save()
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        current_password = request.data.get('current_password')
+        new_password = request.data.get('new_password')
+        
+        # Check if current password is correct
+        user = request.user
+        if not user.check_password(current_password):
+            return Response(
+                {'detail': 'Current password is incorrect.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Set new password
+        user.set_password(new_password)
+        user.save()
+        
+        # Return success response
+        return Response(
+            {'detail': 'Password changed successfully.'},
+            status=status.HTTP_200_OK
+        )

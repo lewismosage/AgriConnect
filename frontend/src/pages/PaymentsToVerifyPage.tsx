@@ -107,7 +107,12 @@ const PaymentsToVerifyPage = () => {
   const currentOrders =
     activeTab === "pending" ? orders.pending : orders.verified;
 
-  if (loading) return <div className="p-6">Loading payments...</div>;
+    if (loading) 
+      return (
+        <div className="p-6 flex justify-center items-center">
+          <div className="spinner"></div>
+        </div>
+      );    
 
   return (
     <div className="container mx-auto p-6">
