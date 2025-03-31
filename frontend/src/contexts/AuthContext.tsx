@@ -71,17 +71,19 @@ export interface Farm {
   location: string;
   description: string;
   image?: string;
+  farmer?: number;
+  specialty: string;
   farm_image?: string;
-  rating?: number;
-  specialty?: string;
-  about?: string;
-  sustainability?: string;
+  rating: number;
+  about: string;  
+  sustainability: string; 
+  ratings?: any[];
   farmer_profile?: {
     about?: string;
     sustainability?: string;
     farm_image?: string;
   };
-}
+} 
 
 export interface Product {
   id: string;

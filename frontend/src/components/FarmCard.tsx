@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Star, MapPin } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import axios from 'axios';
-import { Farm } from '../contexts/AuthContext';
+import React, { useState, useEffect } from "react";
+import { Star, MapPin } from "lucide-react";
+import { Link } from "react-router-dom";
+import axios from "axios";
+import { Farm } from "../contexts/AuthContext";
 
 interface FarmCardProps {
   farm: Farm;
@@ -21,7 +21,7 @@ const FarmCard: React.FC<FarmCardProps> = ({ farm }) => {
           const response = await axios.get(`/api/farms/${farm.id}/`);
           setFarmDetails(response.data);
         } catch (error) {
-          console.error('Error fetching farm description:', error);
+          console.error("Error fetching farm description:", error);
         } finally {
           setLoading(false);
         }
@@ -32,7 +32,24 @@ const FarmCard: React.FC<FarmCardProps> = ({ farm }) => {
   }, [farm.id, farm.description]);
 
   return (
-    <Link to={`/farms/${farm.id}`} className="block">
+    <Link
+      to={`/farms/${farm.id}`}
+      state={{
+        farm: {
+          ...farmDetails,
+          about: farmDetails.about || farmDetails.farmer_profile?.about || "",
+          sustainability:
+            farmDetails.sustainability ||
+            farmDetails.farmer_profile?.sustainability ||
+            "",
+          farm_image:
+            farmDetails.farm_image ||
+            farmDetails.farmer_profile?.farm_image ||
+            "",
+        },
+      }}
+      className="block"
+    >
       <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition duration-300">
         <div className="relative h-48">
           <img
@@ -43,11 +60,15 @@ const FarmCard: React.FC<FarmCardProps> = ({ farm }) => {
         </div>
         <div className="p-6">
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-xl font-semibold text-gray-900">{farmDetails.name}</h2>
+            <h2 className="text-xl font-semibold text-gray-900">
+              {farmDetails.name}
+            </h2>
             {farmDetails.rating !== undefined && (
               <div className="flex items-center">
                 <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                <span className="text-sm text-gray-600">{farmDetails.rating}</span>
+                <span className="text-sm text-gray-600">
+                  {farmDetails.rating}
+                </span>
               </div>
             )}
           </div>
@@ -62,7 +83,7 @@ const FarmCard: React.FC<FarmCardProps> = ({ farm }) => {
             </div>
           ) : (
             <p className="text-gray-600 text-sm mb-4">
-              {farmDetails.description || 'No description available'}
+              {farmDetails.description || "No description available"}
             </p>
           )}
           {farmDetails.specialty && (

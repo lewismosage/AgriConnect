@@ -30,41 +30,43 @@ const FarmDetailPage: React.FC = () => {
   const [totalRatings, setTotalRatings] = useState(0);
 
   // Fetch farm details and products
-  useEffect(() => {
-    const fetchFarmDetails = async () => {
-      setLoading(true);
-      try {
-        if (!location.state?.farm) {
-          const farmResponse = await axios.get(`/api/farms/${farmId}/`);
-          const farmData = farmResponse.data;
-          
-          console.log("Fetched farm data:", farmData); // Debug log
-          
-          setFarm({
-            ...farmData,
-            about: farmData.about,
-            sustainability: farmData.sustainability,
-            farm_image: farmData.farm_image
-          });
-          
-          setRating(farmData.rating);
-          setTotalRatings(farmData.ratings?.length || 0);
-        }
-  
-        const productsResponse = await axios.get(`/api/farms/${farmId}/products/`);
-        setProducts(productsResponse.data);
-      } catch (err) {
-        console.error('Error fetching farm details:', err);
-        setError('Failed to fetch farm details.');
-      } finally {
-        setLoading(false);
+useEffect(() => {
+  const fetchFarmDetails = async () => {
+    setLoading(true);
+    try {
+      // Fetch farm data if not passed via state
+      if (!location.state?.farm) {
+        const farmResponse = await axios.get(`/api/farms/${farmId}/`);
+        const farmData = farmResponse.data;
+        
+        // Modify this part to properly handle the data
+        setFarm({
+          ...farmData,
+          // Use the data directly if available, or fall back to farmer_profile
+          about: farmData.about || farmData.farmer_profile?.about,
+          sustainability: farmData.sustainability || farmData.farmer_profile?.sustainability,
+          farm_image: farmData.farm_image || farmData.farmer_profile?.farm_image
+        });
+        
+        setRating(farmData.rating);
+        setTotalRatings(farmData.ratings?.length || 0);
       }
-    };
-  
-    if (farmId) {
-      fetchFarmDetails();
+
+      // Always fetch products for the farm
+      const productsResponse = await axios.get(`/api/farms/${farmId}/products/`);
+      setProducts(productsResponse.data);
+    } catch (err) {
+      console.error('Error fetching farm details:', err);
+      setError('Failed to fetch farm details.');
+    } finally {
+      setLoading(false);
     }
-  }, [farmId, location.state?.farm]);
+  };
+
+  if (farmId) {
+    fetchFarmDetails();
+  }
+}, [farmId, location.state?.farm]);
 
   const handleRatingSubmit = (newRating: number, newTotalRatings: number) => {
     setRating(newRating);
@@ -103,12 +105,9 @@ const FarmDetailPage: React.FC = () => {
       <div className="relative">
         <div className="h-64 w-full relative">
         <img
-            src={farm.farm_image || farm.image}
+            src={farm.image}
             alt={farm.name}
             className="w-full h-full object-cover"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = '/default-farm-image.jpg';
-            }}
           />
           <div className="absolute inset-0 bg-black bg-opacity-40"></div>
         </div>
@@ -159,12 +158,19 @@ const FarmDetailPage: React.FC = () => {
 
       {/* Tab Content */}
       <div className="max-w-5xl mx-auto px-6 py-8">
-      {activeTab === 'about' && (
+        {/* About Tab Content */}
+        {activeTab === 'about' && (
           <div>
             <h2 className="text-2xl font-semibold mb-4">About {farm.name}</h2>
-            <div className="text-gray-700 whitespace-pre-line">
-              {farm.about}
-            </div>
+            {farm.about ? (
+              <div className="text-gray-700 whitespace-pre-line">
+                {farm.about}
+              </div>
+            ) : (
+              <div className="text-gray-500 italic">
+                This farm hasn't provided an about section yet.
+              </div>
+            )}
           </div>
         )}
 
@@ -224,9 +230,15 @@ const FarmDetailPage: React.FC = () => {
         {activeTab === 'sustainability' && (
           <div>
             <h2 className="text-2xl font-semibold mb-4">Our Sustainability Practices</h2>
-            <div className="text-gray-700 whitespace-pre-line">
-              {farm.sustainability}
-            </div>
+            {farm.sustainability ? (
+              <div className="text-gray-700 whitespace-pre-line">
+                {farm.sustainability}
+              </div>
+            ) : (
+              <div className="text-gray-500 italic">
+                This farm hasn't provided sustainability information yet.
+              </div>
+            )}
           </div>
         )}
       </div>
