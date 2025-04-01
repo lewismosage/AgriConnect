@@ -62,7 +62,17 @@ export interface FarmerProfile {
   farm_image?: string;
   about?: string;
   sustainability?: string;
-  // ... any other existing fields
+  farm?: {  // Add this farm property
+    id: string;
+    name: string;
+    location: string;
+    description: string;
+    image?: string;
+    specialty: string;
+    rating: number;
+    about?: string;
+    sustainability?: string;
+  };
 }
 
 export interface Farm {

@@ -1,8 +1,8 @@
 // pages/Inventory.tsx
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import axios from 'axios';
-import { Package } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import axios from "axios";
+import { Package } from "lucide-react";
 
 interface Product {
   id: string;
@@ -24,55 +24,61 @@ const Inventory: React.FC = () => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('/api/products/', {
-          headers: { 
-            Authorization: `Bearer ${localStorage.getItem('token')}` 
-          }
+        const response = await axios.get("/api/products/", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         });
+
+        if (response.data.length === 0) {
+          setProducts([]);
+          return;
+        }
 
         // Process products to ensure image URLs are complete
         const processedProducts = response.data.map((product: any) => ({
           ...product,
-          image: product.image 
-            ? product.image.startsWith('http') 
-              ? product.image 
+          image: product.image
+            ? product.image.startsWith("http")
+              ? product.image
               : `${import.meta.env.VITE_BACKEND_URL}${product.image}`
-            : null
+            : null,
         }));
 
         setProducts(processedProducts);
       } catch (err) {
-        console.error('Error fetching products:', err);
-        setError('Failed to load inventory. Please try again.');
+        console.error("Error fetching products:", err);
+        setError("Failed to load inventory. Please try again.");
       } finally {
         setLoading(false);
       }
     };
 
-    if (user?.farmer_profile) {
+    if (user?.farmer_profile?.farm) {
       fetchProducts();
     } else {
-      console.log('No farmer profile found');
+      console.log("No farmer profile or farm found");
       setLoading(false);
+      setProducts([]);
     }
   }, [user]);
 
   const getStockStatus = (quantity: number) => {
-    if (quantity <= 0) return 'Out of Stock';
-    if (quantity <= 10) return 'Low Stock';
-    return 'In Stock';
+    if (quantity <= 0) return "Out of Stock";
+    if (quantity <= 10) return "Low Stock";
+    return "In Stock";
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'In Stock':
-        return 'bg-green-100 text-green-800';
-      case 'Low Stock':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'Out of Stock':
-        return 'bg-red-100 text-red-800';
+      case "In Stock":
+        return "bg-green-100 text-green-800";
+      case "Low Stock":
+        return "bg-yellow-100 text-yellow-800";
+      case "Out of Stock":
+        return "bg-red-100 text-red-800";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
@@ -110,10 +116,13 @@ const Inventory: React.FC = () => {
             products.map((product) => {
               const status = getStockStatus(product.quantity);
               return (
-                <div key={product.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div
+                  key={product.id}
+                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                >
                   <div className="flex items-center space-x-4">
                     {product.image ? (
-                      <img 
+                      <img
                         src={product.image}
                         alt={product.name}
                         className="w-12 h-12 rounded-full object-cover border border-gray-200"
@@ -124,7 +133,9 @@ const Inventory: React.FC = () => {
                       </div>
                     )}
                     <div>
-                      <p className="font-medium text-gray-900">{product.name}</p>
+                      <p className="font-medium text-gray-900">
+                        {product.name}
+                      </p>
                       <p className="text-sm text-gray-600">
                         {product.quantity} {product.unit} • ${product.price}
                       </p>
@@ -134,7 +145,9 @@ const Inventory: React.FC = () => {
                     </div>
                   </div>
                   <span
-                    className={`px-3 py-1 text-sm rounded-full ${getStatusColor(status)}`}
+                    className={`px-3 py-1 text-sm rounded-full ${getStatusColor(
+                      status
+                    )}`}
                   >
                     {status}
                   </span>
