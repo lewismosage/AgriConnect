@@ -3,16 +3,13 @@ import { useNavigate } from "react-router-dom";
 import {
   Home,
   ShoppingBag,
-  MessageSquare,
-  Bell,
   Settings,
   LogOut,
   Package,
   Truck,
   DollarSign,
-  ChevronLeft,
-  ChevronRight,
   CreditCard,
+  CalendarCheck,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import FarmOrdersPreview from "../pages/FarmOrdersPreview";
@@ -79,10 +76,10 @@ const FarmerDashboard: React.FC = () => {
       onClick: () => navigate("/payments-to-verify"),
     },
     {
-      id: "notifications",
-      label: "Notifications",
-      icon: <Bell className="w-5 h-5" />,
-      onClick: () => navigate("/notifications"),
+      id: "subscription",
+      label: "Subscription",
+      icon: <CalendarCheck className="w-5 h-5" />,
+      onClick: () => navigate("/subscription"),
     },
     {
       id: "settings",

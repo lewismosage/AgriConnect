@@ -1,13 +1,15 @@
+// components/ProtectedRoute.tsx
 import React from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import SubscriptionRequired from "./SubscriptionRequired";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, subscriptionStatus } = useAuth();
 
   if (loading) {
     return (
@@ -19,6 +21,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Check if user is a farmer and subscription is required
+  if (user.user_type === "farmer" && subscriptionStatus?.has_access === false) {
+    return (
+      <SubscriptionRequired
+        message={subscriptionStatus.message || "Subscription required"}
+        subscriptionData={subscriptionStatus.subscription}
+      />
+    );
   }
 
   return <>{children}</>;

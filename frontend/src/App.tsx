@@ -6,7 +6,6 @@ import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Inventory from "./pages/Inventory";
 import Subscriptions from "./pages/Subscriptions";
-import Deliveries from "./pages/Deliveries";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
@@ -20,7 +19,6 @@ import CustomerDashboard from "./pages/CustomerDashboard";
 import AboutPage from "./pages/AboutPage";
 import FarmRegistration from "./pages/FarmRegistration";
 import FarmProducts from "./pages/FarmProducts";
-import Notifications from './pages/Notifications';
 import FarmDetailPage from './pages/FarmDetailPage';
 import FarmShopPage from './pages/FarmShopPage';
 import { CartProvider } from './contexts/CartContext';
@@ -32,6 +30,7 @@ import OrderHistory from './pages/OrderHistory';
 import OrderTracking from './pages/OrderTracking';
 import PaymentVerificationPage from './pages/PaymentVerificationPage';
 import PaymentsToVerifyPage from './pages/PaymentsToVerifyPage';
+import SubscriptionPage from './pages/SubscriptionPage';
 
 function App() {
   return (
@@ -53,7 +52,6 @@ function App() {
                 <Route path="/cart" element={<CartPage />} />
                 <Route path="/farm-registration" element={<FarmRegistration />} />
                 <Route path="/farm-products" element={<FarmProducts />} />
-                <Route path="/notifications" element={<Notifications />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/farm/:farmId/shop" element={<FarmShopPage />} />
                 <Route path="/wishlist" element={<Wishlist />} />
@@ -65,20 +63,13 @@ function App() {
                 <Route path="/analytics" element={<Analytics />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/inventory" element={<Inventory />} />
+                <Route path="/subscription" element={<SubscriptionPage />} />
                 
                 <Route
                   path="/subscriptions"
                   element={
                     <ProtectedRoute>
                       <Subscriptions />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/deliveries"
-                  element={
-                    <ProtectedRoute>
-                      <Deliveries />
                     </ProtectedRoute>
                   }
                 />

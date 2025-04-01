@@ -1,0 +1,17 @@
+{% extends "subscriptions/emails/base.html" %}
+
+{% block content %}
+  <p>Hello {{ user.first_name }},</p>
+  
+  <p>Thank you for your payment of ${{ payment.amount }} for your AgriConnect {{ subscription.get_plan_display }} plan.</p>
+  
+  <p>Payment Details:</p>
+  <ul>
+    <li>Date: {{ payment.payment_date|date:"F j, Y" }}</li>
+    <li>Amount: ${{ payment.amount }}</li>
+    <li>Payment Method: {{ payment.get_payment_method_display }}</li>
+    <li>Transaction ID: {{ payment.transaction_id }}</li>
+  </ul>
+  
+  <p>If you have any questions about this payment, please contact our support team.</p>
+{% endblock %}

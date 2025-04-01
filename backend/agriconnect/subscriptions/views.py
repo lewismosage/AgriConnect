@@ -1,12 +1,179 @@
-from rest_framework import generics, permissions
-from .serializers import SubscriptionSerializer
-from .models import Subscription
-from datetime import datetime, timedelta
+# subscriptions/views.py
+from rest_framework import generics, status, permissions
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from django.utils import timezone
+from datetime import timedelta
+from .models import Subscription, Payment
+from .serializers import (
+    SubscriptionSerializer,
+    CreateSubscriptionSerializer,
+    UpdateSubscriptionSerializer,
+    PaymentRequestSerializer,
+    PaymentSerializer
+)
+from django.shortcuts import get_object_or_404
 
-class SubscriptionCreateView(generics.CreateAPIView):
+class SubscriptionView(generics.RetrieveAPIView):
     serializer_class = SubscriptionSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def get_object(self):
+        return get_object_or_404(Subscription, user=self.request.user)
+
+class CreateSubscriptionView(generics.CreateAPIView):
+    serializer_class = CreateSubscriptionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
     def perform_create(self, serializer):
-        end_date = datetime.now() + timedelta(days=30)  # 30-day free trial
-        serializer.save(farmer=self.request.user, end_date=end_date)
+        serializer.save(user=self.request.user)
+
+class UpdateSubscriptionView(generics.UpdateAPIView):
+    serializer_class = UpdateSubscriptionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return get_object_or_404(Subscription, user=self.request.user)
+
+    def perform_update(self, serializer):
+        instance = self.get_object()
+        
+        # If upgrading from trial to premium, set the next billing date
+        if instance.status == 'trial' and serializer.validated_data.get('plan') == 'premium':
+            serializer.save(status='active', next_billing_date=timezone.now() + timedelta(days=30))
+        else:
+            serializer.save()
+
+class PaymentView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        subscription = get_object_or_404(Subscription, user=request.user)
+        serializer = PaymentRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        data = serializer.validated_data
+        amount = data['amount']
+        payment_method = data['payment_method']
+        
+        # In a real implementation, you would integrate with a payment gateway here
+        # This is a simplified version for demonstration
+        
+        # Create a payment record
+        payment = Payment.objects.create(
+            subscription=subscription,
+            amount=amount,
+            payment_method=payment_method,
+            transaction_id=f"txn_{timezone.now().timestamp()}",
+            status='completed',
+            description=f"Payment for {subscription.plan} plan"
+        )
+        
+        # Update subscription if it was expired
+        if subscription.status == 'expired':
+            subscription.status = 'active'
+            subscription.next_billing_date = timezone.now() + timedelta(days=30)
+            subscription.save()
+        
+        return Response(
+            PaymentSerializer(payment).data,
+            status=status.HTTP_201_CREATED
+        )
+
+class CheckSubscriptionAccess(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        # Only check for farmers
+        if not hasattr(request.user, 'farmer_profile'):
+            return Response({
+                'has_access': True,
+                'message': 'Consumers do not require subscription'
+            })
+        try:
+            subscription = Subscription.objects.get(user=request.user)
+            if not subscription.can_access_service:
+                return Response({
+                    'has_access': False,
+                    'message': 'Your subscription has expired. Please renew to continue using the service.',
+                    'subscription': SubscriptionSerializer(subscription).data
+                }, status=status.HTTP_402_PAYMENT_REQUIRED)
+            
+            return Response({
+                'has_access': True,
+                'subscription': SubscriptionSerializer(subscription).data
+            })
+        except Subscription.DoesNotExist:
+            return Response({
+                'has_access': False,
+                'message': 'You need to subscribe to access this service'
+            }, status=status.HTTP_402_PAYMENT_REQUIRED)
+        
+# Add these to your existing views
+class PaymentHistoryView(generics.ListAPIView):
+    serializer_class = PaymentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        return Payment.objects.filter(
+            subscription__user=self.request.user
+        ).order_by('-payment_date')
+
+class CancelSubscriptionView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        subscription = get_object_or_404(
+            Subscription, 
+            user=request.user,
+            status='active'
+        )
+        
+        # In a real implementation, you might want to cancel with payment provider
+        subscription.status = 'canceled'
+        subscription.is_active = False
+        subscription.save()
+        
+        return Response(
+            {'detail': 'Subscription canceled. It will remain active until the end of the current billing period.'},
+            status=status.HTTP_200_OK
+        )
+
+class SubscriptionPlansView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        plans = [
+            {
+                'id': 'free_trial',
+                'name': 'Free Trial',
+                'price': 0,
+                'features': [
+                    '30-day free access',
+                    'Basic features',
+                    'Limited product listings'
+                ]
+            },
+            {
+                'id': 'basic',
+                'name': 'Basic Plan',
+                'price': 9.99,
+                'features': [
+                    'Up to 20 product listings',
+                    'Basic analytics',
+                    'Email support'
+                ]
+            },
+            {
+                'id': 'premium',
+                'name': 'Premium Plan',
+                'price': 19.99,
+                'features': [
+                    'Unlimited product listings',
+                    'Advanced analytics',
+                    'Priority support',
+                    'Marketing tools'
+                ]
+            }
+        ]
+        return Response(plans)

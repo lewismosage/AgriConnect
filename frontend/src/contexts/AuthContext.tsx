@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import axios from "./axioConfig";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { checkSubscriptionAccess } from "../services/subscriptionService"; // Import subscription service
 
 // Add axios interceptor for token
 axios.interceptors.request.use(
@@ -62,7 +63,8 @@ export interface FarmerProfile {
   farm_image?: string;
   about?: string;
   sustainability?: string;
-  farm?: {  // Add this farm property
+  farm?: {
+    // Add this farm property
     id: string;
     name: string;
     location: string;
@@ -126,10 +128,22 @@ export interface User {
   farmer_profile?: FarmerProfile;
 }
 
+// Define the SubscriptionStatus interface
+interface SubscriptionStatus {
+  has_access: boolean;
+  message?: string;
+  subscription?: any; // You can create a proper type for this
+}
+
+// Update AuthContextType to include subscriptionStatus and checkSubscription
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  subscriptionStatus: SubscriptionStatus | null; // Add this
+  login: (
+    email: string,
+    password: string
+  ) => Promise<{ error?: string; subscriptionData?: any } | void>;
   register: (userData: RegisterData) => Promise<void>;
   registerFarmer: (farmerData: FarmerRegisterData) => Promise<void>;
   logout: () => Promise<void>;
@@ -138,6 +152,7 @@ interface AuthContextType {
     farmerProfile: Partial<FarmerProfile> | FormData
   ) => Promise<void>;
   setUser: (user: User | null) => void;
+  checkSubscription: () => Promise<void>; // Add this
 }
 
 interface RegisterData {
@@ -186,7 +201,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true); // Start with loading true
+  const [loading, setLoading] = useState(true);
+  const [subscriptionStatus, setSubscriptionStatus] =
+    useState<SubscriptionStatus | null>(null);
   const navigate = useNavigate();
 
   // Restore user from localStorage on app initialization
@@ -248,6 +265,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const checkSubscription = async () => {
+    if (!user || user.user_type !== "farmer") {
+      setSubscriptionStatus(null);
+      return;
+    }
+
+    try {
+      const response = await checkSubscriptionAccess(
+        localStorage.getItem("token") || ""
+      );
+      setSubscriptionStatus(response.data);
+    } catch (error) {
+      console.error("Failed to check subscription:", error);
+      setSubscriptionStatus({
+        has_access: false,
+        message: "Failed to verify subscription status",
+      });
+    }
+  };
+
   const login = async (email: string, password: string) => {
     try {
       const response = await axios.post("/api/accounts/login/", {
@@ -257,7 +294,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const { access, user, user_type, farmer_profile } = response.data;
 
-      // Ensure the farm_image URL is complete
+      // Process user data
       const processedUser = {
         ...user,
         farmer_profile: farmer_profile
@@ -276,8 +313,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       localStorage.setItem("token", access);
       localStorage.setItem("user", JSON.stringify(processedUser));
-
       setUser(processedUser);
+
+      // Check subscription status for farmers
+      if (user_type === "farmer") {
+        await checkSubscription();
+      }
 
       toast.success("Login successful!");
 
@@ -288,14 +329,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     } catch (error) {
       console.error("Login failed:", error);
-
       if (axios.isAxiosError(error) && error.response?.data) {
         const message = error.response.data.detail || "Invalid credentials";
         toast.error(message);
       } else {
         toast.error("Login failed. Please check your credentials.");
       }
-
       throw error;
     }
   };
@@ -485,6 +524,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const value = {
     user,
     loading,
+    subscriptionStatus,
     login,
     register,
     registerFarmer,
@@ -492,6 +532,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     updateUser,
     updateFarmerProfile,
     setUser,
+    checkSubscription,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

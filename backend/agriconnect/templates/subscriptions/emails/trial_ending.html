@@ -1,0 +1,15 @@
+{% extends "subscriptions/emails/base.html" %}
+
+{% block content %}
+  <p>Hello {{ user.first_name }},</p>
+  
+  <p>Your AgriConnect free trial will end in {{ days_remaining }} days.</p>
+  
+  <p>To continue enjoying all the benefits of AgriConnect, please upgrade to a paid plan before your trial ends.</p>
+  
+  <a href="{{ site_url }}/subscription" style="display: inline-block; background-color: #10B981; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: bold; margin: 10px 0;">
+    Upgrade Your Account
+  </a>
+  
+  <p>If you have any questions, please contact our support team.</p>
+{% endblock %}
