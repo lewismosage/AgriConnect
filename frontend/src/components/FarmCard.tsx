@@ -32,24 +32,7 @@ const FarmCard: React.FC<FarmCardProps> = ({ farm }) => {
   }, [farm.id, farm.description]);
 
   return (
-    <Link
-      to={`/farms/${farm.id}`}
-      state={{
-        farm: {
-          ...farmDetails,
-          about: farmDetails.about || farmDetails.farmer_profile?.about || "",
-          sustainability:
-            farmDetails.sustainability ||
-            farmDetails.farmer_profile?.sustainability ||
-            "",
-          farm_image:
-            farmDetails.farm_image ||
-            farmDetails.farmer_profile?.farm_image ||
-            "",
-        },
-      }}
-      className="block"
-    >
+    <Link to={`/farms/${farm.id}`} className="block">
       <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition duration-300">
         <div className="relative h-48">
           <img

@@ -75,15 +75,15 @@ export interface Farm {
   specialty: string;
   farm_image?: string;
   rating: number;
-  about: string;  
-  sustainability: string; 
+  about: string;
+  sustainability: string;
   ratings?: any[];
   farmer_profile?: {
     about?: string;
     sustainability?: string;
     farm_image?: string;
   };
-} 
+}
 
 export interface Product {
   id: string;
@@ -322,9 +322,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const registerFarmer = async (farmerData: FarmerRegisterData) => {
     try {
-      // Create a FormData object
       const formData = new FormData();
-
       // Append user data as nested fields
       formData.append("user[email]", farmerData.user.email);
       formData.append("user[password]", farmerData.user.password);
@@ -359,13 +357,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         );
       }
 
-      // Send the request with multipart/form-data
       const response = await axios.post(
         "/api/accounts/register/farmer/",
         formData,
         {
           headers: {
-            "Content-Type": "multipart/form-data", // Set the content type
+            "Content-Type": "multipart/form-data",
           },
         }
       );
@@ -375,18 +372,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       localStorage.setItem("user", JSON.stringify(user));
       setUser(user);
       toast.success("Farmer registration successful!");
-      return response.data; // Return the response data
+      return response.data;
     } catch (error) {
       console.error("Farmer registration failed:", error);
-      if (axios.isAxiosError(error) && error.response?.data) {
-        const errorMessage = Object.entries(error.response.data)
-          .map(([key, value]) => `${key}: ${value}`)
-          .join("\n");
-        toast.error(errorMessage);
-      } else {
-        toast.error("Farmer registration failed. Please try again.");
+
+      let errorMessage = "Farmer registration failed. Please try again.";
+
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401) {
+          errorMessage =
+            "The email or phone number is already registered. Please use different credentials.";
+        } else if (error.response?.data) {
+          // Handle specific field errors
+          const errors = error.response.data;
+          if (errors.email) {
+            errorMessage = `Email: ${errors.email[0]}`;
+          } else if (errors.phone_number) {
+            errorMessage = `Phone number: ${errors.phone_number[0]}`;
+          } else if (errors.detail) {
+            errorMessage = errors.detail;
+          }
+        }
       }
-      throw error;
+
+      throw new Error(errorMessage);
     }
   };
 
@@ -420,25 +429,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const updateFarmerProfile = async (farmerProfile: Partial<FarmerProfile> | FormData) => {
+  const updateFarmerProfile = async (
+    farmerProfile: Partial<FarmerProfile> | FormData
+  ) => {
     try {
       const isFormData = farmerProfile instanceof FormData;
       const config = {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': isFormData ? 'multipart/form-data' : 'application/json'
-        }
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": isFormData
+            ? "multipart/form-data"
+            : "application/json",
+        },
       };
-  
+
       // For FormData, let axios handle the content type automatically
       const data = isFormData ? farmerProfile : farmerProfile;
-  
+
       const response = await axios.patch(
-        '/api/accounts/farmer/profile/update/',
+        "/api/accounts/farmer/profile/update/",
         data,
         config
       );
-  
+
       // Update user context
       if (user) {
         const updatedUser = {
@@ -451,7 +464,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         setUser(updatedUser);
         localStorage.setItem("user", JSON.stringify(updatedUser));
       }
-  
+
       return response.data;
     } catch (error) {
       console.error("Failed to update farm details:", error);

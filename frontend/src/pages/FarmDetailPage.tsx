@@ -30,43 +30,47 @@ const FarmDetailPage: React.FC = () => {
   const [totalRatings, setTotalRatings] = useState(0);
 
   // Fetch farm details and products
-useEffect(() => {
-  const fetchFarmDetails = async () => {
-    setLoading(true);
-    try {
-      // Fetch farm data if not passed via state
-      if (!location.state?.farm) {
+  useEffect(() => {
+    const fetchFarmDetails = async () => {
+      setLoading(true);
+      try {
+        // Always fetch fresh farm data from the backend
         const farmResponse = await axios.get(`/api/farms/${farmId}/`);
         const farmData = farmResponse.data;
         
-        // Modify this part to properly handle the data
+        // Handle the image URL properly
+        const getImageUrl = (img: string | null | undefined) => {
+          if (!img) return null;
+          return img.startsWith('http') ? img : `${import.meta.env.VITE_BACKEND_URL}${img}`;
+        };
+  
         setFarm({
           ...farmData,
-          // Use the data directly if available, or fall back to farmer_profile
-          about: farmData.about || farmData.farmer_profile?.about,
-          sustainability: farmData.sustainability || farmData.farmer_profile?.sustainability,
-          farm_image: farmData.farm_image || farmData.farmer_profile?.farm_image
+          about: farmData.about,
+          sustainability: farmData.sustainability,
+          // Use farm_image if available, otherwise fall back to image
+          image: getImageUrl(farmData.farm_image || farmData.image),
+          farm_image: getImageUrl(farmData.farm_image)
         });
         
         setRating(farmData.rating);
         setTotalRatings(farmData.ratings?.length || 0);
+  
+        // Fetch products for the farm
+        const productsResponse = await axios.get(`/api/farms/${farmId}/products/`);
+        setProducts(productsResponse.data);
+      } catch (err) {
+        console.error('Error fetching farm details:', err);
+        setError('Failed to fetch farm details.');
+      } finally {
+        setLoading(false);
       }
-
-      // Always fetch products for the farm
-      const productsResponse = await axios.get(`/api/farms/${farmId}/products/`);
-      setProducts(productsResponse.data);
-    } catch (err) {
-      console.error('Error fetching farm details:', err);
-      setError('Failed to fetch farm details.');
-    } finally {
-      setLoading(false);
+    };
+  
+    if (farmId) {
+      fetchFarmDetails();
     }
-  };
-
-  if (farmId) {
-    fetchFarmDetails();
-  }
-}, [farmId, location.state?.farm]);
+  }, [farmId]); 
 
   const handleRatingSubmit = (newRating: number, newTotalRatings: number) => {
     setRating(newRating);
