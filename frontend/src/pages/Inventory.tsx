@@ -24,7 +24,7 @@ const Inventory: React.FC = () => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const response = await axios.get("/api/products/", {
+        const response = await axios.get("/api/products/inventory/", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },

@@ -20,7 +20,13 @@ const farmDetailsSchema = z.object({
   name: z.string().min(3, "Farm name must be at least 3 characters"),
   location: z.string().min(1, "Please enter a location"),
   specialty: z.string().min(1, "Please enter a specialty"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
+  description: z
+    .string()
+    .min(100, "Description should be at least 100 characters")
+    .max(300, "Description should not exceed 300 characters")
+    .refine((val) => val.trim().length >= 100, {
+      message: "Description should be meaningful (100-300 characters)",
+    }),
   // We'll handle the image validation separately since it's not a simple text field
 });
 
@@ -432,19 +438,36 @@ const FarmRegistration = () => {
           htmlFor="description"
           className="block text-sm font-medium text-gray-700"
         >
-          Description
+          Farm Description
         </label>
         <textarea
           id="description"
-          rows={3}
+          rows={4}
           {...registerFarm("description")}
           className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+          placeholder="Briefly describe your farm (100-300 characters)..."
         />
-        {farmErrors.description && (
-          <p className="mt-1 text-sm text-red-600">
-            {farmErrors.description.message}
-          </p>
-        )}
+        <div className="flex justify-between mt-1">
+          {farmErrors.description ? (
+            <p className="text-sm text-red-600">
+              {farmErrors.description.message}
+            </p>
+          ) : (
+            <p className="text-xs text-gray-500">
+              Aim for 250-300 characters for an optimal description
+            </p>
+          )}
+          <span
+            className={`text-xs ${
+              watchFarm("description")?.length > 300
+                ? "text-red-600"
+                : "text-gray-500"
+            }`}
+          >
+            {watchFarm("description")?.length || 0}/300
+          </span>
+        </div>
+        
       </div>
 
       {/* Farm Profile Image Upload */}
