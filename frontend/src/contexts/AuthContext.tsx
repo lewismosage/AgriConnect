@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import axios from "./axioConfig";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { checkSubscriptionAccess } from "../services/subscriptionService"; // Import subscription service
+import { checkSubscriptionAccess } from "../services/subscriptionService";
 
 // Add axios interceptor for token
 axios.interceptors.request.use(
@@ -30,7 +30,6 @@ axios.interceptors.response.use(
         error.response.data?.error ||
         "An error occurred";
 
-      // Skip redirect for login endpoint
       if (
         error.response.status === 401 &&
         !error.config.url?.includes("/api/accounts/login/")
@@ -64,7 +63,6 @@ export interface FarmerProfile {
   about?: string;
   sustainability?: string;
   farm?: {
-    // Add this farm property
     id: string;
     name: string;
     location: string;
@@ -112,7 +110,6 @@ export interface Product {
   localDelivery: boolean;
 }
 
-// Update the User interface to include farmer_profile
 export interface User {
   id: number;
   email: string;
@@ -128,18 +125,16 @@ export interface User {
   farmer_profile?: FarmerProfile;
 }
 
-// Define the SubscriptionStatus interface
 interface SubscriptionStatus {
   has_access: boolean;
   message?: string;
-  subscription?: any; // You can create a proper type for this
+  subscription?: any;
 }
 
-// Update AuthContextType to include subscriptionStatus and checkSubscription
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  subscriptionStatus: SubscriptionStatus | null; // Add this
+  subscriptionStatus: SubscriptionStatus | null;
   login: (
     email: string,
     password: string
@@ -152,7 +147,7 @@ interface AuthContextType {
     farmerProfile: Partial<FarmerProfile> | FormData
   ) => Promise<void>;
   setUser: (user: User | null) => void;
-  checkSubscription: () => Promise<void>; // Add this
+  checkSubscription: () => Promise<void>;
 }
 
 interface RegisterData {
@@ -181,14 +176,11 @@ export interface FarmerRegisterData {
     description: string;
     farm_image?: File | null;
   };
+  subscription_plan?: string;
 }
 
-// Create and export AuthContext
-export const AuthContext = createContext<AuthContextType | undefined>(
-  undefined
-);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Export useAuth hook
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
@@ -206,7 +198,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     useState<SubscriptionStatus | null>(null);
   const navigate = useNavigate();
 
-  // Restore user from localStorage on app initialization
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     const token = localStorage.getItem("token");
@@ -214,7 +205,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     if (storedUser && token) {
       try {
         const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser); // Restore user from localStorage
+        setUser(parsedUser);
       } catch (error) {
         console.error("Failed to parse user data from localStorage:", error);
         localStorage.removeItem("user");
@@ -222,7 +213,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     }
 
-    // Validate token and fetch user data
     checkAuthStatus();
   }, []);
 
@@ -236,7 +226,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const response = await axios.get("/api/accounts/user/");
 
-      // Process the user data with full farm image URL
       const processedUser = {
         ...response.data,
         farmer_profile: response.data.farmer_profile
@@ -294,7 +283,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const { access, user, user_type, farmer_profile } = response.data;
 
-      // Process user data
       const processedUser = {
         ...user,
         farmer_profile: farmer_profile
@@ -315,7 +303,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       localStorage.setItem("user", JSON.stringify(processedUser));
       setUser(processedUser);
 
-      // Check subscription status for farmers
       if (user_type === "farmer") {
         await checkSubscription();
       }
@@ -352,12 +339,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       console.error("Registration failed:", error);
 
       if (axios.isAxiosError(error) && error.response?.data) {
-        // Check for the specific email error
         if (error.response.data.email) {
-          const emailError = error.response.data.email[0]; // Extract the first error message
-          throw new Error(emailError); // Throw the specific email error
+          const emailError = error.response.data.email[0];
+          throw new Error(emailError);
         } else {
-          // Handle other validation errors
           const errorMessage = Object.entries(error.response.data)
             .map(([key, value]) => `${key}: ${value}`)
             .join("\n");
@@ -372,7 +357,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const registerFarmer = async (farmerData: FarmerRegisterData) => {
     try {
       const formData = new FormData();
-      // Append user data as nested fields
       formData.append("user[email]", farmerData.user.email);
       formData.append("user[password]", farmerData.user.password);
       formData.append("user[first_name]", farmerData.user.first_name);
@@ -380,7 +364,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       formData.append("user[phone_number]", farmerData.user.phone_number);
       formData.append("user[user_type]", farmerData.user.user_type);
 
-      // Append farmer profile data as nested fields
       formData.append(
         "farmer_profile[farm_name]",
         farmerData.farmer_profile.farm_name
@@ -398,12 +381,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         farmerData.farmer_profile.description
       );
 
-      // Append the farm image file if it exists
       if (farmerData.farmer_profile.farm_image) {
         formData.append(
           "farmer_profile[farm_image]",
           farmerData.farmer_profile.farm_image
         );
+      }
+
+      if (farmerData.subscription_plan) {
+        formData.append("subscription_plan", farmerData.subscription_plan);
       }
 
       const response = await axios.post(
@@ -416,10 +402,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       );
 
+      if (farmerData.subscription_plan) {
+        await axios.post(
+          "/api/subscriptions/create/",
+          {
+            plan: farmerData.subscription_plan
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${response.data.access}`
+            }
+          }
+        );
+      }
+
       const { access, user, farmer_profile } = response.data;
       localStorage.setItem("token", access);
       localStorage.setItem("user", JSON.stringify(user));
       setUser(user);
+      
+      await checkSubscription();
+      
       toast.success("Farmer registration successful!");
       return response.data;
     } catch (error) {
@@ -432,7 +435,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           errorMessage =
             "The email or phone number is already registered. Please use different credentials.";
         } else if (error.response?.data) {
-          // Handle specific field errors
           const errors = error.response.data;
           if (errors.email) {
             errorMessage = `Email: ${errors.email[0]}`;
@@ -469,7 +471,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         userData
       );
       setUser(response.data);
-      localStorage.setItem("user", JSON.stringify(response.data)); // Save updated user data
+      localStorage.setItem("user", JSON.stringify(response.data));
       toast.success("Profile updated successfully!");
     } catch (error) {
       console.error("Profile update failed:", error);
@@ -492,7 +494,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         },
       };
 
-      // For FormData, let axios handle the content type automatically
       const data = isFormData ? farmerProfile : farmerProfile;
 
       const response = await axios.patch(
@@ -501,7 +502,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         config
       );
 
-      // Update user context
       if (user) {
         const updatedUser = {
           ...user,

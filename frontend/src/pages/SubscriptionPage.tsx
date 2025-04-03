@@ -76,6 +76,7 @@ const SubscriptionPage: React.FC = () => {
   useEffect(() => {
     if (user?.user_type === 'farmer') {
       fetchPaymentHistory();
+      checkSubscription(); // Ensure subscription status is checked
     }
   }, [user]);
 
@@ -123,7 +124,7 @@ const SubscriptionPage: React.FC = () => {
         paymentData.card_details = cardDetails;
       }
 
-      const response = await axios.post('/api/subscriptions/pay/', paymentData);
+      await axios.post('/api/subscriptions/pay/', paymentData);
       toast.success('Payment processed successfully!');
       
       // Refresh subscription status
@@ -201,15 +202,21 @@ const SubscriptionPage: React.FC = () => {
                      'Active' : subscriptionStatus.subscription.status === 'trial' ? 
                      'Trial' : 'Inactive'}
                   </p>
+                  {subscriptionStatus.subscription.next_billing_date && (
+                    <p className="text-sm text-gray-500">
+                      Next billing: {new Date(subscriptionStatus.subscription.next_billing_date).toLocaleDateString()}
+                    </p>
+                  )}
                 </div>
                 <div className="text-right">
                   <p className="text-lg font-medium">
-                    ${subscriptionStatus.subscription.plan === 'premium' ? '19.99' : '9.99'} / month
+                    ${subscriptionStatus.subscription.plan === 'premium' ? '19.99' : 
+                       subscriptionStatus.subscription.plan === 'basic' ? '9.99' : '0.00'} / month
                   </p>
-                  {subscriptionStatus.subscription.status === 'trial' && (
+                  {subscriptionStatus.subscription.status === 'trial' && subscriptionStatus.subscription.next_billing_date && (
                     <p className="text-sm text-gray-500 flex items-center">
                       <Clock className="w-4 h-4 mr-1" />
-                      {subscriptionStatus.subscription.days_remaining} days remaining
+                      {Math.max(0, Math.ceil((new Date(subscriptionStatus.subscription.next_billing_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} days remaining
                     </p>
                   )}
                 </div>
@@ -233,6 +240,12 @@ const SubscriptionPage: React.FC = () => {
             <div className="text-center py-8">
               <AlertCircle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
               <p className="text-gray-600">No active subscription found</p>
+              <button
+                onClick={() => setSelectedPlan('premium')}
+                className="mt-4 bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700"
+              >
+                Subscribe Now
+              </button>
             </div>
           )}
         </div>

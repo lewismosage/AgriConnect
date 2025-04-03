@@ -26,7 +26,24 @@ class CreateSubscriptionView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        user = self.request.user
+        plan = serializer.validated_data.get('plan', 'free_trial')
+        
+        if plan == 'free_trial':
+            # Set trial period (30 days)
+            next_billing_date = timezone.now() + timedelta(days=30)
+            status = 'trial'
+        else:
+            # For paid plans, set immediate billing cycle
+            next_billing_date = timezone.now() + timedelta(days=30)
+            status = 'active'
+        
+        serializer.save(
+            user=user,
+            status=status,
+            next_billing_date=next_billing_date,
+            is_active=True
+        )
 
 class UpdateSubscriptionView(generics.UpdateAPIView):
     serializer_class = UpdateSubscriptionSerializer

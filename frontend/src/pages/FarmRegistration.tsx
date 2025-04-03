@@ -13,7 +13,7 @@ import {
   Upload,
 } from "lucide-react";
 import { Eye, EyeOff, CheckCircle, AlertCircle } from "lucide-react";
-import { FarmerRegisterData, useAuth } from "../contexts/AuthContext"; // Import useAuth
+import { FarmerRegisterData, useAuth } from "../contexts/AuthContext";
 
 // Validation schemas
 const farmDetailsSchema = z.object({
@@ -246,24 +246,24 @@ const FarmRegistration = () => {
   const completeRegistration = async () => {
     try {
       setIsLoading(true);
-      setError(""); // Clear previous errors
-
-      // Validate form data before proceeding
+      setError("");
+  
+      // Validate form data
       if (formData.password !== formData.confirmPassword) {
         setError("Passwords do not match");
         return;
       }
-
+  
       if (!passwordStrength.isValid) {
         setError("Password does not meet the requirements");
         return;
       }
-
+  
       if (!formData.phoneNumber) {
         setError("Phone number is required");
         return;
       }
-
+  
       const farmerData: FarmerRegisterData = {
         user: {
           email: formData.email,
@@ -280,8 +280,9 @@ const FarmRegistration = () => {
           description: formData.description,
           farm_image: farmImage,
         },
+        subscription_plan: selectedPlan === "premium" ? "premium" : "free_trial"
       };
-
+  
       await registerFarmerAuth(farmerData);
       setStep(5);
       setTimeout(() => {
@@ -289,7 +290,6 @@ const FarmRegistration = () => {
       }, 3000);
     } catch (error) {
       console.error("Registration error:", error);
-      // Show user-friendly error message without redirecting
       setError(
         error instanceof Error
           ? error.message
