@@ -27,7 +27,6 @@ const farmDetailsSchema = z.object({
     .refine((val) => val.trim().length >= 100, {
       message: "Description should be meaningful (100-300 characters)",
     }),
-  // We'll handle the image validation separately since it's not a simple text field
 });
 
 const farmerDetailsSchema = z
@@ -54,8 +53,8 @@ const farmerDetailsSchema = z
   });
 
 const paymentDetailsSchema = z.object({
-  paymentMethod: z.enum(["mpesa", "bank"]), // Payment method
-  mpesaNumber: z.string().optional(), // MPESA number
+  paymentMethod: z.enum(["mpesa", "bank"]),
+  mpesaNumber: z.string().optional(),
   bankDetails: z
     .object({
       cardNumber: z.string().optional(),
@@ -63,7 +62,7 @@ const paymentDetailsSchema = z.object({
       cvv: z.string().optional(),
       name: z.string().optional(),
     })
-    .optional(), // Bank details
+    .optional(),
 });
 
 type FarmDetailsForm = z.infer<typeof farmDetailsSchema>;
@@ -72,9 +71,7 @@ type PaymentDetailsForm = z.infer<typeof paymentDetailsSchema>;
 
 const FarmRegistration = () => {
   const [step, setStep] = useState(1);
-  const [selectedPlan, setSelectedPlan] = useState<"free" | "premium" | null>(
-    null
-  );
+  const [selectedPlan, setSelectedPlan] = useState<"free" | "premium" | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
@@ -84,39 +81,22 @@ const FarmRegistration = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
-  const {
-    register: registerFarm,
-    handleSubmit: handleSubmitFarm,
-    formState: { errors: farmErrors },
-    watch: watchFarm,
-  } = useForm<FarmDetailsForm>({
+  const { register: registerFarm, handleSubmit: handleSubmitFarm, formState: { errors: farmErrors }, watch: watchFarm } = useForm<FarmDetailsForm>({
     resolver: zodResolver(farmDetailsSchema),
   });
 
-  const {
-    register: registerFarmerForm, // Renamed to avoid conflict
-    handleSubmit: handleSubmitFarmer,
-    formState: { errors: farmerErrors },
-    watch: watchFarmer,
-  } = useForm<FarmerDetailsForm>({
+  const { register: registerFarmerForm, handleSubmit: handleSubmitFarmer, formState: { errors: farmerErrors }, watch: watchFarmer } = useForm<FarmerDetailsForm>({
     resolver: zodResolver(farmerDetailsSchema),
-    defaultValues: {
-      password: "", // Provide a default value for password
-    },
+    defaultValues: { password: "" },
   });
 
-  const {
-    register: registerPayment,
-    handleSubmit: handleSubmitPayment,
-    formState: { errors: paymentErrors },
-    watch: watchPayment,
-  } = useForm<PaymentDetailsForm>({
+  const { register: registerPayment, handleSubmit: handleSubmitPayment, formState: { errors: paymentErrors }, watch: watchPayment } = useForm<PaymentDetailsForm>({
     resolver: zodResolver(paymentDetailsSchema),
   });
 
-  const { registerFarmer: registerFarmerAuth } = useAuth(); // Access registerFarmer from AuthContext and rename it
+  const { registerFarmer: registerFarmerAuth, checkSubscription } = useAuth();
 
-  const password = watchFarmer("password"); // Watch password for validation
+  const password = watchFarmer("password");
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -137,7 +117,6 @@ const FarmRegistration = () => {
       const file = e.target.files[0];
       setFarmImage(file);
 
-      // Create a preview URL for the image
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -170,12 +149,7 @@ const FarmRegistration = () => {
       hasLowercase,
       hasNumber,
       hasSpecialChar,
-      isValid:
-        minLength &&
-        hasUppercase &&
-        hasLowercase &&
-        hasNumber &&
-        hasSpecialChar,
+      isValid: minLength && hasUppercase && hasLowercase && hasNumber && hasSpecialChar,
     };
   };
 
@@ -184,16 +158,12 @@ const FarmRegistration = () => {
   const onSubmitFarmDetails = async (data: FarmDetailsForm) => {
     try {
       setIsLoading(true);
-
-      // Validate farm image
       if (!farmImage) {
-        // Use farmImage instead of profileImage
         setError("Please upload a farm profile image");
         setIsLoading(false);
         return;
       }
 
-      // Update formData state with farm details
       setFormData((prev) => ({
         ...prev,
         farmName: data.name,
@@ -203,7 +173,7 @@ const FarmRegistration = () => {
         farmImage: farmImage,
       }));
 
-      setStep(2); // Move to the next step
+      setStep(2);
     } catch (error) {
       setError("Failed to save farm details. Please try again.");
     } finally {
@@ -214,7 +184,6 @@ const FarmRegistration = () => {
   const onSubmitFarmerDetails = async (data: FarmerDetailsForm) => {
     try {
       setIsLoading(true);
-      console.log("Farmer Details Submitted:", data); // Debugging
       setFormData((prev) => ({
         ...prev,
         firstName: data.firstName,
@@ -224,7 +193,7 @@ const FarmRegistration = () => {
         password: data.password,
         confirmPassword: data.confirmPassword,
       }));
-      setStep(3); // Move to the next step
+      setStep(3);
     } catch (error) {
       setError("Failed to save farmer details. Please try again.");
     } finally {
@@ -235,10 +204,8 @@ const FarmRegistration = () => {
   const onSelectPlan = (plan: "free" | "premium") => {
     setSelectedPlan(plan);
     if (plan === "free") {
-      // For free plan, skip the payment step and directly complete registration
       completeRegistration();
     } else {
-      // For premium plan, proceed to payment
       setStep(4);
     }
   };
@@ -248,7 +215,6 @@ const FarmRegistration = () => {
       setIsLoading(true);
       setError("");
   
-      // Validate form data
       if (formData.password !== formData.confirmPassword) {
         setError("Passwords do not match");
         return;
@@ -284,6 +250,8 @@ const FarmRegistration = () => {
       };
   
       await registerFarmerAuth(farmerData);
+      await checkSubscription();
+      
       setStep(5);
       setTimeout(() => {
         navigate("/farmer-dashboard");
@@ -301,7 +269,6 @@ const FarmRegistration = () => {
   };
 
   const onSubmitPayment = async (data: PaymentDetailsForm) => {
-    // For premium plan with payment details
     await completeRegistration();
   };
 

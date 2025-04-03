@@ -84,18 +84,34 @@ class UpdateSubscriptionSerializer(serializers.ModelSerializer):
         return data
 
 class PaymentRequestSerializer(serializers.Serializer):
-    amount = serializers.DecimalField(max_digits=10, decimal_places=2)
-    payment_method = serializers.ChoiceField(choices=[('mpesa', 'MPESA'), ('bank', 'Bank')])
+    amount = serializers.DecimalField(max_digits=10, decimal_places=2, required=True)
+    payment_method = serializers.ChoiceField(
+        choices=[('mpesa', 'MPESA'), ('bank', 'Bank')],
+        required=True
+    )
+    plan = serializers.CharField(required=True)
     mpesa_number = serializers.CharField(required=False, allow_blank=True)
-    card_token = serializers.CharField(required=False, allow_blank=True)
+    card_number = serializers.CharField(required=False, allow_blank=True)
+    card_expiry = serializers.CharField(required=False, allow_blank=True)
+    card_cvv = serializers.CharField(required=False, allow_blank=True)
+    card_name = serializers.CharField(required=False, allow_blank=True)
 
     def validate(self, data):
-        if data['payment_method'] == 'mpesa' and not data.get('mpesa_number'):
+        payment_method = data.get('payment_method')
+        
+        if payment_method == 'mpesa' and not data.get('mpesa_number'):
             raise serializers.ValidationError(
-                "MPESA number is required for MPESA payments"
+                {"mpesa_number": "MPESA number is required for MPESA payments"}
             )
-        if data['payment_method'] == 'bank' and not data.get('card_token'):
+            
+        if payment_method == 'bank' and (
+            not data.get('card_number') or 
+            not data.get('card_expiry') or 
+            not data.get('card_cvv') or 
+            not data.get('card_name')
+        ):
             raise serializers.ValidationError(
-                "Card token is required for bank payments"
+                {"card_details": "All card details are required for bank payments"}
             )
+            
         return data

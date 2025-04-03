@@ -259,18 +259,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setSubscriptionStatus(null);
       return;
     }
-
+  
     try {
       const response = await checkSubscriptionAccess(
         localStorage.getItem("token") || ""
       );
       setSubscriptionStatus(response.data);
     } catch (error) {
-      console.error("Failed to check subscription:", error);
-      setSubscriptionStatus({
-        has_access: false,
-        message: "Failed to verify subscription status",
-      });
+      if (axios.isAxiosError(error) && error.response?.status === 402) {
+        setSubscriptionStatus(error.response.data);
+      } else {
+        console.error("Failed to check subscription:", error);
+        setSubscriptionStatus({
+          has_access: false,
+          message: "Failed to verify subscription status",
+        });
+      }
     }
   };
 
@@ -364,28 +368,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       formData.append("user[phone_number]", farmerData.user.phone_number);
       formData.append("user[user_type]", farmerData.user.user_type);
 
-      formData.append(
-        "farmer_profile[farm_name]",
-        farmerData.farmer_profile.farm_name
-      );
-      formData.append(
-        "farmer_profile[location]",
-        farmerData.farmer_profile.location
-      );
-      formData.append(
-        "farmer_profile[specialty]",
-        farmerData.farmer_profile.specialty
-      );
-      formData.append(
-        "farmer_profile[description]",
-        farmerData.farmer_profile.description
-      );
+      formData.append("farmer_profile[farm_name]", farmerData.farmer_profile.farm_name);
+      formData.append("farmer_profile[location]", farmerData.farmer_profile.location);
+      formData.append("farmer_profile[specialty]", farmerData.farmer_profile.specialty);
+      formData.append("farmer_profile[description]", farmerData.farmer_profile.description);
 
       if (farmerData.farmer_profile.farm_image) {
-        formData.append(
-          "farmer_profile[farm_image]",
-          farmerData.farmer_profile.farm_image
-        );
+        formData.append("farmer_profile[farm_image]", farmerData.farmer_profile.farm_image);
       }
 
       if (farmerData.subscription_plan) {
@@ -402,28 +391,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       );
 
-      if (farmerData.subscription_plan) {
-        await axios.post(
-          "/api/subscriptions/create/",
-          {
-            plan: farmerData.subscription_plan
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${response.data.access}`
-            }
-          }
-        );
-      }
-
-      const { access, user, farmer_profile } = response.data;
+      const { access, user } = response.data;
       localStorage.setItem("token", access);
       localStorage.setItem("user", JSON.stringify(user));
       setUser(user);
       
-      await checkSubscription();
+      // Create subscription after successful registration
+      if (farmerData.subscription_plan) {
+        try {
+          await axios.post(
+            "/api/subscriptions/create/",
+            { plan: farmerData.subscription_plan },
+            {
+              headers: {
+                Authorization: `Bearer ${access}`,
+              },
+            }
+          );
+        } catch (subError) {
+          console.error("Subscription creation error:", subError);
+          // Don't fail registration if subscription creation fails
+        }
+      }
       
-      toast.success("Farmer registration successful!");
+      await checkSubscription();
       return response.data;
     } catch (error) {
       console.error("Farmer registration failed:", error);

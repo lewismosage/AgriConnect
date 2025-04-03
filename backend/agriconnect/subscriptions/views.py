@@ -27,18 +27,27 @@ class CreateSubscriptionView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         user = self.request.user
+        
+        # Check if subscription already exists
+        if hasattr(user, 'subscription'):
+            subscription = user.subscription
+            # Update existing subscription if needed
+            subscription.plan = serializer.validated_data.get('plan', subscription.plan)
+            subscription.status = 'active'
+            subscription.next_billing_date = timezone.now() + timedelta(days=30)
+            subscription.save()
+            return subscription
+        
         plan = serializer.validated_data.get('plan', 'free_trial')
         
         if plan == 'free_trial':
-            # Set trial period (30 days)
             next_billing_date = timezone.now() + timedelta(days=30)
             status = 'trial'
         else:
-            # For paid plans, set immediate billing cycle
             next_billing_date = timezone.now() + timedelta(days=30)
             status = 'active'
         
-        serializer.save(
+        return serializer.save(
             user=user,
             status=status,
             next_billing_date=next_billing_date,
@@ -65,28 +74,30 @@ class PaymentView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        subscription = get_object_or_404(Subscription, user=request.user)
+        try:
+            subscription = Subscription.objects.get(user=request.user)
+        except Subscription.DoesNotExist:
+            return Response(
+                {'detail': 'Please create a subscription first'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         serializer = PaymentRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
         data = serializer.validated_data
-        amount = data['amount']
-        payment_method = data['payment_method']
         
-        # In a real implementation, you would integrate with a payment gateway here
-        # This is a simplified version for demonstration
-        
-        # Create a payment record
+        # Create payment record
         payment = Payment.objects.create(
             subscription=subscription,
-            amount=amount,
-            payment_method=payment_method,
+            amount=data['amount'],
+            payment_method=data['payment_method'],
             transaction_id=f"txn_{timezone.now().timestamp()}",
             status='completed',
-            description=f"Payment for {subscription.plan} plan"
+            description=f"Payment for {data['plan']} plan"
         )
         
-        # Update subscription if it was expired
+        # Update subscription if needed
         if subscription.status == 'expired':
             subscription.status = 'active'
             subscription.next_billing_date = timezone.now() + timedelta(days=30)
@@ -101,29 +112,31 @@ class CheckSubscriptionAccess(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        # Only check for farmers
         if not hasattr(request.user, 'farmer_profile'):
             return Response({
                 'has_access': True,
-                'message': 'Consumers do not require subscription'
+                'message': 'Consumers do not require subscription',
+                'requires_subscription': False
             })
+            
         try:
             subscription = Subscription.objects.get(user=request.user)
-            if not subscription.can_access_service:
-                return Response({
-                    'has_access': False,
-                    'message': 'Your subscription has expired. Please renew to continue using the service.',
-                    'subscription': SubscriptionSerializer(subscription).data
-                }, status=status.HTTP_402_PAYMENT_REQUIRED)
-            
-            return Response({
-                'has_access': True,
+            response_data = {
+                'has_access': subscription.can_access_service,
                 'subscription': SubscriptionSerializer(subscription).data
-            })
+            }
+            
+            if not subscription.can_access_service:
+                response_data['message'] = 'Your subscription has expired' if subscription.status == 'expired' else 'Subscription inactive'
+                return Response(response_data, status=status.HTTP_402_PAYMENT_REQUIRED)
+            
+            return Response(response_data)
+            
         except Subscription.DoesNotExist:
             return Response({
                 'has_access': False,
-                'message': 'You need to subscribe to access this service'
+                'message': 'No subscription found',
+                'requires_subscription': True
             }, status=status.HTTP_402_PAYMENT_REQUIRED)
         
 # Add these to your existing views

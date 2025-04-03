@@ -1,4 +1,3 @@
-// pages/SubscriptionPage.tsx
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import axios from '../contexts/axioConfig';
@@ -76,7 +75,7 @@ const SubscriptionPage: React.FC = () => {
   useEffect(() => {
     if (user?.user_type === 'farmer') {
       fetchPaymentHistory();
-      checkSubscription(); // Ensure subscription status is checked
+      checkSubscription();
     }
   }, [user]);
 
@@ -101,39 +100,60 @@ const SubscriptionPage: React.FC = () => {
       toast.error('Please select a plan');
       return;
     }
-
+  
     try {
       setPaymentLoading(true);
+      
+      // Get the plan price based on selection
+      const planPrice = plans.find(p => p.id === selectedPlan)?.price || 0;
+  
       let paymentData: any = {
-        plan: selectedPlan,
-        payment_method: paymentMethod
+        amount: planPrice,
+        payment_method: paymentMethod,
+        plan: selectedPlan
       };
-
+  
       if (paymentMethod === 'mpesa') {
         if (!mpesaNumber) {
           toast.error('Please enter your MPESA number');
           return;
         }
         paymentData.mpesa_number = mpesaNumber;
-      } else {
-        // Validate card details
+      } else if (paymentMethod === 'card') {
         if (!cardDetails.number || !cardDetails.expiry || !cardDetails.cvv || !cardDetails.name) {
           toast.error('Please enter all card details');
           return;
         }
-        paymentData.card_details = cardDetails;
+        paymentData.card_number = cardDetails.number;
+        paymentData.card_expiry = cardDetails.expiry;
+        paymentData.card_cvv = cardDetails.cvv;
+        paymentData.card_name = cardDetails.name;
       }
-
-      await axios.post('/api/subscriptions/pay/', paymentData);
-      toast.success('Payment processed successfully!');
+  
+      await axios.post('/api/subscriptions/pay/', paymentData, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
       
-      // Refresh subscription status
+      toast.success('Payment processed successfully!');
       await checkSubscription();
       await fetchPaymentHistory();
-      
       setSelectedPlan(null);
     } catch (error) {
-      toast.error('Payment failed. Please try again.');
+      if (axios.isAxiosError(error)) {
+        if (error.response?.data) {
+          // Display backend validation errors
+          const errors = error.response.data;
+          Object.values(errors).forEach((errorArray: any) => {
+            toast.error(errorArray[0]);
+          });
+        } else {
+          toast.error('Payment failed. Please try again.');
+        }
+      } else {
+        toast.error('An unexpected error occurred');
+      }
     } finally {
       setPaymentLoading(false);
     }
