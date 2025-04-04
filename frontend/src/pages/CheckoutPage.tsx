@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useCart } from "../contexts/CartContext";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext"; // Import useAuth for authentication check
 import ShippingInformation from "./ShippingInformation";
 import PaymentInformation from "./PaymentInformation";
 import { Truck, Check, X } from "lucide-react";
@@ -79,6 +80,7 @@ const CheckoutPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { cartItems = [] as CartItem[], clearCart } = useCart();
+  const { user } = useAuth(); // Get the user from the AuthContext
 
   const items = location.state?.cartItems || cartItems;
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -141,6 +143,13 @@ const CheckoutPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Check if the user is logged in
+    if (!user) {
+      showAlert("Authentication Required", "Please log in to place an order.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     if (!selectedAddressId) {

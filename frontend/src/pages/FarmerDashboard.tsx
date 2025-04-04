@@ -10,6 +10,8 @@ import {
   DollarSign,
   CreditCard,
   CalendarCheck,
+  Menu,
+  X,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import FarmOrdersPreview from "../pages/FarmOrdersPreview";
@@ -35,7 +37,7 @@ interface Product {
 
 const FarmerDashboard: React.FC = () => {
   const { user, logout } = useAuth();
-  const [sidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [dashboardStats, setDashboardStats] = useState({
     totalSales: 0,
@@ -44,6 +46,7 @@ const FarmerDashboard: React.FC = () => {
     growth: 0,
   });
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const navigate = useNavigate();
 
@@ -115,25 +118,19 @@ const FarmerDashboard: React.FC = () => {
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <div
-        className={`bg-white border-r transition-all duration-300 ease-in-out ${
-          sidebarCollapsed ? "w-20" : "w-64"
-        } flex flex-col`}
+        className={`fixed inset-y-0 left-0 bg-white border-r z-50 transition-transform transform ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } md:translate-x-0 md:static md:flex md:flex-col w-64`}
       >
-        {/* Farm Profile Section - Simplified without image */}
-        <div className="p-5 border-b">
-          {!sidebarCollapsed && (
-            <div>
-              <h2 className="font-bold">
-                {farmProfile?.farm_name || "My Farm"}
-              </h2>
-              <p className="text-xs text-gray-500">{farmProfile?.location}</p>
-            </div>
-          )}
-          {sidebarCollapsed && (
-            <div className="flex justify-center">
-              <ShoppingBag className="w-6 h-6 text-gray-500" />
-            </div>
-          )}
+        {/* Sidebar Header */}
+        <div className="p-5 border-b flex items-center justify-between">
+          <h2 className="font-bold">{farmProfile?.farm_name || "My Farm"}</h2>
+          <button
+            className="md:hidden text-gray-600"
+            onClick={() => setIsSidebarOpen(false)}
+          >
+            <X className="w-6 h-6" />
+          </button>
         </div>
 
         {/* Navigation Items */}
@@ -146,12 +143,10 @@ const FarmerDashboard: React.FC = () => {
                 activeTab === item.id
                   ? "bg-green-100 text-green-600"
                   : "text-gray-600"
-              } ${sidebarCollapsed ? "justify-center" : "px-5"}`}
+              }`}
             >
               {item.icon}
-              {!sidebarCollapsed && (
-                <span className="ml-3 text-sm">{item.label}</span>
-              )}
+              <span className="ml-3 text-sm">{item.label}</span>
             </button>
           ))}
         </nav>
@@ -160,18 +155,26 @@ const FarmerDashboard: React.FC = () => {
         <div className="border-t p-4">
           <button
             onClick={logout}
-            className={`w-full flex items-center hover:bg-red-50 text-red-600 p-3 ${
-              sidebarCollapsed ? "justify-center" : "px-5"
-            }`}
+            className="w-full flex items-center hover:bg-red-50 text-red-600 p-3"
           >
             <LogOut className="w-5 h-5" />
-            {!sidebarCollapsed && <span className="ml-3 text-sm">Logout</span>}
+            <span className="ml-3 text-sm">Logout</span>
           </button>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto">
+        {/* Mobile Sidebar Toggle */}
+        <div className="md:hidden p-4">
+          <button
+            onClick={() => setIsSidebarOpen(true)}
+            className="text-gray-600"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+        </div>
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="relative bg-gradient-to-r from-green-600 to-emerald-500 rounded-lg shadow-md p-6 mb-8 overflow-hidden">
             <div className="absolute right-0 top-0 opacity-10">
