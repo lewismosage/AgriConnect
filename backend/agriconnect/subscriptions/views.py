@@ -27,32 +27,35 @@ class CreateSubscriptionView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         user = self.request.user
-        
-        # Check if subscription already exists
-        if hasattr(user, 'subscription'):
-            subscription = user.subscription
-            # Update existing subscription if needed
-            subscription.plan = serializer.validated_data.get('plan', subscription.plan)
-            subscription.status = 'active'
-            subscription.next_billing_date = timezone.now() + timedelta(days=30)
-            subscription.save()
-            return subscription
-        
         plan = serializer.validated_data.get('plan', 'free_trial')
         
         if plan == 'free_trial':
             next_billing_date = timezone.now() + timedelta(days=30)
             status = 'trial'
+            amount = 0
         else:
             next_billing_date = timezone.now() + timedelta(days=30)
             status = 'active'
+            amount = 19.99 if plan == 'premium' else 9.99
         
-        return serializer.save(
+        subscription = serializer.save(
             user=user,
             status=status,
             next_billing_date=next_billing_date,
             is_active=True
         )
+        
+        # Create initial payment record
+        Payment.objects.create(
+            subscription=subscription,
+            amount=amount,
+            payment_method='initial',
+            transaction_id=f"init_{timezone.now().timestamp()}",
+            status='completed',
+            description=f"Initial payment for {plan} plan"
+        )
+        
+        return subscription
 
 class UpdateSubscriptionView(generics.UpdateAPIView):
     serializer_class = UpdateSubscriptionSerializer
@@ -94,14 +97,19 @@ class PaymentView(APIView):
             payment_method=data['payment_method'],
             transaction_id=f"txn_{timezone.now().timestamp()}",
             status='completed',
-            description=f"Payment for {data['plan']} plan"
+            description=f"Payment for {data['plan']} plan subscription"
         )
         
-        # Update subscription if needed
-        if subscription.status == 'expired':
-            subscription.status = 'active'
-            subscription.next_billing_date = timezone.now() + timedelta(days=30)
-            subscription.save()
+        # Update subscription
+        subscription.plan = data['plan']
+        subscription.status = 'active'
+        subscription.next_billing_date = timezone.now() + timedelta(days=30)
+        subscription.payment_method = data['payment_method']
+        
+        if data['payment_method'] == 'mpesa' and data.get('mpesa_number'):
+            subscription.mpesa_number = data['mpesa_number']
+        
+        subscription.save()
         
         return Response(
             PaymentSerializer(payment).data,
@@ -121,13 +129,18 @@ class CheckSubscriptionAccess(APIView):
             
         try:
             subscription = Subscription.objects.get(user=request.user)
+            serializer = SubscriptionSerializer(subscription)
+            
             response_data = {
-                'has_access': subscription.can_access_service,
-                'subscription': SubscriptionSerializer(subscription).data
+                'has_access': subscription.can_access_service,  # Removed parentheses
+                'subscription': serializer.data
             }
             
-            if not subscription.can_access_service:
-                response_data['message'] = 'Your subscription has expired' if subscription.status == 'expired' else 'Subscription inactive'
+            if not subscription.can_access_service:  # Removed parentheses
+                response_data['message'] = (
+                    'Your subscription has expired' if subscription.status == 'expired' 
+                    else 'Subscription inactive'
+                )
                 return Response(response_data, status=status.HTTP_402_PAYMENT_REQUIRED)
             
             return Response(response_data)
@@ -136,7 +149,8 @@ class CheckSubscriptionAccess(APIView):
             return Response({
                 'has_access': False,
                 'message': 'No subscription found',
-                'requires_subscription': True
+                'requires_subscription': True,
+                'subscription': None
             }, status=status.HTTP_402_PAYMENT_REQUIRED)
         
 # Add these to your existing views

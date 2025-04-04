@@ -28,10 +28,13 @@ interface PaymentHistory {
   date: string;
   status: string;
   description: string;
+  payment_date: string; // Added property
+  payment_method: string; // Added property
 }
 
 const SubscriptionPage: React.FC = () => {
-  const { user, subscriptionStatus, checkSubscription } = useAuth();
+  const { user, checkSubscription } = useAuth();
+  const [subscriptionStatus, setSubscriptionStatus] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
@@ -84,8 +87,22 @@ const SubscriptionPage: React.FC = () => {
       setLoading(true);
       const response = await axios.get('/api/subscriptions/payments/');
       setPaymentHistory(response.data);
+
+      // Also fetch subscription details if not already available
+      if (!subscriptionStatus) {
+        const subResponse = await axios.get('/api/subscriptions/check-access/');
+        setSubscriptionStatus(subResponse.data);
+      }
     } catch (error) {
-      toast.error('Failed to load payment history');
+      if (axios.isAxiosError(error) && error.response?.status === 402) {
+        // Payment required - no active subscription
+        setSubscriptionStatus({
+          has_access: false,
+          message: error.response.data.detail || 'No active subscription',
+        });
+      } else {
+        toast.error('Failed to load payment history');
+      }
     } finally {
       setLoading(false);
     }
@@ -104,7 +121,6 @@ const SubscriptionPage: React.FC = () => {
     try {
       setPaymentLoading(true);
       
-      // Get the plan price based on selection
       const planPrice = plans.find(p => p.id === selectedPlan)?.price || 0;
   
       let paymentData: any = {
@@ -130,11 +146,7 @@ const SubscriptionPage: React.FC = () => {
         paymentData.card_name = cardDetails.name;
       }
   
-      await axios.post('/api/subscriptions/pay/', paymentData, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await axios.post('/api/subscriptions/pay/', paymentData);
       
       toast.success('Payment processed successfully!');
       await checkSubscription();
@@ -145,9 +157,15 @@ const SubscriptionPage: React.FC = () => {
         if (error.response?.data) {
           // Display backend validation errors
           const errors = error.response.data;
-          Object.values(errors).forEach((errorArray: any) => {
-            toast.error(errorArray[0]);
-          });
+          if (typeof errors === 'object') {
+            Object.values(errors).forEach((errorArray: any) => {
+              if (Array.isArray(errorArray)) {
+                toast.error(errorArray[0]);
+              }
+            });
+          } else {
+            toast.error(errors.detail || 'Payment failed');
+          }
         } else {
           toast.error('Payment failed. Please try again.');
         }
@@ -208,37 +226,41 @@ const SubscriptionPage: React.FC = () => {
             <CreditCard className="w-5 h-5 mr-2" />
             Current Subscription
           </h2>
-          
+
           {subscriptionStatus?.subscription ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-lg font-medium">
-                    {subscriptionStatus.subscription.plan === 'free_trial' ? 'Free Trial' : 
-                     subscriptionStatus.subscription.plan === 'premium' ? 'Premium Plan' : 'Basic Plan'}
+                    {subscriptionStatus.subscription.plan.charAt(0).toUpperCase() +
+                      subscriptionStatus.subscription.plan.slice(1)}{' '}
+                    Plan
                   </p>
                   <p className="text-sm text-gray-500">
-                    {subscriptionStatus.subscription.status === 'active' ? 
-                     'Active' : subscriptionStatus.subscription.status === 'trial' ? 
-                     'Trial' : 'Inactive'}
+                    Status: {subscriptionStatus.subscription.status}
                   </p>
-                  {subscriptionStatus.subscription.next_billing_date && (
-                    <p className="text-sm text-gray-500">
-                      Next billing: {new Date(subscriptionStatus.subscription.next_billing_date).toLocaleDateString()}
-                    </p>
-                  )}
+                  {subscriptionStatus?.subscription?.next_billing_date && (
+                  <p className="text-sm text-gray-500">
+                    Next Billing Date:{" "}
+                    {new Date(subscriptionStatus.subscription.next_billing_date).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </p>
+                )}
                 </div>
                 <div className="text-right">
                   <p className="text-lg font-medium">
-                    ${subscriptionStatus.subscription.plan === 'premium' ? '19.99' : 
-                       subscriptionStatus.subscription.plan === 'basic' ? '9.99' : '0.00'} / month
+                    ${subscriptionStatus.subscription.payments[0]?.amount || '0.00'}{' '}
+                    / month
                   </p>
-                  {subscriptionStatus.subscription.status === 'trial' && subscriptionStatus.subscription.next_billing_date && (
-                    <p className="text-sm text-gray-500 flex items-center">
-                      <Clock className="w-4 h-4 mr-1" />
-                      {Math.max(0, Math.ceil((new Date(subscriptionStatus.subscription.next_billing_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} days remaining
-                    </p>
-                  )}
+                  {subscriptionStatus.subscription.status === 'trial' &&
+                    subscriptionStatus.subscription.days_remaining && (
+                      <p className="text-sm text-gray-500">
+                        {subscriptionStatus.subscription.days_remaining} days remaining
+                      </p>
+                    )}
                 </div>
               </div>
 
@@ -456,7 +478,7 @@ const SubscriptionPage: React.FC = () => {
             <History className="w-5 h-5 mr-2" />
             Payment History
           </h2>
-          
+
           {loading ? (
             <div className="flex justify-center py-8">
               <RefreshCw className="w-8 h-8 animate-spin text-gray-400" />
@@ -469,15 +491,25 @@ const SubscriptionPage: React.FC = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {paymentHistory.map((payment) => (
                     <tr key={payment.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{payment.date}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">${payment.amount}</td>
-                      <td className="px-6 py-4 text-sm text-gray-500">{payment.description}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(payment.payment_date).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        ${Number(payment.amount).toFixed(2)}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {payment.description}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {payment.payment_method}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 text-xs rounded-full ${
                           payment.status === 'completed' ? 'bg-green-100 text-green-800' :

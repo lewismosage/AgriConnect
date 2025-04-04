@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 
 class PaymentSerializer(serializers.ModelSerializer):
+    payment_date = serializers.DateTimeField(format="%Y-%m-%d %H:%M")
+    
     class Meta:
         model = Payment
         fields = [
@@ -18,6 +20,9 @@ class SubscriptionSerializer(serializers.ModelSerializer):
     payments = PaymentSerializer(many=True, read_only=True)
     is_active = serializers.SerializerMethodField()
     days_remaining = serializers.SerializerMethodField()
+    start_date = serializers.DateTimeField(format="%Y-%m-%d")
+    end_date = serializers.DateTimeField(format="%Y-%m-%d")
+    next_billing_date = serializers.DateTimeField(format="%Y-%m-%d")
 
     class Meta:
         model = Subscription
@@ -33,10 +38,14 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         ]
 
     def get_is_active(self, obj):
-        return obj.can_access_service
+        """Method to calculate if subscription is active"""
+        return obj.status in ['active', 'trial'] and (
+            obj.end_date is None or obj.end_date > timezone.now()
+        )
 
     def get_days_remaining(self, obj):
-        if obj.status == 'trial':
+        """Method to calculate days remaining in subscription"""
+        if obj.status == 'trial' and obj.end_date:
             delta = obj.end_date - timezone.now()
             return max(0, delta.days)
         elif obj.status == 'active' and obj.next_billing_date:

@@ -261,18 +261,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   
     try {
-      const response = await checkSubscriptionAccess(
-        localStorage.getItem("token") || ""
-      );
+      const response = await axios.get('/api/subscriptions/check-access/');
       setSubscriptionStatus(response.data);
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 402) {
-        setSubscriptionStatus(error.response.data);
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 402) {
+          // Payment required - no active subscription
+          setSubscriptionStatus({
+            has_access: false,
+            message: error.response.data?.message || 'Subscription required',
+            subscription: error.response.data?.subscription || null
+          });
+        } else {
+          console.error("Failed to check subscription:", error);
+          setSubscriptionStatus({
+            has_access: false,
+            message: "Failed to verify subscription status",
+            subscription: null
+          });
+        }
       } else {
-        console.error("Failed to check subscription:", error);
+        console.error("Unexpected error checking subscription:", error);
         setSubscriptionStatus({
           has_access: false,
-          message: "Failed to verify subscription status",
+          message: "Unexpected error",
+          subscription: null
         });
       }
     }
