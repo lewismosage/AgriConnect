@@ -113,14 +113,14 @@ class PaymentRequestSerializer(serializers.Serializer):
                 {"mpesa_number": "MPESA number is required for MPESA payments"}
             )
             
-        if payment_method == 'bank' and (
+        if payment_method == 'card' and (
             not data.get('card_number') or 
             not data.get('card_expiry') or 
             not data.get('card_cvv') or 
             not data.get('card_name')
         ):
             raise serializers.ValidationError(
-                {"card_details": "All card details are required for bank payments"}
+                {"card_details": "All card details are required for card payments"}
             )
             
         return data

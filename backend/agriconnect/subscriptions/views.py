@@ -1,5 +1,5 @@
 # subscriptions/views.py
-from rest_framework import generics, status, permissions
+from rest_framework import generics, status, permissions, serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils import timezone
@@ -27,33 +27,23 @@ class CreateSubscriptionView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         user = self.request.user
+        if hasattr(user, 'subscription'):
+            raise serializers.ValidationError({"detail": "User already has a subscription"})
+            
         plan = serializer.validated_data.get('plan', 'free_trial')
         
+        # Default values
+        subscription_data = {
+            'user': user,
+            'status': 'trial' if plan == 'free_trial' else 'active',
+            'is_active': True,
+        }
+        
+        # For free trial, set end_date to 30 days from now
         if plan == 'free_trial':
-            next_billing_date = timezone.now() + timedelta(days=30)
-            status = 'trial'
-            amount = 0
-        else:
-            next_billing_date = timezone.now() + timedelta(days=30)
-            status = 'active'
-            amount = 19.99 if plan == 'premium' else 9.99
+            subscription_data['end_date'] = timezone.now() + timedelta(days=30)
         
-        subscription = serializer.save(
-            user=user,
-            status=status,
-            next_billing_date=next_billing_date,
-            is_active=True
-        )
-        
-        # Create initial payment record
-        Payment.objects.create(
-            subscription=subscription,
-            amount=amount,
-            payment_method='initial',
-            transaction_id=f"init_{timezone.now().timestamp()}",
-            status='completed',
-            description=f"Initial payment for {plan} plan"
-        )
+        subscription = serializer.save(**subscription_data)
         
         return subscription
 
@@ -77,12 +67,18 @@ class PaymentView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
+        # Get or create subscription
         try:
             subscription = Subscription.objects.get(user=request.user)
         except Subscription.DoesNotExist:
-            return Response(
-                {'detail': 'Please create a subscription first'},
-                status=status.HTTP_400_BAD_REQUEST
+            # Create a basic subscription if none exists
+            subscription = Subscription.objects.create(
+                user=request.user,
+                plan='basic',  # Default plan
+                status='active',
+                is_active=True,
+                end_date=timezone.now() + timedelta(days=365),  # 1 year
+                next_billing_date=timezone.now() + timedelta(days=30)
             )
 
         serializer = PaymentRequestSerializer(data=request.data)
@@ -101,7 +97,7 @@ class PaymentView(APIView):
                 description=f"Payment for {data['plan']} plan subscription"
             )
             
-            # Update subscription
+            # Update subscription with new plan details
             subscription.plan = data['plan']
             subscription.status = 'active'
             subscription.next_billing_date = timezone.now() + timedelta(days=30)

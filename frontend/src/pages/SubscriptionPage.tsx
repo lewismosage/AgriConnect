@@ -122,13 +122,13 @@ const SubscriptionPage: React.FC = () => {
       setPaymentLoading(true);
       
       const planPrice = plans.find(p => p.id === selectedPlan)?.price || 0;
-  
+      
       let paymentData: any = {
         amount: planPrice,
         payment_method: paymentMethod,
         plan: selectedPlan
       };
-  
+      
       if (paymentMethod === 'mpesa') {
         if (!mpesaNumber) {
           toast.error('Please enter your MPESA number');
@@ -145,7 +145,8 @@ const SubscriptionPage: React.FC = () => {
         paymentData.card_cvv = cardDetails.cvv;
         paymentData.card_name = cardDetails.name;
       }
-  
+      
+      // Directly call payment endpoint - it will handle subscription creation if needed
       const response = await axios.post('/api/subscriptions/pay/', paymentData);
       
       toast.success('Payment processed successfully!');
@@ -155,7 +156,6 @@ const SubscriptionPage: React.FC = () => {
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response?.data) {
-          // Display backend validation errors
           const errors = error.response.data;
           if (typeof errors === 'object') {
             Object.values(errors).forEach((errorArray: any) => {

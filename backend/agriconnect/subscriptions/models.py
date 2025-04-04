@@ -2,6 +2,7 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from datetime import timedelta
 from django.core.exceptions import ValidationError
 from enum import Enum
 
@@ -65,15 +66,17 @@ class Subscription(models.Model):
             raise ValidationError("Active subscriptions must have a payment method")
 
     def save(self, *args, **kwargs):
-        # Set end date for free trial if not set
-        if self.status == SubscriptionStatus.TRIAL.value and not self.end_date:
-            self.end_date = timezone.now() + timezone.timedelta(days=30)
+        # Set default end_date for new subscriptions
+        if not self.pk and not self.end_date:
+            if self.status == 'trial':
+                self.end_date = timezone.now() + timedelta(days=30)
+            else:
+                self.end_date = timezone.now() + timedelta(days=365)  # 1 year for paid plans
         
-        # Set next billing date for premium subscriptions
-        if self.plan == SubscriptionPlan.PREMIUM.value and self.status == SubscriptionStatus.ACTIVE.value:
-            if not self.next_billing_date:
-                self.next_billing_date = timezone.now() + timezone.timedelta(days=30)
-        
+        # Set next billing date for active subscriptions
+        if self.status == 'active' and not self.next_billing_date:
+            self.next_billing_date = timezone.now() + timedelta(days=30)
+            
         super().save(*args, **kwargs)
 
     @property
