@@ -95,7 +95,7 @@ class UpdateSubscriptionSerializer(serializers.ModelSerializer):
 class PaymentRequestSerializer(serializers.Serializer):
     amount = serializers.DecimalField(max_digits=10, decimal_places=2, required=True)
     payment_method = serializers.ChoiceField(
-        choices=[('mpesa', 'MPESA'), ('bank', 'Bank')],
+        choices=[('mpesa', 'MPESA'), ('card', 'Credit Card')],
         required=True
     )
     plan = serializers.CharField(required=True)

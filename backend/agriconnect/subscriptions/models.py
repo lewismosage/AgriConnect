@@ -93,7 +93,17 @@ class Subscription(models.Model):
 
     @property
     def can_access_service(self):
-        return self.is_trial_active or self.is_premium_active
+        """Check if subscription is currently active"""
+        now = timezone.now()
+    
+        if self.status == 'trial':
+            return self.end_date > now if self.end_date else False
+        elif self.status == 'active':
+            # For active subscriptions, check next billing date if it exists
+            if self.next_billing_date:
+                return self.next_billing_date > now
+            return True
+        return False
 
 class Payment(models.Model):
     subscription = models.ForeignKey(
@@ -102,7 +112,11 @@ class Payment(models.Model):
         related_name='payments'
     )
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    payment_method = models.CharField(max_length=50)
+    payment_method = models.CharField(
+        max_length=50, 
+        choices=[('mpesa', 'MPESA'), ('card', 'Credit Card')],
+        blank=True, null=True
+    )
     transaction_id = models.CharField(max_length=100)
     status = models.CharField(
         max_length=20,

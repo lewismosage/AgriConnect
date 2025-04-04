@@ -90,31 +90,37 @@ class PaymentView(APIView):
         
         data = serializer.validated_data
         
-        # Create payment record
-        payment = Payment.objects.create(
-            subscription=subscription,
-            amount=data['amount'],
-            payment_method=data['payment_method'],
-            transaction_id=f"txn_{timezone.now().timestamp()}",
-            status='completed',
-            description=f"Payment for {data['plan']} plan subscription"
-        )
-        
-        # Update subscription
-        subscription.plan = data['plan']
-        subscription.status = 'active'
-        subscription.next_billing_date = timezone.now() + timedelta(days=30)
-        subscription.payment_method = data['payment_method']
-        
-        if data['payment_method'] == 'mpesa' and data.get('mpesa_number'):
-            subscription.mpesa_number = data['mpesa_number']
-        
-        subscription.save()
-        
-        return Response(
-            PaymentSerializer(payment).data,
-            status=status.HTTP_201_CREATED
-        )
+        try:
+            # Create payment record
+            payment = Payment.objects.create(
+                subscription=subscription,
+                amount=data['amount'],
+                payment_method=data['payment_method'],
+                transaction_id=f"txn_{timezone.now().timestamp()}",
+                status='completed',
+                description=f"Payment for {data['plan']} plan subscription"
+            )
+            
+            # Update subscription
+            subscription.plan = data['plan']
+            subscription.status = 'active'
+            subscription.next_billing_date = timezone.now() + timedelta(days=30)
+            subscription.payment_method = data['payment_method']
+            
+            if data['payment_method'] == 'mpesa' and data.get('mpesa_number'):
+                subscription.mpesa_number = data['mpesa_number']
+            
+            subscription.save()
+            
+            return Response(
+                PaymentSerializer(payment).data,
+                status=status.HTTP_201_CREATED
+            )
+        except Exception as e:
+            return Response(
+                {'detail': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 class CheckSubscriptionAccess(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -129,17 +135,18 @@ class CheckSubscriptionAccess(APIView):
             
         try:
             subscription = Subscription.objects.get(user=request.user)
+            has_access = subscription.can_access_service
             serializer = SubscriptionSerializer(subscription)
             
             response_data = {
-                'has_access': subscription.can_access_service,  # Removed parentheses
+                'has_access': has_access,
                 'subscription': serializer.data
             }
             
-            if not subscription.can_access_service:  # Removed parentheses
+            if not has_access:
                 response_data['message'] = (
                     'Your subscription has expired' if subscription.status == 'expired' 
-                    else 'Subscription inactive'
+                    else 'Subscription requires payment'
                 )
                 return Response(response_data, status=status.HTTP_402_PAYMENT_REQUIRED)
             

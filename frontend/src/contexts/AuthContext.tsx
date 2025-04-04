@@ -266,11 +266,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response?.status === 402) {
-          // Payment required - no active subscription
+          // Payment required - check if we have subscription data
+          const subscriptionData = error.response.data?.subscription;
           setSubscriptionStatus({
             has_access: false,
             message: error.response.data?.message || 'Subscription required',
-            subscription: error.response.data?.subscription || null
+            subscription: subscriptionData || null
           });
         } else {
           console.error("Failed to check subscription:", error);

@@ -28,8 +28,8 @@ interface PaymentHistory {
   date: string;
   status: string;
   description: string;
-  payment_date: string; // Added property
-  payment_method: string; // Added property
+  payment_date: string; 
+  payment_method: string;
 }
 
 const SubscriptionPage: React.FC = () => {
@@ -87,22 +87,22 @@ const SubscriptionPage: React.FC = () => {
       setLoading(true);
       const response = await axios.get('/api/subscriptions/payments/');
       setPaymentHistory(response.data);
-
-      // Also fetch subscription details if not already available
-      if (!subscriptionStatus) {
+  
+      try {
         const subResponse = await axios.get('/api/subscriptions/check-access/');
         setSubscriptionStatus(subResponse.data);
+      } catch (subError) {
+        if (axios.isAxiosError(subError) && subError.response?.status === 402) {
+          // Even if we get 402, we might have subscription data
+          setSubscriptionStatus({
+            has_access: false,
+            message: subError.response.data.detail || 'No active subscription',
+            subscription: subError.response.data.subscription || null
+          });
+        }
       }
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 402) {
-        // Payment required - no active subscription
-        setSubscriptionStatus({
-          has_access: false,
-          message: error.response.data.detail || 'No active subscription',
-        });
-      } else {
-        toast.error('Failed to load payment history');
-      }
+      toast.error('Failed to load payment history');
     } finally {
       setLoading(false);
     }
