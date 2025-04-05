@@ -422,21 +422,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const response = await axios.post("/api/accounts/google-login/", {
         token: credentialResponse.credential,
       });
-
-      const { access, user } = response.data;
+  
+      const { access, user, user_type, farmer_profile } = response.data;
+  
+      const processedUser = {
+        ...user,
+        farmer_profile: farmer_profile
+          ? {
+              ...farmer_profile,
+              farm_image: farmer_profile.farm_image
+                ? farmer_profile.farm_image.startsWith("http")
+                  ? farmer_profile.farm_image
+                  : `${import.meta.env.VITE_BACKEND_URL}${farmer_profile.farm_image}`
+                : null,
+            }
+          : null,
+      };
+  
       localStorage.setItem("token", access);
-      localStorage.setItem("user", JSON.stringify(user));
-      setUser(user);
-      toast.success("Google login successful!");
-
-      if (user.user_type === "farmer") {
+      localStorage.setItem("user", JSON.stringify(processedUser));
+      setUser(processedUser);
+  
+      if (user_type === "farmer") {
+        await checkSubscription();
+      }
+  
+      toast.success(
+        response.status === 201 
+          ? "Google registration successful!" 
+          : "Google login successful!"
+      );
+  
+      if (user_type === "farmer") {
         navigate("/farmer-dashboard");
       } else {
         navigate("/customer-dashboard");
       }
     } catch (error) {
-      console.error("Google login error:", error);
-      toast.error("Failed to log in with Google. Please try again.");
+      console.error("Google authentication error:", error);
+      
+      let errorMessage = "Failed to authenticate with Google. Please try again.";
+      if (axios.isAxiosError(error) && error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      }
+      
+      toast.error(errorMessage);
     }
   };
 

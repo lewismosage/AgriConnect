@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, CheckCircle, AlertCircle, User } from "lucide-react";
+import { Eye, EyeOff, CheckCircle, AlertCircle } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import { GoogleLogin } from "@react-oauth/google";
+import toast from "react-hot-toast";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -20,7 +22,7 @@ const Register = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const { register, handleGoogleLogin } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -65,29 +67,29 @@ const Register = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-  
+
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
       return;
     }
-  
+
     if (!passwordStrength.isValid) {
       setError("Password does not meet the requirements");
       return;
     }
-  
+
     if (!formData.agreeToTerms) {
       setError("You must agree to the terms and conditions");
       return;
     }
-  
+
     if (!formData.phoneNumber) {
       setError("Phone number is required");
       return;
     }
-  
+
     setIsLoading(true);
-  
+
     try {
       const registerData = {
         email: formData.email,
@@ -103,8 +105,7 @@ const Register = () => {
       navigate("/customer-dashboard");
     } catch (error) {
       console.error("Registration failed:", error);
-  
-      // Handle the specific email error
+
       if (error instanceof Error && error.message.includes("A user with this email already exists")) {
         setError("A user with this email already exists.");
       } else {
@@ -112,6 +113,17 @@ const Register = () => {
       }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleRegistration = async (credentialResponse: any) => {
+    try {
+      await handleGoogleLogin(credentialResponse);
+      toast.success("Registration with Google successful!");
+      navigate("/customer-dashboard");
+    } catch (error) {
+      console.error("Google registration failed:", error);
+      toast.error("Failed to register with Google. Please try again.");
     }
   };
 
@@ -153,7 +165,6 @@ const Register = () => {
           )}
 
           <form className="space-y-6" onSubmit={handleSubmit}>
-            {/* Personal details */}
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div>
                 <label
@@ -456,40 +467,18 @@ const Register = () => {
               </div>
             </div>
 
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              <div>
-                <a
-                  href="#"
-                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                >
-                  <span className="sr-only">Sign up with Google</span>
-                  <svg
-                    className="w-5 h-5"
-                    aria-hidden="true"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z" />
-                  </svg>
-                </a>
-              </div>
-
-              <div>
-                <a
-                  href="#"
-                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                >
-                  <span className="sr-only">Sign up with Microsoft</span>
-                  <svg
-                    className="w-5 h-5"
-                    aria-hidden="true"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M11.4 24H0V12.6h11.4V24zM24 24H12.6V12.6H24V24zM11.4 11.4H0V0h11.4v11.4zm12.6 0H12.6V0H24v11.4z" />
-                  </svg>
-                </a>
-              </div>
+            <div className="mt-6 flex justify-center">
+              <GoogleLogin
+                onSuccess={handleGoogleRegistration}
+                onError={() => toast.error('Failed to register with Google')}
+                useOneTap
+                auto_select
+                theme="filled_blue"
+                shape="rectangular"
+                size="medium"
+                text="signup_with"
+                width="300"
+              />
             </div>
           </div>
         </div>
