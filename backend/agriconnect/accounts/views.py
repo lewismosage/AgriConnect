@@ -13,6 +13,17 @@ from rest_framework.permissions import IsAuthenticated
 from .models import FarmerProfile
 from .serializers import FarmerProfileSerializer
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
+import requests
+
+import jwt
+from django.conf import settings
+from rest_framework.exceptions import AuthenticationFailed
+
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from allauth.socialaccount.providers.microsoft.views import MicrosoftGraphOAuth2Adapter
+from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+from allauth.socialaccount.models import SocialAccount
+
 
 
 logger = logging.getLogger(__name__)
@@ -83,6 +94,65 @@ class LoginView(APIView):
             return Response(response_data, status=status.HTTP_200_OK)
         else:
             return Response({'detail': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+class GoogleLogin(APIView):
+    def post(self, request):
+        token = request.data.get('token')
+        
+        try:
+            # Verify the token with Google
+            response = requests.get(
+                'https://www.googleapis.com/oauth2/v3/tokeninfo',
+                params={'id_token': token}
+            )
+            response.raise_for_status()
+            idinfo = response.json()
+            
+            # Check audience
+            if idinfo['aud'] != settings.SOCIALACCOUNT_PROVIDERS['google']['APP']['client_id']:
+                raise AuthenticationFailed('Invalid audience')
+            
+            # Check if email is verified
+            if not idinfo.get('email_verified', False):
+                raise AuthenticationFailed('Google email not verified')
+            
+            email = idinfo['email']
+            first_name = idinfo.get('given_name', '')
+            last_name = idinfo.get('family_name', '')
+            
+            # Try to get existing user
+            try:
+                user = User.objects.get(email=email)
+            except User.DoesNotExist:
+                # Create new user
+                username = email.split('@')[0]
+                counter = 1
+                while User.objects.filter(username=username).exists():
+                    username = f"{email.split('@')[0]}_{counter}"
+                    counter += 1
+                
+                user = User.objects.create_user(
+                    email=email,
+                    username=username,
+                    first_name=first_name,
+                    last_name=last_name,
+                    user_type='consumer'  # Default to consumer
+                )
+            
+            # Generate JWT tokens
+            refresh = RefreshToken.for_user(user)
+            serializer = UserSerializer(user)
+            
+            return Response({
+                'user': serializer.data,
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            })
+            
+        except requests.exceptions.RequestException as e:
+            raise AuthenticationFailed(f'Google token verification failed: {str(e)}')
+        except Exception as e:
+            raise AuthenticationFailed(str(e))
 
 class LogoutView(APIView):
     def post(self, request):

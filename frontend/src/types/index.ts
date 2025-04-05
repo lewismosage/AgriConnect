@@ -1,12 +1,39 @@
-export interface User {
+// src/types/index.ts
+export interface FarmerProfile {
   id: string;
+  farm_name: string;
+  location: string;
+  specialty: string;
+  description: string;
+  farm_image?: string;
+  about?: string;
+  sustainability?: string;
+  farm?: {
+    id: string;
+    name: string;
+    location: string;
+    description: string;
+    image?: string;
+    specialty: string;
+    rating: number;
+    about?: string;
+    sustainability?: string;
+  };
+}
+
+export interface User {
+  id: number;
+  username: string;
   email: string;
-  role: 'farmer' | 'business' | 'consumer';
-  name: string;
-  businessName?: string;
-  address: string;
-  phone: string;
-  createdAt: Date;
+  first_name: string;
+  last_name: string;
+  user_type: 'farmer' | 'consumer';
+  phone_number?: string;
+  profile_picture?: string;
+  date_joined?: string;
+  is_farmer?: boolean;
+  is_consumer?: boolean;
+  farmer_profile?: FarmerProfile;
 }
 
 export interface Product {

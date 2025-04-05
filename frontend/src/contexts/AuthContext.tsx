@@ -3,7 +3,9 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import axios from "./axioConfig";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { User, FarmerProfile } from '../types';
 import { checkSubscriptionAccess } from "../services/subscriptionService";
+import { GoogleOAuthProvider, googleLogout } from "@react-oauth/google";
 
 // Add axios interceptor for token
 axios.interceptors.request.use(
@@ -52,29 +54,6 @@ axios.interceptors.response.use(
   }
 );
 
-// Define the FarmerProfile interface
-export interface FarmerProfile {
-  id: string;
-  farm_name: string;
-  location: string;
-  specialty: string;
-  description: string;
-  farm_image?: string;
-  about?: string;
-  sustainability?: string;
-  farm?: {
-    id: string;
-    name: string;
-    location: string;
-    description: string;
-    image?: string;
-    specialty: string;
-    rating: number;
-    about?: string;
-    sustainability?: string;
-  };
-}
-
 export interface Farm {
   id: string;
   name: string;
@@ -110,21 +89,6 @@ export interface Product {
   localDelivery: boolean;
 }
 
-export interface User {
-  id: number;
-  email: string;
-  username: string;
-  first_name: string;
-  last_name: string;
-  phone_number?: string;
-  profile_picture?: string;
-  user_type: string;
-  date_joined?: string;
-  is_farmer?: boolean;
-  is_consumer?: boolean;
-  farmer_profile?: FarmerProfile;
-}
-
 interface SubscriptionStatus {
   has_access: boolean;
   message?: string;
@@ -146,8 +110,9 @@ interface AuthContextType {
   updateFarmerProfile: (
     farmerProfile: Partial<FarmerProfile> | FormData
   ) => Promise<void>;
-  setUser: (user: User | null) => void;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
   checkSubscription: () => Promise<void>;
+  handleGoogleLogin: (credentialResponse: any) => Promise<void>;
 }
 
 interface RegisterData {
@@ -266,7 +231,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response?.status === 402) {
-          // Payment required - check if we have subscription data
           const subscriptionData = error.response.data?.subscription;
           setSubscriptionStatus({
             has_access: false,
@@ -410,7 +374,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       localStorage.setItem("user", JSON.stringify(user));
       setUser(user);
       
-      // Create subscription after successful registration
       if (farmerData.subscription_plan) {
         try {
           await axios.post(
@@ -424,7 +387,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           );
         } catch (subError) {
           console.error("Subscription creation error:", subError);
-          // Don't fail registration if subscription creation fails
         }
       }
       
@@ -455,12 +417,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const handleGoogleLogin = async (credentialResponse: any) => {
+    try {
+      const response = await axios.post("/api/accounts/google-login/", {
+        token: credentialResponse.credential,
+      });
+
+      const { access, user } = response.data;
+      localStorage.setItem("token", access);
+      localStorage.setItem("user", JSON.stringify(user));
+      setUser(user);
+      toast.success("Google login successful!");
+
+      if (user.user_type === "farmer") {
+        navigate("/farmer-dashboard");
+      } else {
+        navigate("/customer-dashboard");
+      }
+    } catch (error) {
+      console.error("Google login error:", error);
+      toast.error("Failed to log in with Google. Please try again.");
+    }
+  };
+
   const logout = async () => {
     try {
       await axios.post("/api/accounts/logout/");
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       setUser(null);
+      googleLogout();
       toast.success("Logged out successfully");
       navigate("/");
     } catch (error) {
@@ -530,17 +516,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     user,
     loading,
     subscriptionStatus,
+    setUser,
     login,
     register,
     registerFarmer,
     logout,
     updateUser,
     updateFarmerProfile,
-    setUser,
     checkSubscription,
+    handleGoogleLogin,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+        {children}
+      </GoogleOAuthProvider>
+    </AuthContext.Provider>
+  );
 };
 
 export default AuthContext;
