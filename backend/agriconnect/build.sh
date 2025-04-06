@@ -1,11 +1,5 @@
 #!/bin/bash
 set -o errexit
 
-# Install dependencies
-pip install -r requirements.txt
-
-# Apply database migrations
-python manage.py migrate
-
-# Collect static files
-python manage.py collectstatic --noinput
+# No commands needed here since we moved everything to render.yaml
+# This file can remain empty or be deleted
