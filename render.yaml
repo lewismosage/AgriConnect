@@ -1,12 +1,12 @@
 services:
   - type: web
-    name: agriconnect-backend
+    name: agriconnect
     runtime: python
+    rootDirectory: backend
     buildCommand: |
-      cd backend &&
-      pip install -r requirements.txt &&
+      pip install -r requirements.txt
       python manage.py collectstatic --noinput
-    startCommand: "cd backend && gunicorn agriconnect.wsgi:application --timeout 120"
+    startCommand: "gunicorn agriconnect.wsgi:application --timeout 120"
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -17,4 +17,4 @@ services:
       - key: DEBUG
         value: "False"
       - key: ALLOWED_HOSTS
-        value: "agriconnect-app.vercel.app,your-render-url.onrender.com"
+        value: "agriconnect-app.vercel.app,agriconnect-gfca.onrender.com"
