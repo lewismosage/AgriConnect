@@ -4,6 +4,7 @@ from django.urls import path, include
 from . import views
 from django.conf import settings
 from django.conf.urls.static import static
+from farms.views import SearchView
 
 urlpatterns = [
     path('', views.home, name='home'),
@@ -14,4 +15,5 @@ urlpatterns = [
     path('api/orders/', include('orders.urls')),
     path('api/subscriptions/', include('subscriptions.urls')),
     path('api/farm/', include('analytics.urls')),   
+    path('api/search/', SearchView.as_view(), name='search'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

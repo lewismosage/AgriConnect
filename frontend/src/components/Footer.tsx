@@ -1,12 +1,35 @@
 import React from "react";
-import { Facebook, Twitter, Linkedin, Mail } from "lucide-react";
+import { Instagram, Mail } from "lucide-react";
+
+// Custom "X" (Twitter) Icon
+const XIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    {...props}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d="M6.94 3H3L10.6 12L3 21H6.94L12 14.88L17.06 21H21L13.4 12L21 3H17.06L12 9.12L6.94 3Z" />
+  </svg>
+);
 
 const navigation = {
   social: [
-    { name: "Facebook", href: "#", icon: Facebook },
-    { name: "Twitter", href: "#", icon: Twitter },
-    { name: "LinkedIn", href: "#", icon: Linkedin },
-    { name: "Email", href: "#", icon: Mail },
+    {
+      name: "Instagram",
+      href: "https://instagram.com/lmprojectgroup",
+      icon: Instagram,
+    },
+    {
+      name: "X (Twitter)",
+      href: "https://twitter.com/LMProjectGroup",
+      icon: XIcon,
+    },
+    {
+      name: "Email",
+      href: "mailto:lmprojectmanagementgroup@gmail.com",
+      icon: Mail,
+    },
   ],
 };
 
@@ -49,7 +72,7 @@ const Footer: React.FC = () => {
           <div className="text-center md:text-left">
             <h3 className="text-lg font-semibold mb-4">Contact Us</h3>
             <p className="text-gray-400">Email: support@agriconnect.com</p>
-            <p className="text-gray-400">Phone: +1 (123) 456-7890</p>
+            <p className="text-gray-400">Phone: +254 793 052198</p>
           </div>
         </div>
 
@@ -70,6 +93,8 @@ const Footer: React.FC = () => {
                     key={item.name}
                     href={item.href}
                     className="text-gray-400 hover:text-white transition-colors"
+                    target="_blank"
+                    rel="noopener noreferrer"
                   >
                     <span className="sr-only">{item.name}</span>
                     <Icon className="h-6 w-6" />

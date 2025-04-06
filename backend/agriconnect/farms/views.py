@@ -11,6 +11,9 @@ from django.shortcuts import get_object_or_404
 from django.contrib.sessions.models import Session
 from django.utils import timezone
 from rest_framework.permissions import AllowAny
+from farms.models import Farm
+from django.db.models import Q
+from django.contrib.postgres.search import SearchVector
 
 class MyFarmView(APIView):
     def get(self, request):
@@ -214,3 +217,48 @@ class RateView(APIView):
             'averageRating': farm.rating,
             'totalRatings': len(farm.ratings)
         })
+
+class SearchView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        query = request.GET.get('q', '').strip()
+        
+        if not query:
+            return Response([])
+        
+        # Search farms
+        farms = Farm.objects.filter(
+            Q(name__icontains=query) |
+            Q(location__icontains=query) |
+            Q(description__icontains=query) |
+            Q(about__icontains=query)
+        ).distinct()
+        
+        # Search products - only use fields that exist in your Product model
+        products = Product.objects.filter(
+            Q(name__icontains=query) |
+            Q(category__icontains=query)
+        ).distinct()
+        
+        results = []
+        
+        for farm in farms:
+            results.append({
+                'id': farm.id,
+                'name': farm.name,
+                'type': 'farm',
+                'image': farm.image.url if farm.image else None,
+                'description': farm.description[:100] + '...' if farm.description else ''
+            })
+        
+        for product in products:
+            results.append({
+                'id': product.id,
+                'name': product.name,
+                'type': 'product',
+                'image': product.image.url if product.image else None,
+                'description': product.category  # Using category since description might not exist
+            })
+        
+        return Response(results)
