@@ -188,9 +188,12 @@ const Navbar: React.FC = () => {
                         >
                           {result.image && (
                             <img
-                              src={result.image}
+                              src={`'VITE_BACKEND_URL'${result.image}`}
                               alt={result.name}
                               className="w-10 h-10 object-cover rounded mr-3"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/100';
+                              }}
                             />
                           )}
                           <div className="flex-1">
@@ -291,9 +294,12 @@ const Navbar: React.FC = () => {
                       >
                         {result.image && (
                           <img 
-                            src={result.image} 
+                            src={`http://localhost:8000${result.image}`} 
                             alt={result.name}
                             className="w-8 h-8 object-cover rounded mr-2"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = 'https://via.placeholder.com/100';
+                            }}
                           />
                         )}
                         <div>
