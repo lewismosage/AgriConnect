@@ -87,6 +87,7 @@ export interface Product {
   isOrganic: boolean;
   inStock: boolean;
   localDelivery: boolean;
+  unit?: string;
 }
 
 interface SubscriptionStatus {

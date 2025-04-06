@@ -14,8 +14,13 @@ class FarmSerializer(serializers.ModelSerializer):
         return obj.rating if hasattr(obj, 'rating') else 0
 
 class ProductSerializer(serializers.ModelSerializer):
-    farm = FarmSerializer(read_only=True)  # Include farm details
-    image = serializers.ImageField(required=False)  # Allow image uploads
+    farm = FarmSerializer(read_only=True)
+    image = serializers.ImageField(required=False)
+    price = serializers.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        coerce_to_string=False  # This ensures the price is returned as a number
+    )
 
     class Meta:
         model = Product

@@ -24,12 +24,16 @@ class ProductListCreateView(generics.ListCreateAPIView):
 
 class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ProductSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]  # Changed from IsAuthenticated
+    queryset = Product.objects.all()  # Added queryset
 
     def get_queryset(self):
-        # Only allow access to products for the logged-in farmer's farm
-        farm = self.request.user.farmer_profile.farm
-        return Product.objects.filter(farm=farm)
+        if self.request.user.is_authenticated and hasattr(self.request.user, 'farmer_profile'):
+            # For authenticated farmers, only show their own products
+            farm = self.request.user.farmer_profile.farm
+            return Product.objects.filter(farm=farm)
+        # For unauthenticated users or non-farmers, show all products
+        return Product.objects.all()
     
 class FarmerInventoryView(generics.ListAPIView):
     serializer_class = ProductSerializer

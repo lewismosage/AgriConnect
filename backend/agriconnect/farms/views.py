@@ -227,38 +227,66 @@ class SearchView(APIView):
         if not query:
             return Response([])
         
-        # Search farms
-        farms = Farm.objects.filter(
+        # Exact matches first
+        exact_farm_matches = Farm.objects.filter(
+            name__iexact=query
+        )
+        
+        exact_product_matches = Product.objects.filter(
+            name__iexact=query
+        )
+        
+        # Then partial matches
+        partial_farm_matches = Farm.objects.filter(
             Q(name__icontains=query) |
             Q(location__icontains=query) |
             Q(description__icontains=query) |
             Q(about__icontains=query)
-        ).distinct()
+        ).exclude(id__in=[f.id for f in exact_farm_matches])
         
-        # Search products - only use fields that exist in your Product model
-        products = Product.objects.filter(
+        partial_product_matches = Product.objects.filter(
             Q(name__icontains=query) |
             Q(category__icontains=query)
-        ).distinct()
+        ).exclude(id__in=[p.id for p in exact_product_matches])
         
         results = []
         
-        for farm in farms:
+        # Add exact matches first
+        for farm in exact_farm_matches:
             results.append({
                 'id': farm.id,
                 'name': farm.name,
                 'type': 'farm',
                 'image': farm.image.url if farm.image else None,
-                'description': farm.description[:100] + '...' if farm.description else ''
+                'match_type': 'exact'
             })
         
-        for product in products:
+        for product in exact_product_matches:
             results.append({
                 'id': product.id,
                 'name': product.name,
                 'type': 'product',
                 'image': product.image.url if product.image else None,
-                'description': product.category  # Using category since description might not exist
+                'match_type': 'exact'
+            })
+        
+        # Then partial matches
+        for farm in partial_farm_matches:
+            results.append({
+                'id': farm.id,
+                'name': farm.name,
+                'type': 'farm',
+                'image': farm.image.url if farm.image else None,
+                'match_type': 'partial'
+            })
+        
+        for product in partial_product_matches:
+            results.append({
+                'id': product.id,
+                'name': product.name,
+                'type': 'product',
+                'image': product.image.url if product.image else None,
+                'match_type': 'partial'
             })
         
         return Response(results)

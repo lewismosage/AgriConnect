@@ -87,16 +87,48 @@ const Navbar: React.FC = () => {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
-      setIsSearchOpen(false);
-      setSearchQuery('');
-      setSearchResults([]);
+    const trimmedQuery = searchQuery.trim();
+    
+    if (!trimmedQuery) return;
+  
+    if (isSearching) {
+      // If still searching, wait a bit (you might want to show a loading state)
+      const timer = setTimeout(() => {
+        handleSearchSubmit(e);
+      }, 300);
+      return () => clearTimeout(timer);
     }
+  
+    // Check for exact match first (case insensitive)
+    const exactMatch = searchResults.find(
+      result => result.name.toLowerCase() === trimmedQuery.toLowerCase()
+    );
+  
+    if (exactMatch) {
+      navigate(`/${exactMatch.type}s/${exactMatch.id}`);
+    } else if (searchResults.length > 0) {
+      // If no exact match but results exist, you could:
+      // 1. Navigate to the first result
+      navigate(`/${searchResults[0].type}s/${searchResults[0].id}`);
+      // OR 2. Navigate to search results page
+      // navigate(`/search?q=${encodeURIComponent(trimmedQuery)}`);
+    } else {
+      // No results - navigate to search page with query
+      navigate(`/search?q=${encodeURIComponent(trimmedQuery)}`);
+    }
+  
+    // Reset search state
+    setIsSearchOpen(false);
+    setSearchQuery('');
+    setSearchResults([]);
   };
 
   const handleResultClick = (result: SearchResult) => {
-    navigate(`/${result.type}s/${result.id}`);
+    if (result.type === 'product') {
+      navigate(`/products/${result.id}`);
+    } else {
+      navigate(`/farms/${result.id}`);
+    }
     setIsSearchOpen(false);
     setSearchQuery('');
     setSearchResults([]);

@@ -28,6 +28,7 @@ import OrderDetails from './pages/OrderDetails';
 import OrdersPage from './pages/OrdersPage';
 import OrderHistory from './pages/OrderHistory';
 import OrderTracking from './pages/OrderTracking';
+import ProductDetailPage from './pages/ProductDetailPage';
 import PaymentVerificationPage from './pages/PaymentVerificationPage';
 import PaymentsToVerifyPage from './pages/PaymentsToVerifyPage';
 import SubscriptionPage from './pages/SubscriptionPage';
@@ -64,6 +65,7 @@ function App() {
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/inventory" element={<Inventory />} />
                 <Route path="/subscription" element={<SubscriptionPage />} />
+                <Route path="/products/:productId" element={<ProductDetailPage />} />
                 
                 <Route
                   path="/subscriptions"
