@@ -33,12 +33,17 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dev-key-123')
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
 # Host settings
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',') or [
+ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
+    '0.0.0.0',  # For Docker compatibility
+    '.onrender.com',
     '.vercel.app',
-    '.onrender.com'
 ]
+
+# For development, allow all hosts when DEBUG=True
+if DEBUG:
+    ALLOWED_HOSTS.extend(['*'])
 
 # Application definition
 INSTALLED_APPS = [
@@ -168,6 +173,8 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_DIRS = [BASE_DIR / 'static']
+os.makedirs(STATIC_ROOT, exist_ok=True)
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -176,7 +183,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # SECURITY
 # ========================
 
-# HTTPS Settings
+# HTTPS Settings - Only apply in production
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
@@ -185,6 +192,11 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+else:
+    # Explicitly disable SSL settings in development
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
 
 # CORS Settings
 CORS_ALLOWED_ORIGINS = [
@@ -193,11 +205,16 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:8000",
+    "http://127.0.0.1:8000",
 ]
 CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
     "https://*.vercel.app",
     "https://*.onrender.com",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
 ]
 
 # ========================
