@@ -6,15 +6,17 @@ services:
     buildCommand: |
       pip install -r requirements.txt
       python manage.py collectstatic --noinput
+      python manage.py makemigrations
+      python manage.py migrate
     startCommand: "gunicorn agriconnect.wsgi:application --timeout 120" 
     envVars:
       - key: DATABASE_URL
         fromDatabase:
-          name: agriconnect_db
+          name: agriconnect_db_y3by  # Updated to match actual DB name
           property: connectionString
       - key: SECRET_KEY
         generateValue: true
       - key: DEBUG
-        value: "False"
+        value: "False"  # Should be False in production
       - key: ALLOWED_HOSTS
-        value: "agriconnect-app.vercel.app,agriconnect-gfca.onrender.com"
+        value: "agriconnect-app.vercel.app,agriconnect-trpn.onrender.com"
