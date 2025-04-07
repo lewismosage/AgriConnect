@@ -1,7 +1,7 @@
 import axios, { InternalAxiosRequestConfig } from 'axios';
 
 // Use VITE_API_URL from environment or fallback to Render backend URL
-axios.defaults.baseURL = import.meta.env.VITE_API_URL || "https://agriconnect-gfca.onrender.com";
+axios.defaults.baseURL = import.meta.env.VITE_API_URL || "https://agriconnect-trpn.onrender.com";
 axios.defaults.headers.common["Content-Type"] = "application/json";
 axios.defaults.withCredentials = true;
 
