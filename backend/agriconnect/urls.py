@@ -5,6 +5,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from farms.views import SearchView
 from . import views
+from .healthchecks import health_check
 
 urlpatterns = [
     path('', views.home, name='home'),
@@ -16,4 +17,5 @@ urlpatterns = [
     path('api/subscriptions/', include('subscriptions.urls')),
     path('api/farm/', include('analytics.urls')),   
     path('api/search/', SearchView.as_view(), name='search'),
+    path('health/', health_check),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
