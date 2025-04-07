@@ -7,17 +7,16 @@ services:
       pip install -r requirements.txt
       python manage.py collectstatic --noinput
     startCommand: |
-      python manage.py wait_for_db && 
       python manage.py migrate &&
       gunicorn agriconnect.wsgi:application --timeout 120
     envVars:
       - key: DATABASE_URL
         fromDatabase:
-          name: agriconnect_db_mg7d
+          name: agriconnect_db_9mrf
           property: connectionString
       - key: SECRET_KEY
         generateValue: true
       - key: DEBUG
-        value: "False"
+        value: "True"  # Temporarily set to True for debugging
       - key: ALLOWED_HOSTS
-        value: "agriconnect-app.vercel.app,agriconnect-trpn.onrender.com"
+        value: "*"  # Temporarily allow all hosts
