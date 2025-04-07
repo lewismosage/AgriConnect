@@ -1,63 +1,31 @@
 import os
 from pathlib import Path
-import dj_database_url
-from dotenv import load_dotenv
-from datetime import timedelta
-import sys
-from django.db.backends.base.base import BaseDatabaseWrapper
-from django.db.utils import OperationalError
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load environment variables
-load_dotenv(BASE_DIR / '.env')
+SECRET_KEY = 'django-insecure-nfyho+7ogjmo^%-o6dpddl%86_nmurhsrmb7$=&12xgytqubi@'
 
-# ========================
-# CORE SETTINGS
-# ========================
+DEBUG = True
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dev-key-123')
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
-
-# Host settings
-ALLOWED_HOSTS = [
-    'localhost',
-    '127.0.0.1',
-    '0.0.0.0',  # For Docker compatibility
-    '.onrender.com',
-    '.vercel.app',
-]
-
-# For development, allow all hosts when DEBUG=True
-if DEBUG:
-    ALLOWED_HOSTS.extend(['*'])
-
-# Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'whitenoise.runserver_nostatic',  # Whitenoise app
     'django.contrib.staticfiles',
+    'rest_framework_simplejwt.token_blacklist',
+
     'django.contrib.sites',
-    
-    # Third-party apps
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+
     'rest_framework',
-    'rest_framework_simplejwt',
-    'rest_framework_simplejwt.token_blacklist',
-    'corsheaders',
-    
-    # Local apps
+    'corsheaders',  
     'accounts',
     'farms',
     'products',
@@ -66,9 +34,10 @@ INSTALLED_APPS = [
     'analytics',
 ]
 
+SITE_ID = 1
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -80,12 +49,18 @@ MIDDLEWARE = [
     'subscriptions.middleware.SubscriptionMiddleware',
 ]
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+}
+
 ROOT_URLCONF = 'agriconnect.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -100,57 +75,20 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'agriconnect.wsgi.application'
 
-# ========================
-# DATABASE
-# ========================
-
-DATABASES = {
-    'default': dj_database_url.config(
-        conn_max_age=600,
-        conn_health_checks=True,
-        default='sqlite:///' + str(BASE_DIR / 'db.sqlite3')
-    )
-}
-
-# Simple database connection test
-if 'test' not in sys.argv:
-    import time
-    from django.db import connections
-    from django.db.utils import OperationalError
-    
-    max_retries = 5
-    retry_delay = 2
-    
-    for _ in range(max_retries):
-        try:
-            conn = connections['default']
-            conn.ensure_connection()
-            break
-        except OperationalError:
-            time.sleep(retry_delay)
-    else:
-        raise Exception("Could not connect to database after multiple attempts")       
-
-# Database optimization settings (only for PostgreSQL)
-if 'postgres' in DATABASES['default']['ENGINE']:
-    DATABASES['default']['CONN_MAX_AGE'] = 600
-    DATABASES['default']['OPTIONS'] = {
-        'connect_timeout': 5,  # Only works with PostgreSQL
-    }
-DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
-
-# ========================
-# AUTHENTICATION
-# ========================
-
 AUTH_USER_MODEL = 'accounts.User'
+
 AUTHENTICATION_BACKENDS = [
-    'accounts.backends.EmailBackend',
-    'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
+    'accounts.backends.EmailBackend',  # Replace 'accounts' with your app name
+    'django.contrib.auth.backends.ModelBackend',  # Keep the default backend
 ]
 
-# Password validation
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -166,169 +104,57 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# ========================
-# INTERNATIONALIZATION
-# ========================
-
 LANGUAGE_CODE = 'en-us'
+
 TIME_ZONE = 'UTC'
+
 USE_I18N = True
+
 USE_TZ = True
 
-# ========================
-# STATIC & MEDIA FILES
-# ========================
+STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # For production
 
-STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-STATICFILES_DIRS = [BASE_DIR / 'static']
-os.makedirs(STATIC_ROOT, exist_ok=True)
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-
-# ========================
-# SECURITY
-# ========================
-
-# HTTPS Settings - Only apply in production
-if not DEBUG:
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    SECURE_HSTS_SECONDS = 31536000  # 1 year
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
-else:
-    # Explicitly disable SSL settings in development
-    SECURE_SSL_REDIRECT = False
-    SESSION_COOKIE_SECURE = False
-    CSRF_COOKIE_SECURE = False
+MEDIA_URL = 'media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # CORS Settings
 CORS_ALLOWED_ORIGINS = [
-    "https://agriconnect-app.vercel.app",
-    "https://agriconnect-trpn.onrender.com",
+    "https://agriconnect-app.vercel.app/",
+    "https://agriconnect-trpn.onrender.com/",
     "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:8000",
+    "http://localhost:5174",  
     "http://127.0.0.1:8000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174", 
 ]
+
+# Add these if not present
 CORS_ALLOW_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS = [
-    "https://*.vercel.app",
-    "https://*.onrender.com",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
-]
+CORS_ALLOW_ALL_ORIGINS = DEBUG 
+CORS_EXPOSE_HEADERS = ['Cross-Origin-Opener-Policy']
+CORS_ALLOW_CREDENTIALS = True
+SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin-allow-popups'
 
-# ========================
-# THIRD-PARTY CONFIG
-# ========================
+# Allauth settings
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+ACCOUNT_EMAIL_VERIFICATION = 'optional'  # or 'mandatory' for production
 
-# Django Allauth
-SITE_ID = 1
-#ACCOUNT_LOGIN_METHODS = ['email']
-#ACCOUNT_SIGNUP_FIELDS = ['email', 'password1', 'password2']
-#ACCOUNT_AUTHENTICATION_METHOD = 'email'
-#ACCOUNT_EMAIL_REQUIRED = True
-#ACCOUNT_UNIQUE_EMAIL = True
-#ACCOUNT_USERNAME_REQUIRED = False
-#ACCOUNT_USER_MODEL_USERNAME_FIELD = None
-#ACCOUNT_EMAIL_VERIFICATION = 'mandatory' if not DEBUG else 'optional'
-#LOGIN_REDIRECT_URL = '/'
-#ACCOUNT_LOGOUT_REDIRECT_URL = '/'
-
-# Email settings
-if DEBUG:
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-else:
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = os.environ.get('EMAIL_HOST')
-    EMAIL_PORT = os.environ.get('EMAIL_PORT', 587)
-    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
-    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
-    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
-    DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@agriconnect.com')
-
-# Google OAuth
+# Social account providers configuration
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'SCOPE': ['profile', 'email'],
         'AUTH_PARAMS': {'access_type': 'online'},
         'APP': {
-            'client_id': os.environ.get('GOOGLE_CLIENT_ID'),
-            'secret': os.environ.get('GOOGLE_CLIENT_SECRET'),
+            'client_id': '829063166970-pooutlbkr6sbju2j22pgvad49vjj6ok8.apps.googleusercontent.com',
+            'secret': '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',
             'key': ''
         }
     }
-}
-
-# REST Framework
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
-    ],
-    'DEFAULT_RENDERER_CLASSES': [
-        'rest_framework.renderers.JSONRenderer',
-    ] if not DEBUG else [
-        'rest_framework.renderers.JSONRenderer',
-        'rest_framework.renderers.BrowsableAPIRenderer',
-    ]
-}
-
-# JWT Settings
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-    'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True,
-    'UPDATE_LAST_LOGIN': True,
-    'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
-}
-
-# ========================
-# LOGGING
-# ========================
-
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
-    },
-    'root': {
-        'handlers': ['console'],
-        'level': 'WARNING',
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
-            'propagate': False,
-        },
-    },
-}
-
-# ========================
-# CUSTOM SETTINGS
-# ========================
-
-# Default primary key field type
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# Health check endpoint
-HEALTH_CHECK = {
-    'DISK_USAGE_MAX': 90,  # percent
-    'MEMORY_MIN': 100,    # in MB
 }
