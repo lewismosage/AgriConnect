@@ -129,6 +129,7 @@ if 'postgres' in DATABASES['default']['ENGINE']:
     DATABASES['default']['OPTIONS'] = {
         'connect_timeout': 5,  # Only works with PostgreSQL
     }
+DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
 
 # ========================
 # AUTHENTICATION
@@ -223,6 +224,8 @@ CSRF_TRUSTED_ORIGINS = [
 
 # Django Allauth
 SITE_ID = 1
+ACCOUNT_LOGIN_METHODS = ['email']
+ACCOUNT_SIGNUP_FIELDS = ['email', 'password1', 'password2']
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_UNIQUE_EMAIL = True
