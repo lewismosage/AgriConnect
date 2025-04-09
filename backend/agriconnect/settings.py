@@ -81,13 +81,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'agriconnect.wsgi.application'
 
-# Database
-# Uses DATABASE_URL from environment, falls back to SQLite for development
+# Database Configuration
 DATABASES = {
     'default': dj_database_url.config(
         default=os.getenv('DATABASE_URL', 'sqlite:///' + os.path.join(BASE_DIR, 'backend', 'db.sqlite3')),
         conn_max_age=600,
-        ssl_require=not DEBUG
+        ssl_require=True  
     )
 }
 
@@ -187,3 +186,7 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+DATABASES['default']['OPTIONS'] = {
+    'sslmode': 'require'
+}
