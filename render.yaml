@@ -1,25 +1,25 @@
 services:
   - type: web
-    name: agriconnect
+    name: agriconnect-backend
+    env: python
+    region: oregon
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn agriconnect.wsgi:application"
     runtime: python
-    rootDirectory: backend 
-    buildCommand: |
-      pip install -r requirements.txt
-      python manage.py collectstatic --noinput
-    startCommand: |
-      python scripts/check_db.py &&
-      python manage.py migrate --no-input &&
-      gunicorn agriconnect.wsgi:application --timeout 120
+    plan: free
     envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: agriconnect_db_om15
-          property: connectionString
+      - key: DEBUG
+        value: False
       - key: SECRET_KEY
         generateValue: true
-      - key: DEBUG
-        value: "False"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: agriconnect-db
+          property: connectionString
       - key: ALLOWED_HOSTS
-        value: "agriconnect-trpn.onrender.com"
-      - key: DJANGO_SETTINGS_MODULE
-        value: "agriconnect.settings"
+        value: .onrender.com
+    autoDeploy: true
+
+databases:
+  - name: agriconnect-db
+    plan: free

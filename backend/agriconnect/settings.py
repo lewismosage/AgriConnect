@@ -6,16 +6,13 @@ import dj_database_url
 # Load environment variables
 load_dotenv()
 
-BASE_DIR = Path(__file__).resolve().parent.parent.parent  # Updated to project root
+BASE_DIR = Path(__file__).resolve().parent.parent.parent  # Project root
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-fallback-secret-key')
 
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',') or [
-    'localhost',
-    '127.0.0.1',
-]
+ALLOWED_HOSTS = ['.onrender.com', 'localhost', '127.0.0.1']
 
 # Application definition
 INSTALLED_APPS = [
@@ -26,7 +23,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
-    
+
     # Third-party apps
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
@@ -35,7 +32,7 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
-    
+
     # Local apps
     'accounts',
     'farms',
@@ -81,12 +78,10 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'agriconnect.wsgi.application'
 
-# Database Configuration
+# Database
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.getenv('DATABASE_URL', 'sqlite:///' + os.path.join(BASE_DIR, 'backend', 'db.sqlite3')),
-        conn_max_age=600,
-        ssl_require=True  
+        default=os.getenv('DATABASE_URL')
     )
 }
 
@@ -121,11 +116,11 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
+# Static files
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'backend', 'staticfiles')
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'frontend', 'dist'),  # Only if using Vite
+    os.path.join(BASE_DIR, 'frontend', 'dist'),
 ]
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
@@ -142,17 +137,13 @@ REST_FRAMEWORK = {
     ],
 }
 
-# CORS Settings
+# CORS settings for local development
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    "https://agriconnect-app.vercel.app",
-    "https://agriconnect-trpn.onrender.com",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
-    "https://agriconnect-app.vercel.app",
-    "https://agriconnect-trpn.onrender.com",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -160,33 +151,33 @@ CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']
 SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin-allow-popups'
 
 # Allauth settings
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_UNIQUE_EMAIL = True
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_USER_MODEL_USERNAME_FIELD = None
-ACCOUNT_EMAIL_VERIFICATION = 'optional'
+#ACCOUNT_AUTHENTICATION_METHOD = 'email'
+#ACCOUNT_EMAIL_REQUIRED = True
+#ACCOUNT_UNIQUE_EMAIL = True
+#ACCOUNT_USERNAME_REQUIRED = False
+#ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+#ACCOUNT_EMAIL_VERIFICATION = 'optional'
 
-# Social account providers configuration
+# Social account config
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'SCOPE': ['profile', 'email'],
         'AUTH_PARAMS': {'access_type': 'online'},
         'APP': {
-            'client_id': os.getenv('GOOGLE_CLIENT_ID'),
-            'secret': os.getenv('GOOGLE_CLIENT_SECRET'),
+            'client_id': os.getenv('GOOGLE_CLIENT_ID', ''),
+            'secret': os.getenv('GOOGLE_CLIENT_SECRET', ''),
             'key': ''
         }
     }
 }
 
-# Security settings for production
+
+SECRET_KEY = os.getenv('SECRET_KEY', 'fallback-key')
+
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-DATABASES['default']['OPTIONS'] = {
-    'sslmode': 'require'
-}
+    SECURE_HSTS_SECONDS = 3600
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
