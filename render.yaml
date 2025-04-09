@@ -17,6 +17,8 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: DEBUG
-        value: "True"
+        value: "False"
       - key: ALLOWED_HOSTS
-        value: "*"
+        value: "agriconnect-trpn.onrender.com"
+      - key: DJANGO_SETTINGS_MODULE
+        value: "agriconnect.settings"

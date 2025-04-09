@@ -1,21 +1,20 @@
 import os
 from pathlib import Path
-from dotenv import load_dotenv  # Add this import
+from dotenv import load_dotenv
+import dj_database_url
 
 # Load environment variables
 load_dotenv()
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent  # Updated to project root
 
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-fallback-secret-key')
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-fallback-secret-key')
 
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-# Allowed hosts configuration
-ALLOWED_HOSTS = [
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',') or [
     'localhost',
     '127.0.0.1',
-    'agriconnect-trpn.onrender.com',
 ]
 
 # Application definition
@@ -50,6 +49,7 @@ SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -66,7 +66,7 @@ ROOT_URLCONF = 'agriconnect.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],  # For frontend integration
+        'DIRS': [os.path.join(BASE_DIR, 'backend', 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -82,11 +82,13 @@ TEMPLATES = [
 WSGI_APPLICATION = 'agriconnect.wsgi.application'
 
 # Database
+# Uses DATABASE_URL from environment, falls back to SQLite for development
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=os.getenv('DATABASE_URL', 'sqlite:///' + os.path.join(BASE_DIR, 'backend', 'db.sqlite3')),
+        conn_max_age=600,
+        ssl_require=not DEBUG
+    )
 }
 
 # Authentication
@@ -122,14 +124,15 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = os.path.join(BASE_DIR, 'backend', 'staticfiles')
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),  # For Vite assets in production
+    os.path.join(BASE_DIR, 'frontend', 'dist'),  # Only if using Vite
 ]
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'backend', 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -142,8 +145,8 @@ REST_FRAMEWORK = {
 
 # CORS Settings
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  
-    "https://agriconnect-app.vercel.app", 
+    "http://localhost:5173",
+    "https://agriconnect-app.vercel.app",
     "https://agriconnect-trpn.onrender.com",
 ]
 
@@ -178,10 +181,9 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-# Vite configuration for development
-VITE_APP_DIR = os.path.join(BASE_DIR, 'frontend')  # Path to your Vite project
-
-if DEBUG:
-    STATICFILES_DIRS += [
-        os.path.join(VITE_APP_DIR, 'dist'),  # Vite build output
-    ]
+# Security settings for production
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
