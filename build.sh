@@ -1,8 +1,5 @@
-#!/usr/bin/env bash
-# build.sh
-
-echo "Applying database migrations..."
-python manage.py migrate
+echo "Applying migrations..."
+python backend/manage.py migrate
 
 echo "Collecting static files..."
-python manage.py collectstatic --noinput
+python backend/manage.py collectstatic --noinput
