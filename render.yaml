@@ -3,18 +3,10 @@ services:
     name: agriconnect-backend
     env: python
     region: oregon
-    buildCommand: "./build.sh"
-    startCommand: "gunicorn agriconnect.wsgi:application"
+    buildCommand: "pip install -r backend/requirements.txt && ./build.sh"
+    startCommand: "gunicorn backend.agriconnect.wsgi:application"
+    runtime: python
     plan: free
-    autoDeploy: true
-    buildFilter:
-      paths:
-        - backend/** 
-        - build.sh
-        - render.yaml
-        - manage.py
-        - agriconnect/**
-
     envVars:
       - key: DEBUG
         value: False
@@ -26,6 +18,7 @@ services:
           property: connectionString
       - key: ALLOWED_HOSTS
         value: .onrender.com
+    autoDeploy: true
 
 databases:
   - name: agriconnect-db
