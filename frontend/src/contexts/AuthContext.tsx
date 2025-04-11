@@ -4,7 +4,6 @@ import axios from "./axioConfig";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { User, FarmerProfile } from '../types';
-import { checkSubscriptionAccess } from "../services/subscriptionService";
 import { GoogleOAuthProvider, googleLogout } from "@react-oauth/google";
 
 // Add axios interceptor for token
