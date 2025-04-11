@@ -32,6 +32,8 @@ import ProductDetailPage from './pages/ProductDetailPage';
 import PaymentVerificationPage from './pages/PaymentVerificationPage';
 import PaymentsToVerifyPage from './pages/PaymentsToVerifyPage';
 import SubscriptionPage from './pages/SubscriptionPage';
+import TermsOfService from './pages/TermsOfService';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 
 function App() {
   return (
@@ -58,6 +60,8 @@ function App() {
                 <Route path="/wishlist" element={<Wishlist />} />
                 <Route path="/checkout" element={<CheckoutPage />} />
                 <Route path="/orders" element={<OrdersPage />} />
+                <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/orders/:id" element={<OrderDetails />} />
                 <Route path="/orders/:id/tracking" element={<OrderTracking />} />
                 <Route path="/orders-history" element={<OrderHistory />} />

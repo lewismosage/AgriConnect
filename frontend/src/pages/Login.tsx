@@ -229,16 +229,19 @@ const Login = () => {
             </div>
 
             <div className="mt-6 flex justify-center">
-              <GoogleLogin
-                onSuccess={handleGoogleLogin}
-                onError={() => toast.error('Failed to log in with Google. Please try again.')}
-                useOneTap
-                auto_select
-                theme="filled_blue"
-                shape="rectangular"
-                size="medium"
-                text="continue_with"
-                width="300"
+            <GoogleLogin
+              onSuccess={handleGoogleLogin}
+              onError={() => {
+              console.error('Google Login failed');
+              toast.error('Failed to log in with Google. Please try again.');
+              }}
+              useOneTap
+              auto_select
+              theme="filled_blue"
+              shape="rectangular"
+              size="medium"
+              text="continue_with"
+              width="300"
               />
             </div>
           </div>

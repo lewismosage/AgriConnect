@@ -560,7 +560,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   return (
     <AuthContext.Provider value={value}>
-      <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+      <GoogleOAuthProvider 
+        clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}
+        onScriptLoadError={() => console.error("Failed to load Google OAuth script")}
+        onScriptLoadSuccess={() => console.log("Google OAuth script loaded successfully")}
+      >
         {children}
       </GoogleOAuthProvider>
     </AuthContext.Provider>
