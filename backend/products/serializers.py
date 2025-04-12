@@ -19,7 +19,7 @@ class ProductSerializer(serializers.ModelSerializer):
     price = serializers.DecimalField(
         max_digits=10, 
         decimal_places=2, 
-        coerce_to_string=False  # This ensures the price is returned as a number
+        coerce_to_string=False
     )
 
     class Meta:

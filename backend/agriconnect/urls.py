@@ -20,4 +20,4 @@ urlpatterns = [
     path('api/search/', SearchView.as_view(), name='search'),
     path('health/', health_check),
     path('check-migrations/', check_migrations),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]

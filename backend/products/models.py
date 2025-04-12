@@ -2,6 +2,7 @@
 from django.db import models
 from farms.models import Farm
 from django.core.validators import FileExtensionValidator
+from cloudinary.models import CloudinaryField
 
 class Product(models.Model):
     name = models.CharField(max_length=255)
@@ -10,8 +11,8 @@ class Product(models.Model):
     quantity = models.FloatField(default=0.0)
     unit = models.CharField(max_length=50, default="unit")
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
-    image = models.ImageField(
-        upload_to='products/',
+    image = CloudinaryField(
+        'products',
         blank=True,
         null=True,
         validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'])]

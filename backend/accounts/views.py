@@ -76,10 +76,7 @@ class LoginView(APIView):
                     'location': farmer_profile.location,
                     'specialty': farmer_profile.specialty,
                     'description': farmer_profile.description,
-                    'farm_image': (
-                        f"{request.scheme}://{request.get_host()}{farmer_profile.farm_image.url}" 
-                        if farmer_profile.farm_image else None
-                    )
+                    'farm_image': farmer_profile.farm_image.url if farmer_profile.farm_image else None
                 }
 
             # Prepare the response data
@@ -300,14 +297,12 @@ class FarmImageUploadView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        # Ensure the user is a farmer
         if request.user.user_type != 'farmer':
             return Response(
                 {'detail': 'Only farmers can upload farm images.'},
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        # Get the uploaded file
         file = request.FILES.get('file')
         if not file:
             return Response(
@@ -315,13 +310,14 @@ class FarmImageUploadView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Save the file to the farmer's profile
         try:
             farmer_profile = request.user.farmer_profile
             farmer_profile.farm_image = file
             farmer_profile.save()
+            
+            # Return the Cloudinary URL directly
             return Response(
-                {'url': farmer_profile.farm_image.url},  # Return the URL of the uploaded image
+                {'url': farmer_profile.farm_image.url},
                 status=status.HTTP_200_OK
             )
         except Exception as e:

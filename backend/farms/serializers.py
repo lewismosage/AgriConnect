@@ -20,5 +20,5 @@ class FarmSerializer(serializers.ModelSerializer):
     def get_farm_image(self, obj):
         farmer_profile = obj.farmer.farmer_profile if hasattr(obj.farmer, 'farmer_profile') else None
         if farmer_profile and farmer_profile.farm_image:
-            return self.context['request'].build_absolute_uri(farmer_profile.farm_image.url)
+            return farmer_profile.farm_image.url
         return None
