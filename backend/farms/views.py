@@ -253,11 +253,18 @@ class SearchView(APIView):
         
         # Add exact matches first
         for farm in exact_farm_matches:
+            # Get farmer profile image if farm image doesn't exist
+            farm_image = None
+            if farm.image:
+                farm_image = farm.image.url
+            elif hasattr(farm.farmer, 'farmer_profile') and farm.farmer.farmer_profile.farm_image:
+                farm_image = farm.farmer.farmer_profile.farm_image.url
+                
             results.append({
                 'id': farm.id,
                 'name': farm.name,
                 'type': 'farm',
-                'image': farm.image.url if farm.image else None,
+                'image': farm_image,
                 'match_type': 'exact'
             })
         
@@ -272,11 +279,18 @@ class SearchView(APIView):
         
         # Then partial matches
         for farm in partial_farm_matches:
+            # Get farmer profile image if farm image doesn't exist
+            farm_image = None
+            if farm.image:
+                farm_image = farm.image.url
+            elif hasattr(farm.farmer, 'farmer_profile') and farm.farmer.farmer_profile.farm_image:
+                farm_image = farm.farmer.farmer_profile.farm_image.url
+                
             results.append({
                 'id': farm.id,
                 'name': farm.name,
                 'type': 'farm',
-                'image': farm.image.url if farm.image else None,
+                'image': farm_image,
                 'match_type': 'partial'
             })
         
