@@ -17,3 +17,10 @@ python backend/manage.py migrate
 
 echo "Collecting static files..."
 python backend/manage.py collectstatic --noinput
+
+# Clear all data but keep tables
+echo "Resetting database..."
+python backend/manage.py flush --no-input  # Clear all data but keep tables
+
+echo "Applying database migrations..."
+python backend/manage.py migrate
