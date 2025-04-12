@@ -1,4 +1,3 @@
-// pages/ProductCard.tsx
 import React from 'react';
 import { Heart, Check, Star } from 'lucide-react';
 import { Product } from '../contexts/AuthContext';
@@ -25,38 +24,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
     onToggleWishlist(product);
   };
 
-  const renderRatingStars = () => {
-    if (!product.farm?.rating) return null;
-    
-    const stars = [];
-    const roundedRating = Math.round(product.farm.rating * 2) / 2;
-
-    for (let i = 1; i <= 5; i++) {
-      stars.push(
-        <Star 
-          key={i}
-          className={`w-4 h-4 ${i <= roundedRating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
-        />
-      );
-    }
-
-    return (
-      <div className="flex items-center mt-1">
-        <div className="flex mr-1">
-          {stars}
-        </div>
-        <span className="text-xs text-gray-500">
-          {product.farm.name}
-        </span>
-      </div>
-    );
-  };
-
   const handleAddToCart = () => {
     if (!isAddedToCart) {
       onAddToCart(product);
     }
   };
+
+  // Get the rating from product.farm.rating or default to 0
+  const rating = product.farm?.rating || 0;
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
@@ -86,10 +61,31 @@ const ProductCard: React.FC<ProductCardProps> = ({
       </div>
 
       <div className="p-4">
-        <h3 className="font-medium text-gray-900">{product.name}</h3>
-        {renderRatingStars()}
-        <div className="flex justify-between items-center mt-2">
-          <span className="text-green-600 font-semibold">${product.price.toFixed(2)}</span>
+        <h3 className="text-lg font-semibold mb-1">{product.name}</h3>
+        {product.farm?.name && (
+          <p className="text-sm text-gray-600 mb-2">{product.farm.name}</p>
+        )}
+        
+        <div className="flex items-center mb-3">
+          <div className="flex items-center">
+            {[...Array(5)].map((_, i) => (
+              <Star
+                key={i}
+                className={`w-4 h-4 ${
+                  i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                }`}
+              />
+            ))}
+            <span className="ml-1 text-sm text-gray-600">
+              {rating.toFixed(1)}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <span className="text-xl font-bold text-green-600">
+            ${product.price.toFixed(2)}
+          </span>
           <button
             onClick={handleAddToCart}
             disabled={isAddedToCart}
