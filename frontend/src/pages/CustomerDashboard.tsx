@@ -28,7 +28,7 @@ const CustomerDashboard: React.FC = () => {
       <div
         className={`fixed inset-y-0 left-0 bg-white border-r z-50 transition-transform transform ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0 md:static md:flex md:flex-col w-64`}
+        } md:translate-x-0 md:static md:flex md:flex-col w-72`}
       >
         {/* Sidebar Header */}
         <div className="p-5 border-b flex items-center justify-between">
