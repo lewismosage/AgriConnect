@@ -227,80 +227,89 @@ class SearchView(APIView):
         if not query:
             return Response([])
         
-        # Exact matches first
-        exact_farm_matches = Farm.objects.filter(
+        def get_farm_image(farm):
+            """Get image URL with proper fallbacks"""
+            if farm.image:  # First try direct farm image
+                return farm.image.url
+            try:
+                # Then try farmer profile image
+                if hasattr(farm, 'farmer') and hasattr(farm.farmer, 'farmer_profile'):
+                    if farm.farmer.farmer_profile.farm_image:
+                        return farm.farmer.farmer_profile.farm_image.url
+            except Exception:
+                pass
+            return None
+        
+        def get_product_image(product):
+            """Get product image URL"""
+            if product.image:
+                return product.image.url
+            return None
+        
+        # Get all matches
+        exact_farms = Farm.objects.select_related('farmer__farmer_profile').filter(
             name__iexact=query
         )
         
-        exact_product_matches = Product.objects.filter(
+        exact_products = Product.objects.select_related('farm').filter(
             name__iexact=query
         )
         
-        # Then partial matches
-        partial_farm_matches = Farm.objects.filter(
+        partial_farms = Farm.objects.select_related('farmer__farmer_profile').filter(
             Q(name__icontains=query) |
             Q(location__icontains=query) |
             Q(description__icontains=query) |
             Q(about__icontains=query)
-        ).exclude(id__in=[f.id for f in exact_farm_matches])
+        ).exclude(id__in=[f.id for f in exact_farms])
         
-        partial_product_matches = Product.objects.filter(
+        partial_products = Product.objects.select_related('farm').filter(
             Q(name__icontains=query) |
             Q(category__icontains=query)
-        ).exclude(id__in=[p.id for p in exact_product_matches])
+        ).exclude(id__in=[p.id for p in exact_products])
         
+        # Build results
         results = []
         
-        # Add exact matches first
-        for farm in exact_farm_matches:
-            # Get farmer profile image if farm image doesn't exist
-            farm_image = None
-            if farm.image:
-                farm_image = farm.image.url
-            elif hasattr(farm.farmer, 'farmer_profile') and farm.farmer.farmer_profile.farm_image:
-                farm_image = farm.farmer.farmer_profile.farm_image.url
-                
+        # Process farms
+        for farm in exact_farms:
             results.append({
                 'id': farm.id,
                 'name': farm.name,
                 'type': 'farm',
-                'image': farm_image,
-                'match_type': 'exact'
+                'image': get_farm_image(farm),
+                'match_type': 'exact',
+                'location': farm.location
             })
         
-        for product in exact_product_matches:
-            results.append({
-                'id': product.id,
-                'name': product.name,
-                'type': 'product',
-                'image': product.image.url if product.image else None,
-                'match_type': 'exact'
-            })
-        
-        # Then partial matches
-        for farm in partial_farm_matches:
-            # Get farmer profile image if farm image doesn't exist
-            farm_image = None
-            if farm.image:
-                farm_image = farm.image.url
-            elif hasattr(farm.farmer, 'farmer_profile') and farm.farmer.farmer_profile.farm_image:
-                farm_image = farm.farmer.farmer_profile.farm_image.url
-                
+        for farm in partial_farms:
             results.append({
                 'id': farm.id,
                 'name': farm.name,
                 'type': 'farm',
-                'image': farm_image,
-                'match_type': 'partial'
+                'image': get_farm_image(farm),
+                'match_type': 'partial',
+                'location': farm.location
             })
         
-        for product in partial_product_matches:
+        # Process products
+        for product in exact_products:
             results.append({
                 'id': product.id,
                 'name': product.name,
                 'type': 'product',
-                'image': product.image.url if product.image else None,
-                'match_type': 'partial'
+                'image': get_product_image(product),
+                'match_type': 'exact',
+                'farm_name': product.farm.name if product.farm else None
+            })
+        
+        for product in partial_products:
+            results.append({
+                'id': product.id,
+                'name': product.name,
+                'type': 'product',
+                'image': get_product_image(product),
+                'match_type': 'partial',
+                'farm_name': product.farm.name if product.farm else None
             })
         
         return Response(results)
