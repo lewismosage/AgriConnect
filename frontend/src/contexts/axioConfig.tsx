@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 // Configure Axios defaults
-axios.defaults.baseURL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000" || "https://agriconnect-backend-2f31.onrender.com";
+// axiosConfig.tsx
+axios.defaults.baseURL = import.meta.env.VITE_API_URL || "https://agriconnect-backend-2f31.onrender.com";
 axios.defaults.headers.common["Content-Type"] = "application/json";
 axios.defaults.withCredentials = true; // Ensure cookies are sent with requests
 
