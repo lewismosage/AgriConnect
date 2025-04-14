@@ -11,7 +11,9 @@ interface SearchResult {
   name: string;
   type: 'product' | 'farm';
   image?: string;
-  description?: string;
+  match_type?: string;
+  location?: string;  // for farms
+  farm_name?: string; // for products
 }
 
 const Navbar: React.FC = () => {
@@ -56,15 +58,7 @@ const Navbar: React.FC = () => {
       const response = await axios.get('/api/search/', {
         params: { q: searchQuery },
       });
-      // Ensure the response data matches our interface
-      const formattedResults = response.data.map((item: any) => ({
-        id: item.id,
-        name: item.name,
-        type: item.type,
-        image: item.image || undefined,
-        description: item.description,
-      }));
-      setSearchResults(formattedResults);
+      setSearchResults(response.data);
     } catch (error) {
       console.error('Search failed:', error);
       setSearchResults([]);
@@ -80,7 +74,7 @@ const Navbar: React.FC = () => {
       } else {
         setSearchResults([]);
       }
-    }, 500); // Increased from 300ms to 500ms for better performance
+    }, 500);
 
     return () => clearTimeout(debounceTimer);
   }, [searchQuery]);
@@ -92,14 +86,12 @@ const Navbar: React.FC = () => {
     if (!trimmedQuery) return;
   
     if (isSearching) {
-      // If still searching, wait a bit (you might want to show a loading state)
       const timer = setTimeout(() => {
         handleSearchSubmit(e);
       }, 300);
       return () => clearTimeout(timer);
     }
   
-    // Check for exact match first (case insensitive)
     const exactMatch = searchResults.find(
       result => result.name.toLowerCase() === trimmedQuery.toLowerCase()
     );
@@ -107,28 +99,18 @@ const Navbar: React.FC = () => {
     if (exactMatch) {
       navigate(`/${exactMatch.type}s/${exactMatch.id}`);
     } else if (searchResults.length > 0) {
-      // If no exact match but results exist, you could:
-      // 1. Navigate to the first result
       navigate(`/${searchResults[0].type}s/${searchResults[0].id}`);
-      // OR 2. Navigate to search results page
-      // navigate(`/search?q=${encodeURIComponent(trimmedQuery)}`);
     } else {
-      // No results - navigate to search page with query
       navigate(`/search?q=${encodeURIComponent(trimmedQuery)}`);
     }
   
-    // Reset search state
     setIsSearchOpen(false);
     setSearchQuery('');
     setSearchResults([]);
   };
 
   const handleResultClick = (result: SearchResult) => {
-    if (result.type === 'product') {
-      navigate(`/products/${result.id}`);
-    } else {
-      navigate(`/farms/${result.id}`);
-    }
+    navigate(`/${result.type}s/${result.id}`);
     setIsSearchOpen(false);
     setSearchQuery('');
     setSearchResults([]);
@@ -188,9 +170,10 @@ const Navbar: React.FC = () => {
                         >
                           {result.image && (
                             <img
-                              src={`'VITE_BACKEND_URL'${result.image}`}
+                              src={result.image}
                               alt={result.name}
                               className="w-10 h-10 object-cover rounded mr-3"
+                              loading="lazy"
                               onError={(e) => {
                                 (e.target as HTMLImageElement).src = 'https://via.placeholder.com/100';
                               }}
@@ -200,9 +183,14 @@ const Navbar: React.FC = () => {
                             <div className="font-medium text-gray-900">
                               {result.name}
                             </div>
-                            {result.description && (
-                              <div className="text-xs text-gray-500 truncate">
-                                {result.description}
+                            {result.type === 'farm' && result.location && (
+                              <div className="text-xs text-gray-500">
+                                {result.location}
+                              </div>
+                            )}
+                            {result.type === 'product' && result.farm_name && (
+                              <div className="text-xs text-gray-500">
+                                From: {result.farm_name}
                               </div>
                             )}
                             <div className="text-xs text-gray-400 capitalize mt-1">
@@ -250,7 +238,6 @@ const Navbar: React.FC = () => {
             </Link>
           </div>
 
-          {/* Mobile menu button */}
           <div className="md:hidden">
             <button
               onClick={toggleMobileMenu}
@@ -261,7 +248,6 @@ const Navbar: React.FC = () => {
           </div>
         </div>
 
-        {/* Mobile search - now appears when mobile menu is open */}
         {isMobileMenuOpen && (
           <div className="md:hidden">
             <div className="flex flex-col space-y-4 mt-4 pb-4">
@@ -294,9 +280,10 @@ const Navbar: React.FC = () => {
                       >
                         {result.image && (
                           <img 
-                            src={`http://localhost:8000${result.image}`} 
+                            src={result.image}
                             alt={result.name}
                             className="w-8 h-8 object-cover rounded mr-2"
+                            loading="lazy"
                             onError={(e) => {
                               (e.target as HTMLImageElement).src = 'https://via.placeholder.com/100';
                             }}
