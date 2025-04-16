@@ -37,7 +37,6 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import ForgotPassword from './components/ForgotPassword';
 import ResetPassword from './components/ResetPassword';
 
-
 function App() {
   return (
     <Router>
@@ -75,6 +74,7 @@ function App() {
                 <Route path="/products/:productId" element={<ProductDetailPage />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
+
                 
                 <Route
                   path="/subscriptions"

@@ -43,7 +43,7 @@ const Hero: React.FC = () => {
       <div 
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: "url('https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-1.2.1&auto=format&fit=crop&w=2850&q=80')", // New image
+          backgroundImage: "url('https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-1.2.1&auto=format&fit=crop&w=2850&q=80')",
         }}
       >
         <div className="absolute inset-0 bg-black bg-opacity-50"></div> {/* Dark overlay */}
