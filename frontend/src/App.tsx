@@ -34,6 +34,9 @@ import PaymentsToVerifyPage from './pages/PaymentsToVerifyPage';
 import SubscriptionPage from './pages/SubscriptionPage';
 import TermsOfService from './pages/TermsOfService';
 import PrivacyPolicy from './pages/PrivacyPolicy';
+import ForgotPassword from './components/ForgotPassword';
+import ResetPassword from './components/ResetPassword';
+
 
 function App() {
   return (
@@ -70,6 +73,8 @@ function App() {
                 <Route path="/inventory" element={<Inventory />} />
                 <Route path="/subscription" element={<SubscriptionPage />} />
                 <Route path="/products/:productId" element={<ProductDetailPage />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 
                 <Route
                   path="/subscriptions"

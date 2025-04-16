@@ -17,17 +17,17 @@ const navigation = {
   social: [
     {
       name: "Instagram",
-      href: "https://instagram.com/lmprojectgroup",
+      href: "https://instagram.com/savanna.tek",
       icon: Instagram,
     },
     {
       name: "X (Twitter)",
-      href: "https://twitter.com/LMProjectGroup",
+      href: "https://twitter.com/savannatek",
       icon: XIcon,
     },
     {
       name: "Email",
-      href: "mailto:lmprojectmanagementgroup@gmail.com",
+      href: "mailto:lewismosage@outlook.com",
       icon: Mail,
     },
   ],
