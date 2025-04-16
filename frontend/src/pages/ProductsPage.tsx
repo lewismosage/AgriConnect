@@ -5,6 +5,7 @@ import ProductCard from '../pages/ProductCard';
 import { useCart } from '../contexts/CartContext';
 import { useNavigate } from 'react-router-dom';
 import FarmOfTheWeek from '../pages/FarmOfTheWeek';
+import { Link } from 'react-router-dom';
 
 const getRandomItems = <T,>(arr: T[], num: number): T[] => {
   const shuffled = [...arr].sort(() => 0.5 - Math.random());
@@ -256,12 +257,12 @@ const ProductsPage: React.FC = () => {
         {renderProductSection('Seasonal Favorites', seasonalPicks, 'Perfect for this time of year')}
         
         <div className="my-16 py-12 bg-gradient-to-r from-green-600 to-green-700 rounded-2xl shadow-lg text-center text-white">
-          <h2 className="text-3xl font-bold mb-4">Support Local Farmers</h2>
-          <p className="max-w-2xl mx-auto mb-6">Every purchase directly supports local agriculture and sustainable farming practices.</p>
-          <button className="bg-white text-green-700 hover:bg-gray-100 font-medium py-3 px-8 rounded-lg transition duration-300">
-            Learn More About Our Farms
-          </button>
-        </div>
+        <h2 className="text-3xl font-bold mb-4">Support Local Farmers</h2>
+        <p className="max-w-2xl mx-auto mb-6">Every purchase directly supports local agriculture and sustainable farming practices.</p>
+        <Link to="/about" className="inline-block bg-white text-green-700 hover:bg-gray-100 font-medium py-3 px-8 rounded-lg transition duration-300">
+          Learn More About Our Farms
+        </Link>
+      </div>
       </div>
       
       {renderViewAllProducts()}
