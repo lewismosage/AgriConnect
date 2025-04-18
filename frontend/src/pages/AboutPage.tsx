@@ -396,22 +396,22 @@ const AboutPage: React.FC = () => {
         </div>
 
         {/* Newsletter Section */}
-        <div className="mb-20 bg-green-600 rounded-2xl p-8 shadow-md">
+        <div className="mb-20 bg-green-600 rounded-2xl p-4 sm:p-6 md:p-8 shadow-md">
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-white mb-4">Stay Connected</h2>
-            <p className="text-white opacity-90 max-w-2xl mx-auto mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3 sm:mb-4">Stay Connected</h2>
+            <p className="text-white opacity-90 max-w-2xl mx-auto mb-6 sm:mb-8 text-sm sm:text-base px-2">
               Subscribe to our newsletter for seasonal recipes, farming tips, upcoming events, and exclusive offers from our partner farms.
             </p>
             
-            <form className="max-w-md mx-auto flex">
+            <form className="max-w-md mx-auto flex flex-col sm:flex-row gap-2 sm:gap-0 px-2 sm:px-0">
               <input 
                 type="email" 
                 placeholder="Your email address" 
-                className="flex-1 py-2 px-4 rounded-l-md focus:outline-none focus:ring-2 focus:ring-white"
+                className="flex-1 py-2 px-4 rounded-md sm:rounded-l-md sm:rounded-r-none focus:outline-none focus:ring-2 focus:ring-white text-sm sm:text-base"
               />
               <button 
                 type="submit" 
-                className="bg-white text-green-600 font-medium py-2 px-6 rounded-r-md hover:bg-gray-100 transition-colors"
+                className="bg-white text-green-600 font-medium py-2 px-4 sm:px-6 rounded-md sm:rounded-r-md sm:rounded-l-none hover:bg-gray-100 transition-colors text-sm sm:text-base"
               >
                 Subscribe
               </button>
