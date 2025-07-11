@@ -108,7 +108,13 @@ const FarmsPage: React.FC = () => {
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-gray-600">No farms available at the moment.</p>
+            <p className="text-gray-600 text-lg font-semibold mb-4">There are no farms at the moment.</p>
+            <Link
+              to="/farm-registration"
+              className="inline-block bg-green-600 text-white hover:bg-green-700 font-medium py-3 px-8 rounded-lg transition duration-300"
+            >
+              Add Farm
+            </Link>
           </div>
         )}
       </div>

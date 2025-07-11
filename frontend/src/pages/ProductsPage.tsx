@@ -116,6 +116,21 @@ const ProductsPage: React.FC = () => {
     );
   }
 
+  // Show alert if no products are available
+  if (!products.length) {
+    return (
+      <div className="bg-gray-50 min-h-screen flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow text-center">
+          <h2 className="text-2xl font-bold mb-2 text-gray-800">No products available at the moment.</h2>
+          <p className="text-gray-600 mb-4">Please check back later or contact us for more information.</p>
+          <Link to="/about" className="inline-block bg-green-600 text-white hover:bg-green-700 font-medium py-3 px-8 rounded-lg transition duration-300">
+            Learn More About Our Farms
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   const renderProductSection = (title: string, items: Product[], subtitle?: string) => {
     if (!items.length) return null;
     
