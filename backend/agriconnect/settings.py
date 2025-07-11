@@ -15,12 +15,14 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-fallback-secret-key')
 DEBUG = True
 
 # Domain settings
-BACKEND_DOMAIN = 'http://localhost:8000'
-FRONTEND_DOMAIN = 'http://localhost:5173'
+BACKEND_DOMAIN = os.getenv('BACKEND_DOMAIN', 'http://localhost:8000')
+FRONTEND_DOMAIN = os.getenv('FRONTEND_DOMAIN', 'http://localhost:5173')
 
 ALLOWED_HOSTS = [
     'localhost',
-    '127.0.0.1'
+    '127.0.0.1',
+    'agriconnect-backend-2f31.onrender.com',
+    'agriconnect-app.vercel.app',
 ]
 
 # Application definition (keep this the same)
@@ -169,11 +171,13 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
     "http://localhost:5174",
     "http://127.0.0.1:5174",
+    "https://agriconnect-app.vercel.app",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "https://agriconnect-app.vercel.app",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
